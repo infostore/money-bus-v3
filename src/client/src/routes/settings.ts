@@ -20,6 +20,12 @@ const InstitutionPage = lazy(() =>
   })),
 )
 
+const AccountTypePage = lazy(() =>
+  import('../features/settings/AccountTypePage').then((m) => ({
+    default: m.AccountTypePage,
+  })),
+)
+
 export const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
@@ -38,4 +44,15 @@ export const institutionsRoute = createRoute({
   component: InstitutionPage,
 })
 
-export const settingsRoutes = [settingsRoute, familyMembersRoute, institutionsRoute] as const
+export const accountTypesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account-types',
+  component: AccountTypePage,
+})
+
+export const settingsRoutes = [
+  settingsRoute,
+  familyMembersRoute,
+  institutionsRoute,
+  accountTypesRoute,
+] as const

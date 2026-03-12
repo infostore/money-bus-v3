@@ -6,9 +6,11 @@ import { db, runMigrations, checkConnection, closeDatabase } from './database/se
 import { ItemRepository, SettingsRepository } from './database/repositories.js'
 import { FamilyMemberRepository } from './database/family-member-repository.js'
 import { InstitutionRepository } from './database/institution-repository.js'
+import { AccountTypeRepository } from './database/account-type-repository.js'
 import { createItemRoutes } from './routes/items.js'
 import { createFamilyMemberRoutes } from './routes/family-members.js'
 import { createInstitutionRoutes } from './routes/institutions.js'
+import { createAccountTypeRoutes } from './routes/account-types.js'
 import { requestLogger, log } from './middleware/logger.js'
 import { registerCleanupHandler, setupShutdownHandlers } from './shutdown.js'
 import type { ApiResponse } from '../shared/types.js'
@@ -34,6 +36,7 @@ const itemRepo = new ItemRepository(db)
 const settingsRepo = new SettingsRepository(db)
 const familyMemberRepo = new FamilyMemberRepository(db)
 const institutionRepo = new InstitutionRepository(db)
+const accountTypeRepo = new AccountTypeRepository(db)
 
 try {
   const institutionCount = await institutionRepo.count()
@@ -43,6 +46,16 @@ try {
   }
 } catch (error) {
   log('error', `Institution seed failed: ${error}`)
+}
+
+try {
+  const accountTypeCount = await accountTypeRepo.count()
+  if (accountTypeCount === 0) {
+    await accountTypeRepo.seed()
+    log('info', 'Default account types seeded (13 records)')
+  }
+} catch (error) {
+  log('error', `Account type seed failed: ${error}`)
 }
 
 
@@ -66,6 +79,7 @@ app.get('/api/health', async (c) => {
 app.route('/api/items', createItemRoutes(itemRepo))
 app.route('/api/family-members', createFamilyMemberRoutes(familyMemberRepo))
 app.route('/api/institutions', createInstitutionRoutes(institutionRepo))
+app.route('/api/account-types', createAccountTypeRoutes(accountTypeRepo))
 
 app.get('/api/settings', async (c) => {
   const data = await settingsRepo.getAll()

@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Account Type Management
 related-prd: PRD-FEAT-003
-phase: plan
-status: not-started
+phase: do
+status: in-progress
 created: 2026-03-12
 updated: 2026-03-12
 tags: [pdca, account-type, settings, crud, master-data]
@@ -64,6 +64,7 @@ tags: [pdca, account-type, settings, crud, master-data]
 
 - **Progress Log**:
   - 2026-03-12: PDCA plan created
+  - 2026-03-12: Phase transition plan → do. Implementation started.
 
 ## Check
 

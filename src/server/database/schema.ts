@@ -30,3 +30,11 @@ export const institutions = pgTable('institutions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+export const accountTypes = pgTable('account_types', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  taxTreatment: text('tax_treatment').notNull().default('일반'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
