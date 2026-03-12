@@ -69,6 +69,34 @@ export interface UpdateInstitutionPayload {
   readonly category?: string
 }
 
+// PRD-FEAT-004: Product Management
+export interface Product {
+  readonly id: number
+  readonly name: string
+  readonly code: string | null
+  readonly asset_type: string
+  readonly currency: string
+  readonly exchange: string | null
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+export interface CreateProductPayload {
+  readonly name: string
+  readonly code?: string | null
+  readonly asset_type?: string
+  readonly currency?: string
+  readonly exchange?: string | null
+}
+
+export interface UpdateProductPayload {
+  readonly name?: string
+  readonly code?: string | null
+  readonly asset_type?: string
+  readonly currency?: string
+  readonly exchange?: string | null
+}
+
 // PRD-FEAT-003: Account Type Management
 export interface AccountType {
   readonly id: number

@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Product Management
 related-prd: PRD-FEAT-004
-phase: plan
-status: not-started
+phase: do
+status: in-progress
 created: 2026-03-12
 updated: 2026-03-12
 tags: [pdca, product, instrument, settings, crud, master-data]
@@ -76,6 +76,7 @@ tags: [pdca, product, instrument, settings, crud, master-data]
 
 - **Progress Log**:
   - 2026-03-12: PDCA plan created
+  - 2026-03-12: Transitioned to DO phase — starting implementation
 
 ## Check
 

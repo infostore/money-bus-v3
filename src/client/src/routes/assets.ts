@@ -1,6 +1,13 @@
+import { lazy } from 'react'
 import { createRoute } from '@tanstack/react-router'
 import { rootRoute } from './root'
 import { ComingSoon } from './shared'
+
+const ProductPage = lazy(() =>
+  import('../features/settings/ProductPage').then((m) => ({
+    default: m.ProductPage,
+  })),
+)
 
 export const portfolioRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -17,7 +24,7 @@ export const accountsRoute = createRoute({
 export const productsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/products',
-  component: ComingSoon,
+  component: ProductPage,
 })
 
 export const assetRoutes = [

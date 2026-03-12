@@ -12,6 +12,9 @@ import type {
   AccountType,
   CreateAccountTypePayload,
   UpdateAccountTypePayload,
+  Product,
+  CreateProductPayload,
+  UpdateProductPayload,
 } from '@shared/types'
 
 const BASE_URL = '/api'
@@ -93,6 +96,22 @@ export const api = {
       }),
     delete: (id: number) =>
       request<null>(`/account-types/${id}`, { method: 'DELETE' }),
+  },
+  // PRD-FEAT-004: Product Management
+  products: {
+    list: () => request<Product[]>('/products'),
+    create: (input: CreateProductPayload) =>
+      request<Product>('/products', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    update: (id: number, input: UpdateProductPayload) =>
+      request<Product>(`/products/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    delete: (id: number) =>
+      request<null>(`/products/${id}`, { method: 'DELETE' }),
   },
   settings: {
     getAll: () => request<Record<string, string>>('/settings'),

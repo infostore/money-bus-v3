@@ -31,6 +31,18 @@ export const institutions = pgTable('institutions', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+// PRD-FEAT-004: Product Management
+export const products = pgTable('products', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  code: text('code'),
+  assetType: text('asset_type').notNull().default('기타'),
+  currency: text('currency').notNull().default('KRW'),
+  exchange: text('exchange'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const accountTypes = pgTable('account_types', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),

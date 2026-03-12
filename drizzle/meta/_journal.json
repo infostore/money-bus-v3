@@ -36,6 +36,13 @@
       "when": 1773303738864,
       "tag": "0004_hard_red_wolf",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1773306097155,
+      "tag": "0005_daily_nicolaos",
+      "breakpoints": true
     }
   ]
 }

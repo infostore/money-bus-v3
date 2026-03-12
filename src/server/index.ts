@@ -7,10 +7,12 @@ import { ItemRepository, SettingsRepository } from './database/repositories.js'
 import { FamilyMemberRepository } from './database/family-member-repository.js'
 import { InstitutionRepository } from './database/institution-repository.js'
 import { AccountTypeRepository } from './database/account-type-repository.js'
+import { ProductRepository } from './database/product-repository.js'
 import { createItemRoutes } from './routes/items.js'
 import { createFamilyMemberRoutes } from './routes/family-members.js'
 import { createInstitutionRoutes } from './routes/institutions.js'
 import { createAccountTypeRoutes } from './routes/account-types.js'
+import { createProductRoutes } from './routes/products.js'
 import { requestLogger, log } from './middleware/logger.js'
 import { registerCleanupHandler, setupShutdownHandlers } from './shutdown.js'
 import type { ApiResponse } from '../shared/types.js'
@@ -37,6 +39,7 @@ const settingsRepo = new SettingsRepository(db)
 const familyMemberRepo = new FamilyMemberRepository(db)
 const institutionRepo = new InstitutionRepository(db)
 const accountTypeRepo = new AccountTypeRepository(db)
+const productRepo = new ProductRepository(db)
 
 try {
   const institutionCount = await institutionRepo.count()
@@ -58,6 +61,15 @@ try {
   log('error', `Account type seed failed: ${error}`)
 }
 
+try {
+  const productCount = await productRepo.count()
+  if (productCount === 0) {
+    await productRepo.seed()
+    log('info', 'Default products seeded (15 records)')
+  }
+} catch (error) {
+  log('error', `Product seed failed: ${error}`)
+}
 
 const app = new Hono()
 
@@ -80,6 +92,7 @@ app.route('/api/items', createItemRoutes(itemRepo))
 app.route('/api/family-members', createFamilyMemberRoutes(familyMemberRepo))
 app.route('/api/institutions', createInstitutionRoutes(institutionRepo))
 app.route('/api/account-types', createAccountTypeRoutes(accountTypeRepo))
+app.route('/api/products', createProductRoutes(productRepo))
 
 app.get('/api/settings', async (c) => {
   const data = await settingsRepo.getAll()
