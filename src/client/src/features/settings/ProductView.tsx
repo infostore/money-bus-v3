@@ -1,5 +1,5 @@
 // PRD-FEAT-004: Product Management
-import { useState, useMemo, type MutableRefObject } from 'react'
+import { useState, useMemo, useCallback, type MutableRefObject } from 'react'
 import { Package, Plus } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -28,6 +28,25 @@ const ASSET_TYPE_FILTERS = [
   '기타',
 ] as const
 
+const STORAGE_KEY_ASSET_TYPE = 'product-filter-asset-type'
+const STORAGE_KEY_EXCHANGE = 'product-filter-exchange'
+
+function loadFilter(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+function saveFilter(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // storage full or unavailable — ignore
+  }
+}
+
 interface ProductViewProps {
   readonly onCreateRef?: MutableRefObject<(() => void) | undefined>
 }
@@ -45,8 +64,22 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [editProduct, setEditProduct] = useState<Product | undefined>()
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
-  const [assetTypeFilter, setAssetTypeFilter] = useState<string>('전체')
-  const [exchangeFilter, setExchangeFilter] = useState<string>('전체')
+  const [assetTypeFilter, setAssetTypeFilter] = useState<string>(
+    () => loadFilter(STORAGE_KEY_ASSET_TYPE, '전체'),
+  )
+  const [exchangeFilter, setExchangeFilter] = useState<string>(
+    () => loadFilter(STORAGE_KEY_EXCHANGE, '전체'),
+  )
+
+  const handleAssetTypeChange = useCallback((value: string) => {
+    setAssetTypeFilter(value)
+    saveFilter(STORAGE_KEY_ASSET_TYPE, value)
+  }, [])
+
+  const handleExchangeChange = useCallback((value: string) => {
+    setExchangeFilter(value)
+    saveFilter(STORAGE_KEY_EXCHANGE, value)
+  }, [])
 
   const exchangeOptions = useMemo(() => {
     const exchanges = new Set(
@@ -104,7 +137,7 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
               key={filter}
               variant={assetTypeFilter === filter ? 'primary' : 'ghost'}
               className="h-8 px-3 text-sm"
-              onClick={() => setAssetTypeFilter(filter)}
+              onClick={() => handleAssetTypeChange(filter)}
             >
               {filter}
             </Button>
@@ -112,7 +145,7 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
         </div>
         <Select
           value={exchangeFilter}
-          onChange={(e) => setExchangeFilter(e.target.value)}
+          onChange={(e) => handleExchangeChange(e.target.value)}
           className="h-8 w-36 py-1 text-sm"
           aria-label="시장 필터"
         >
