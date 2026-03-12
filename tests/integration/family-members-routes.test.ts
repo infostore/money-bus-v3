@@ -180,6 +180,18 @@ describe('PUT /api/family-members/:id', () => {
     expect(res.status).toBe(409)
   })
 
+  it('returns 400 for invalid update payload', async () => {
+    const createRes = await request('POST', '/api/family-members', {
+      name: '홍길동',
+    })
+    const { id } = (await createRes.json()).data
+
+    const res = await request(`PUT`, `/api/family-members/${id}`, {
+      birth_year: 'not-a-number',
+    })
+    expect(res.status).toBe(400)
+  })
+
   it('succeeds when self-updating with same name', async () => {
     const createRes = await request('POST', '/api/family-members', {
       name: '홍길동',

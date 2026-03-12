@@ -4,7 +4,7 @@ prd-id: PRD-FEAT-001
 prd-type: feature
 title: Family Member Management (가족 구성원 관리)
 status: approved
-implementation-status: not-started
+implementation-status: in-progress
 created: 2026-03-12
 updated: 2026-03-12
 author: -
