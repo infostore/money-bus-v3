@@ -38,7 +38,7 @@ export function Dashboard() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-error-200 bg-error-50 p-6 text-error-600">
+      <div className="rounded-xl border border-error-500/20 bg-error-500/10 p-6 text-error-400">
         Error: {error}
       </div>
     )

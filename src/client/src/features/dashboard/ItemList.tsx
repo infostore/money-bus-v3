@@ -21,7 +21,7 @@ export function ItemList({ items, onDelete }: ItemListProps) {
       {items.map((item) => (
         <div
           key={item.id}
-          className="flex items-center justify-between rounded-xl border border-black/[0.04] bg-white/40 px-4 py-3 transition-all duration-300 hover:bg-white/60 hover:border-black/[0.08]"
+          className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-surface-800/40 px-4 py-3 transition-all duration-300 hover:bg-surface-800/60 hover:border-white/[0.08]"
         >
           <div className="flex-1">
             <span className="font-medium">{item.name}</span>
@@ -30,7 +30,7 @@ export function ItemList({ items, onDelete }: ItemListProps) {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-primary-600">
+            <span className="text-sm font-medium text-primary-400">
               {item.value.toLocaleString()}
             </span>
             <Button

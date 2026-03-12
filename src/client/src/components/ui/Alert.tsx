@@ -11,19 +11,19 @@ interface AlertProps {
 
 const variants = {
   info: {
-    container: 'bg-primary-50 border-primary-200 text-primary-800',
+    container: 'bg-info-500/10 border-info-500/20 text-info-300',
     icon: Info,
   },
   success: {
-    container: 'bg-success-50 border-success-200 text-success-800',
+    container: 'bg-success-500/10 border-success-500/20 text-success-300',
     icon: CheckCircle,
   },
   warning: {
-    container: 'bg-primary-50 border-primary-200 text-primary-800',
+    container: 'bg-primary-500/10 border-primary-500/20 text-primary-300',
     icon: AlertTriangle,
   },
   error: {
-    container: 'bg-error-50 border-error-200 text-error-800',
+    container: 'bg-error-500/10 border-error-500/20 text-error-300',
     icon: AlertCircle,
   },
 }

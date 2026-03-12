@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, Settings } from 'lucide-react'
+import { LayoutDashboard, Settings, Bell, User } from 'lucide-react'
 import { Dashboard } from './features/dashboard/Dashboard'
 import { SettingsView } from './features/settings/SettingsView'
 import { cn } from './lib/utils'
@@ -37,36 +37,47 @@ export function App() {
   }
 
   return (
-    <div className="flex h-screen bg-mesh">
-      <aside className="flex w-56 flex-col border-r border-black/[0.06] bg-white/60 backdrop-blur-2xl">
-        <div className="flex h-14 items-center px-6">
-          <h1 className="bg-gradient-warm bg-clip-text text-lg font-bold text-transparent">
-            Hono Local
-          </h1>
+    <div className="flex h-screen flex-col bg-mesh">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.04] bg-surface-900/60 backdrop-blur-2xl px-6">
+        <h1 className="bg-gradient-warm bg-clip-text text-lg font-bold text-transparent">
+          Money Bus
+        </h1>
+        <div className="flex items-center gap-1">
+          <button className="flex h-9 w-9 items-center justify-center rounded-xl text-surface-400 transition-colors hover:bg-white/[0.06] hover:text-surface-200">
+            <Bell size={18} />
+          </button>
+          <button className="flex h-9 w-9 items-center justify-center rounded-xl text-surface-400 transition-colors hover:bg-white/[0.06] hover:text-surface-200">
+            <User size={18} />
+          </button>
         </div>
-        <nav className="flex-1 space-y-1 px-3 py-2">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => navigate(id)}
-              className={cn(
-                'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300',
-                view === id
-                  ? 'bg-primary-500/10 text-primary-600 shadow-glow-sm'
-                  : 'text-surface-500 hover:bg-black/[0.04] hover:text-surface-800',
-              )}
-            >
-              <Icon size={18} />
-              {label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+      </header>
 
-      <main className="flex-1 overflow-y-auto p-8">
-        {view === 'dashboard' && <Dashboard />}
-        {view === 'settings' && <SettingsView />}
-      </main>
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="flex w-56 shrink-0 flex-col border-r border-white/[0.04] bg-surface-900/40 backdrop-blur-2xl">
+          <nav className="flex-1 space-y-1 px-3 py-3">
+            {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => navigate(id)}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300',
+                  view === id
+                    ? 'bg-primary-500/15 text-primary-400 shadow-glow-sm'
+                    : 'text-surface-400 hover:bg-white/[0.04] hover:text-surface-200',
+                )}
+              >
+                <Icon size={18} />
+                {label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <main className="flex-1 overflow-y-auto p-8">
+          {view === 'dashboard' && <Dashboard />}
+          {view === 'settings' && <SettingsView />}
+        </main>
+      </div>
     </div>
   )
 }

@@ -31,15 +31,15 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
     >
       <div
         className={cn(
-          'w-full max-w-md rounded-2xl bg-white/95 backdrop-blur-xl shadow-xl',
+          'w-full max-w-md rounded-2xl bg-surface-900/95 backdrop-blur-xl shadow-xl',
           className,
         )}
       >
-        <div className="flex items-center justify-between border-b border-black/[0.06] px-6 py-4">
-          <h2 className="text-lg font-semibold text-surface-900">{title}</h2>
+        <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
+          <h2 className="text-lg font-semibold text-surface-100">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-surface-400 transition-colors hover:bg-black/[0.04] hover:text-surface-600"
+            className="rounded-lg p-1.5 text-surface-400 transition-colors hover:bg-white/[0.06] hover:text-surface-200"
           >
             <X size={18} />
           </button>
