@@ -153,6 +153,18 @@ describe('PUT /api/family-members/:id', () => {
     expect(json.data.relationship).toBe('배우자')
   })
 
+  it('returns 400 for empty update body', async () => {
+    const createRes = await request('POST', '/api/family-members', {
+      name: '홍길동',
+    })
+    const { id } = (await createRes.json()).data
+
+    const res = await request(`PUT`, `/api/family-members/${id}`, {})
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.error).toContain('At least one field')
+  })
+
   it('returns 404 for non-existent id', async () => {
     const res = await request('PUT', '/api/family-members/999', {
       name: '없음',

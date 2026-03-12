@@ -37,6 +37,7 @@ export function FamilyMemberTable({
               variant="ghost"
               className="h-8 w-8 p-0 text-surface-400 hover:text-primary-400"
               onClick={() => onEdit(member)}
+              aria-label={`${member.name} 수정`}
             >
               <Pencil size={14} />
             </Button>
@@ -44,6 +45,7 @@ export function FamilyMemberTable({
               variant="ghost"
               className="h-8 w-8 p-0 text-surface-400 hover:text-error-500"
               onClick={() => onDelete(member)}
+              aria-label={`${member.name} 삭제`}
             >
               <Trash2 size={14} />
             </Button>
