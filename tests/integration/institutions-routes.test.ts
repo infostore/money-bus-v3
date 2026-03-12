@@ -120,7 +120,7 @@ describe('POST /api/institutions', () => {
     expect(res.status).toBe(409)
     const json = await res.json()
     expect(json.success).toBe(false)
-    expect(json.error).toContain('already exists')
+    expect(json.error).toContain('이미 등록된 기관명입니다.')
   })
 
   it('trims whitespace from name', async () => {

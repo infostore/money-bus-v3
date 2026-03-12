@@ -9,12 +9,12 @@ const CATEGORY_OPTIONS = ['증권', '은행', '운용사'] as const
 function createSchemas() {
   return {
     create: z.object({
-      name: z.string().trim().min(1).max(100),
+      name: z.string().trim().min(1, '기관명을 입력해주세요.').max(100, '기관명은 100자 이하여야 합니다.'),
       category: z.enum(CATEGORY_OPTIONS).optional(),
     }),
     update: z
       .object({
-        name: z.string().trim().min(1).max(100).optional(),
+        name: z.string().trim().min(1, '기관명을 입력해주세요.').max(100, '기관명은 100자 이하여야 합니다.').optional(),
         category: z.enum(CATEGORY_OPTIONS).optional(),
       })
       .strict(),
@@ -101,7 +101,7 @@ export function createInstitutionRoutes(
           {
             success: false,
             data: null,
-            error: 'An institution with this name already exists',
+            error: '이미 등록된 기관명입니다.',
           },
           409,
         )
@@ -166,7 +166,7 @@ export function createInstitutionRoutes(
           {
             success: false,
             data: null,
-            error: 'An institution with this name already exists',
+            error: '이미 등록된 기관명입니다.',
           },
           409,
         )

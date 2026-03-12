@@ -119,12 +119,15 @@ export class InstitutionRepository {
 
   async seed(): Promise<void> {
     await this.db.transaction(async (tx) => {
-      for (const inst of DEFAULT_INSTITUTIONS) {
-        await tx.insert(institutions).values({
-          name: inst.name,
-          category: inst.category ?? '증권',
-        })
-      }
+      await tx
+        .insert(institutions)
+        .values(
+          DEFAULT_INSTITUTIONS.map((inst) => ({
+            name: inst.name,
+            category: inst.category ?? '증권',
+          })),
+        )
+        .onConflictDoNothing()
     })
   }
 }
