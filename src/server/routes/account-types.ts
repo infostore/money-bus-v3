@@ -142,7 +142,7 @@ export function createAccountTypeRoutes(repo: AccountTypeRepository): Hono {
     const { name, tax_treatment } = parsed.data
     if (name === undefined && tax_treatment === undefined) {
       return c.json<ApiResponse<null>>(
-        { success: false, data: null, error: 'At least one field must be provided' },
+        { success: false, data: null, error: '최소 하나의 필드를 입력해주세요.' },
         400,
       )
     }
@@ -152,7 +152,7 @@ export function createAccountTypeRoutes(repo: AccountTypeRepository): Hono {
 
       if (!data) {
         return c.json<ApiResponse<null>>(
-          { success: false, data: null, error: 'Account type not found' },
+          { success: false, data: null, error: '계좌유형을 찾을 수 없습니다.' },
           404,
         )
       }
@@ -187,7 +187,7 @@ export function createAccountTypeRoutes(repo: AccountTypeRepository): Hono {
 
     if (!deleted) {
       return c.json<ApiResponse<null>>(
-        { success: false, data: null, error: 'Account type not found' },
+        { success: false, data: null, error: '계좌유형을 찾을 수 없습니다.' },
         404,
       )
     }

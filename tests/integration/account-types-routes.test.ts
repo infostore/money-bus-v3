@@ -158,7 +158,7 @@ describe('PUT /api/account-types/:id', () => {
     const res = await request('PUT', `/api/account-types/${id}`, {})
     expect(res.status).toBe(400)
     const json = await res.json()
-    expect(json.error).toContain('At least one field')
+    expect(json.error).toContain('최소 하나의 필드를 입력해주세요.')
   })
 
   it('returns 404 for non-existent id', async () => {
