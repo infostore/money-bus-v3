@@ -3,5 +3,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+RUN touch .env
 EXPOSE 3001 5173
 CMD ["npm", "run", "dev"]
