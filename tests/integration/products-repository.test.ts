@@ -153,8 +153,13 @@ describe('ProductRepository.update', () => {
   it('sets updatedAt on update', async () => {
     const created = await repo.create({ name: 'Apple' })
 
+    // Small delay to ensure timestamp difference
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
     const updated = await repo.update(created.id, { name: 'Apple Inc.' })
-    expect(updated!.updated_at).not.toBe(created.updated_at)
+    expect(new Date(updated!.updated_at).getTime()).toBeGreaterThan(
+      new Date(created.updated_at).getTime(),
+    )
   })
 
   it('returns undefined for non-existent id', async () => {
