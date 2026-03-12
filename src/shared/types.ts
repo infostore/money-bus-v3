@@ -49,3 +49,22 @@ export interface UpdateFamilyMemberPayload {
   readonly relationship?: string
   readonly birth_year?: number
 }
+
+// PRD-FEAT-002: Institution Management
+export interface Institution {
+  readonly id: number
+  readonly name: string
+  readonly category: string
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+export interface CreateInstitutionPayload {
+  readonly name: string
+  readonly category?: string
+}
+
+export interface UpdateInstitutionPayload {
+  readonly name?: string
+  readonly category?: string
+}
