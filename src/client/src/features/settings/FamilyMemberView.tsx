@@ -1,5 +1,5 @@
 // PRD-FEAT-001: Family Member Management
-import { useState } from 'react'
+import { useState, type MutableRefObject } from 'react'
 import { Users, Plus } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -16,7 +16,11 @@ import type {
   UpdateFamilyMemberPayload,
 } from '@shared/types'
 
-export function FamilyMemberView() {
+interface FamilyMemberViewProps {
+  readonly onCreateRef?: MutableRefObject<(() => void) | undefined>
+}
+
+export function FamilyMemberView({ onCreateRef }: FamilyMemberViewProps) {
   const { members, loading, error, createMember, updateMember, deleteMember } =
     useFamilyMembers()
 
@@ -32,6 +36,10 @@ export function FamilyMemberView() {
   const handleCreate = () => {
     setEditMember(undefined)
     setFormOpen(true)
+  }
+
+  if (onCreateRef) {
+    onCreateRef.current = handleCreate
   }
 
   const handleFormSubmit = async (
@@ -52,12 +60,6 @@ export function FamilyMemberView() {
 
   return (
     <>
-      <div className="flex justify-end">
-        <Button onClick={handleCreate} className="gap-1.5">
-          <Plus size={16} />
-          추가
-        </Button>
-      </div>
       <Card>
         <CardContent>
           {loading ? (
