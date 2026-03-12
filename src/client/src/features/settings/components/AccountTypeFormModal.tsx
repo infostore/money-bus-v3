@@ -31,6 +31,7 @@ export function AccountTypeFormModal({
 }: AccountTypeFormModalProps) {
   const isEdit = !!accountType
   const [name, setName] = useState('')
+  const [shortCode, setShortCode] = useState('')
   const [taxTreatment, setTaxTreatment] = useState('일반')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -38,6 +39,7 @@ export function AccountTypeFormModal({
   useEffect(() => {
     if (open) {
       setName(accountType?.name ?? '')
+      setShortCode(accountType?.short_code ?? '')
       setTaxTreatment(accountType?.tax_treatment ?? '일반')
       setError(null)
     }
@@ -56,8 +58,10 @@ export function AccountTypeFormModal({
     setError(null)
 
     try {
+      const trimmedCode = shortCode.trim()
       const input = {
         name: trimmedName,
+        short_code: trimmedCode || undefined,
         tax_treatment: taxTreatment,
       }
       await onSubmit(input)
@@ -87,6 +91,17 @@ export function AccountTypeFormModal({
             placeholder="계좌유형명 입력"
             maxLength={100}
             autoFocus
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="account-type-short-code">단축코드</Label>
+          <Input
+            id="account-type-short-code"
+            value={shortCode}
+            onChange={(e) => setShortCode(e.target.value)}
+            placeholder="예: ISA, IRP, DC (선택)"
+            maxLength={20}
           />
         </div>
 

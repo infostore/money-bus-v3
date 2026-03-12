@@ -14,6 +14,7 @@ function createSchemas() {
         .trim()
         .min(1, '계좌유형명을 입력해주세요.')
         .max(100, '계좌유형명은 100자 이하여야 합니다.'),
+      short_code: z.string().trim().max(20, '단축코드는 20자 이하여야 합니다.').optional(),
       tax_treatment: z.enum(TAX_TREATMENT_OPTIONS).optional(),
     }),
     update: z
@@ -24,6 +25,7 @@ function createSchemas() {
           .min(1, '계좌유형명을 입력해주세요.')
           .max(100, '계좌유형명은 100자 이하여야 합니다.')
           .optional(),
+        short_code: z.union([z.string().trim().max(20, '단축코드는 20자 이하여야 합니다.'), z.null()]).optional(),
         tax_treatment: z.enum(TAX_TREATMENT_OPTIONS).optional(),
       })
       .strict(),
@@ -139,8 +141,8 @@ export function createAccountTypeRoutes(repo: AccountTypeRepository): Hono {
       )
     }
 
-    const { name, tax_treatment } = parsed.data
-    if (name === undefined && tax_treatment === undefined) {
+    const { name, short_code, tax_treatment } = parsed.data
+    if (name === undefined && short_code === undefined && tax_treatment === undefined) {
       return c.json<ApiResponse<null>>(
         { success: false, data: null, error: '최소 하나의 필드를 입력해주세요.' },
         400,

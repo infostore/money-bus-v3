@@ -83,12 +83,24 @@ describe('POST /api/account-types', () => {
     expect(json.data.id).toBeGreaterThan(0)
   })
 
-  it('defaults tax_treatment to 일반', async () => {
+  it('defaults tax_treatment to 일반 and short_code to null', async () => {
     const res = await request('POST', '/api/account-types', {
       name: '테스트계좌',
     })
     const json = await res.json()
     expect(json.data.tax_treatment).toBe('일반')
+    expect(json.data.short_code).toBeNull()
+  })
+
+  it('creates with short_code', async () => {
+    const res = await request('POST', '/api/account-types', {
+      name: 'ISA (개인종합자산관리계좌)',
+      short_code: 'ISA',
+      tax_treatment: '세금우대',
+    })
+    expect(res.status).toBe(201)
+    const json = await res.json()
+    expect(json.data.short_code).toBe('ISA')
   })
 
   it('returns 400 for empty name', async () => {
