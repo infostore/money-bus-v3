@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Account Type Management
 related-prd: PRD-FEAT-003
-phase: do
-status: in-progress
+phase: act
+status: completed
 created: 2026-03-12
 updated: 2026-03-12
 tags: [pdca, account-type, settings, crud, master-data]
@@ -65,19 +65,34 @@ tags: [pdca, account-type, settings, crud, master-data]
 - **Progress Log**:
   - 2026-03-12: PDCA plan created
   - 2026-03-12: Phase transition plan → do. Implementation started.
+  - 2026-03-12: All waves completed. 101 tests passing, coverage > 80%. Phase transition do → check.
+  - 2026-03-12: Review fixes applied. Phase transition check → act. Status: completed.
 
 ## Check
 
 - **Results**:
-  - [TBD]
+  - All 16 tasks completed across 5 waves
+  - 101 tests passing (37 new: 17 repository + 20 route tests)
+  - Coverage: 83.63% statements, 81.77% branches, 91.37% functions, 83.63% lines (all > 80%)
+  - TypeScript: zero type errors (`npx tsc --noEmit` clean)
+  - Code review: 0 CRITICAL, 3 HIGH (all fixed — Korean error messages)
+  - Security review: passed
+  - 13 default account types seeded in single transaction
 
 - **Evidence**:
-  - [TBD]
+  - `npx vitest run --coverage`: 101/101 tests pass, all coverage metrics > 80%
+  - `npx tsc --noEmit`: clean
+  - Code review: English error strings fixed to Korean in account-types.ts
+  - Files created: 10 new, 5 modified
 
 ## Act
 
 - **Learnings**:
-  - [TBD]
+  - PRD-FEAT-002 patterns (Institution Management) transferred cleanly — same repository, route, hook, and UI patterns
+  - Client-side filtering via useMemo is simpler than server-side query param filtering for small datasets
+  - English error messages from institution routes were carried forward; caught in code review — always check Korean UI convention
+  - Subagent-driven TDD (3 parallel agents for waves 2/3/4-5) was efficient for this CRUD pattern
 
 - **Next Actions**:
-  - [TBD]
+  - Merge to main via PR
+  - Future: link account_types to accounts table via FK (deferred to accounts PRD)

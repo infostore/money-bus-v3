@@ -4,7 +4,7 @@ prd-id: PRD-FEAT-003
 prd-type: feature
 title: Account Type Management (계좌유형 관리)
 status: approved
-implementation-status: not-started
+implementation-status: completed
 created: 2026-03-12
 updated: 2026-03-12
 author: -
