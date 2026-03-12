@@ -51,14 +51,23 @@ describe('AccountTypeRepository.findAll', () => {
 })
 
 describe('AccountTypeRepository.create', () => {
-  it('creates an account type with default tax treatment', async () => {
+  it('creates an account type with default tax treatment and null short_code', async () => {
     const created = await repo.create({ name: '일반위탁계좌' })
 
     expect(created.id).toBeGreaterThan(0)
     expect(created.name).toBe('일반위탁계좌')
+    expect(created.short_code).toBeNull()
     expect(created.tax_treatment).toBe('일반')
     expect(created.created_at).toBeDefined()
     expect(created.updated_at).toBeDefined()
+  })
+
+  it('creates an account type with short_code', async () => {
+    const created = await repo.create({ name: 'ISA (개인종합자산관리계좌)', short_code: 'ISA', tax_treatment: '세금우대' })
+
+    expect(created.name).toBe('ISA (개인종합자산관리계좌)')
+    expect(created.short_code).toBe('ISA')
+    expect(created.tax_treatment).toBe('세금우대')
   })
 
   it('creates an account type with explicit tax treatment', async () => {
@@ -102,6 +111,21 @@ describe('AccountTypeRepository.update', () => {
     const updated = await repo.update(created.id, { name: '적금' })
     expect(updated!.name).toBe('적금')
     expect(updated!.tax_treatment).toBe('연금')
+  })
+
+  it('updates short_code', async () => {
+    const created = await repo.create({ name: 'ISA (개인종합자산관리계좌)', short_code: 'ISA' })
+
+    const updated = await repo.update(created.id, { short_code: 'ISA계좌' })
+    expect(updated!.short_code).toBe('ISA계좌')
+    expect(updated!.name).toBe('ISA (개인종합자산관리계좌)')
+  })
+
+  it('sets short_code to null', async () => {
+    const created = await repo.create({ name: 'CMA', short_code: 'CMA' })
+
+    const updated = await repo.update(created.id, { short_code: null })
+    expect(updated!.short_code).toBeNull()
   })
 
   it('returns undefined for non-existent id', async () => {
@@ -160,6 +184,20 @@ describe('AccountTypeRepository.seed', () => {
     await repo.seed()
     const all = await repo.findAll()
     expect(all).toHaveLength(13)
+  })
+
+  it('seed includes short codes for applicable types', async () => {
+    await repo.seed()
+    const all = await repo.findAll()
+
+    const isa = all.find((t) => t.name.startsWith('ISA'))
+    expect(isa?.short_code).toBe('ISA')
+
+    const irp = all.find((t) => t.name.startsWith('IRP'))
+    expect(irp?.short_code).toBe('IRP')
+
+    const savings = all.find((t) => t.name === '예금')
+    expect(savings?.short_code).toBeNull()
   })
 
   it('seed includes tax-advantaged, general, and pension types', async () => {

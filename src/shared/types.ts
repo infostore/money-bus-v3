@@ -73,6 +73,7 @@ export interface UpdateInstitutionPayload {
 export interface AccountType {
   readonly id: number
   readonly name: string
+  readonly short_code: string | null
   readonly tax_treatment: string
   readonly created_at: string
   readonly updated_at: string
@@ -80,10 +81,12 @@ export interface AccountType {
 
 export interface CreateAccountTypePayload {
   readonly name: string
+  readonly short_code?: string
   readonly tax_treatment?: string
 }
 
 export interface UpdateAccountTypePayload {
   readonly name?: string
+  readonly short_code?: string | null
   readonly tax_treatment?: string
 }

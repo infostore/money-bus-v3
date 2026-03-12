@@ -52,11 +52,11 @@ v1(PRD-FEAT-001)에서 검증된 계좌유형 관리 기능을 v3 스택(Postgre
 - Tax treatment filter (전체/세금우대/일반/연금)
 - Delete confirmation via existing Modal component
 - Input validation via Zod
+- `short_code` 필드 (nullable, 선택 입력) — 단축코드 (예: ISA, IRP, DC)
 
 ### Out of Scope
 - 계좌유형과 계좌 간 FK 연결 (계좌 PRD에서 처리)
 - 계좌유형별 세부 세금 규정 저장
-- 계좌유형 코드(code) 필드 (향후 필요 시 추가)
 - 계좌유형 정렬 순서 커스터마이징
 
 ---

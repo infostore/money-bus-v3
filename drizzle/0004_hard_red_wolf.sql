@@ -1,0 +1,1 @@
+ALTER TABLE "account_types" ADD COLUMN "short_code" text;
