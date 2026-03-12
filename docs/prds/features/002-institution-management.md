@@ -4,7 +4,7 @@ prd-id: PRD-FEAT-002
 prd-type: feature
 title: Institution Management (금융기관 관리)
 status: approved
-implementation-status: not-started
+implementation-status: completed
 created: 2026-03-12
 updated: 2026-03-12
 author: -
