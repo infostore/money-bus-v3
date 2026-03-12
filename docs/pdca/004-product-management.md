@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Product Management
 related-prd: PRD-FEAT-004
-phase: do
-status: in-progress
+phase: act
+status: completed
 created: 2026-03-12
 updated: 2026-03-12
 tags: [pdca, product, instrument, settings, crud, master-data]
@@ -47,49 +47,57 @@ tags: [pdca, product, instrument, settings, crud, master-data]
 - **Tasks**:
 
   ### Wave 1 — Foundation
-  - [ ] Wave 1-A: Add `Product`, `CreateProductPayload`, `UpdateProductPayload` to `src/shared/types.ts` — Low
-  - [ ] Wave 1-B: Add `products` table to `src/server/database/schema.ts` (Drizzle pgTable: serial PK, name unique text, code nullable text, asset_type text default '기타', currency text default 'KRW', exchange nullable text, timestamps) — Low
-  - [ ] Wave 1-C: Generate and apply Drizzle migration (`npm run db:generate && npm run db:migrate`) — Low
+  - [x] Wave 1-A: Add `Product`, `CreateProductPayload`, `UpdateProductPayload` to `src/shared/types.ts`
+  - [x] Wave 1-B: Add `products` table to `src/server/database/schema.ts`
+  - [x] Wave 1-C: Generate Drizzle migration (0005_daily_nicolaos.sql)
 
   ### Wave 2 — Repository
-  - [ ] Wave 2-A: Write `ProductRepository` unit tests (RED) — findAll (sorted name ASC), findById, create, update (explicit updatedAt), delete (returns bool), count, seed, uniqueness constraints — Medium
-  - [ ] Wave 2-B: Implement `ProductRepository` in `src/server/database/product-repository.ts` (GREEN + REFACTOR) including `seed()` with 15 default products in a single transaction — Medium
-  - [ ] Wave 2-C: Wire seed call in `src/server/index.ts` after `runMigrations()` — call `productRepo.seed()` only when `count() === 0` — Low
+  - [x] Wave 2-A: Write `ProductRepository` unit tests (22 tests)
+  - [x] Wave 2-B: Implement `ProductRepository` with seed (15 default products)
+  - [x] Wave 2-C: Wire seed call in `src/server/index.ts`
 
   ### Wave 3 — Server Routes
-  - [ ] Wave 3-A: Write Hono route integration tests (RED) — GET (list sorted), POST (201/400/409), PUT (200/400/404/409/empty-body/same-name-no-409), DELETE (200/404), pg error 23505 → 409 — Medium
-  - [ ] Wave 3-B: Implement `createProductRoutes` in `src/server/routes/products.ts` with Zod validation, pg unique violation (23505) → 409 ('이미 등록된 종목입니다.') handling (GREEN + REFACTOR) — Medium
-  - [ ] Wave 3-C: Register `/api/products` route in `src/server/index.ts` — Low
+  - [x] Wave 3-A: Write Hono route integration tests (20 tests)
+  - [x] Wave 3-B: Implement `createProductRoutes` with Zod validation
+  - [x] Wave 3-C: Register `/api/products` route
 
   ### Wave 4 — Client Hook
-  - [ ] Wave 4-A: Add `productsApi` to `src/client/src/lib/api.ts` (list, create, update, delete) — Low
-  - [ ] Wave 4-B: Implement `useProducts` hook in `src/client/src/features/settings/use-products.ts` using TanStack Query (`invalidateQueries` on mutation success, `PRODUCTS_KEY`) — Low
+  - [x] Wave 4-A: Add `productsApi` to `src/client/src/lib/api.ts`
+  - [x] Wave 4-B: Implement `useProducts` hook with TanStack Query
 
   ### Wave 5a — View & Table
-  - [ ] Wave 5a-A: Implement `ProductTable` component in `src/client/src/features/settings/components/ProductTable.tsx` (name, code, asset_type, currency, exchange columns; edit/delete action buttons) — Medium
-  - [ ] Wave 5a-B: Implement `ProductView` in `src/client/src/features/settings/ProductView.tsx` with asset type filter tabs (전체/주식/ETF/펀드/채권/예적금/암호화폐/기타 via useMemo), empty state ('해당 자산 유형의 종목이 없습니다.' for filtered, generic for no data), loading spinner, error Alert — Medium
+  - [x] Wave 5a-A: Implement `ProductTable` component
+  - [x] Wave 5a-B: Implement `ProductView` with asset type filter
 
   ### Wave 5b — Modals & Integration
-  - [ ] Wave 5b-A: Implement `ProductFormModal` in `src/client/src/features/settings/components/ProductFormModal.tsx` (create/edit dual mode via optional `product?` prop; fields: name → code → asset_type → currency → exchange; inline error on 400/409; loading spinner on submit; disabled double-submit) — Medium
-  - [ ] Wave 5b-B: Implement `ProductDeleteModal` in `src/client/src/features/settings/components/ProductDeleteModal.tsx` (title: '종목 삭제', body: ''{name}'을(를) 삭제하시겠습니까?', confirm '삭제', cancel '취소') — Low
-  - [ ] Wave 5b-C: Add `/products` route to `routes/settings.ts` (or relevant domain file) and nav item (label: '종목 관리', icon: Package) to `navigation.ts` — Low
+  - [x] Wave 5b-A: Implement `ProductFormModal` (create/edit)
+  - [x] Wave 5b-B: Implement `ProductDeleteModal`
+  - [x] Wave 5b-C: Wire `/products` route in `routes/assets.ts`
 
 - **Progress Log**:
   - 2026-03-12: PDCA plan created
   - 2026-03-12: Transitioned to DO phase — starting implementation
+  - 2026-03-12: All waves completed — 148 tests passing, 85.85% coverage
+  - 2026-03-12: Transitioned to ACT phase — completed
 
 ## Check
 
 - **Results**:
-  - [Result 1]
+  - All 148 tests pass (42 product-specific + 106 existing)
+  - Coverage: 85.85% stmts, 82.14% branches, 93.05% funcs, 85.85% lines (all > 80%)
+  - TypeScript compiles cleanly (npx tsc --noEmit)
 
 - **Evidence**:
-  - [Verification evidence]
+  - `npx vitest run --coverage` — 8 test files, 148 tests, 0 failures
+  - product-repository.ts: 100% coverage
+  - products.ts routes: 88.57% coverage
 
 ## Act
 
 - **Learnings**:
-  1. [Learning 1]
+  1. Same-millisecond timestamp comparison can cause flaky tests — use small delay for updatedAt assertions
+  2. Products route is in assets group (navigation.ts) not settings group, matching nav structure
 
 - **Next Actions**:
-  1. [Next action 1]
+  1. Future: Connect products to holdings via FK (holdings PRD)
+  2. Future: Price API integration for real-time quotes
