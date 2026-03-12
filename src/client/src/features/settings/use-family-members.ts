@@ -1,5 +1,5 @@
 // PRD-FEAT-001: Family Member Management
-import { useState, useEffect, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import type {
   FamilyMember,
@@ -7,72 +7,50 @@ import type {
   UpdateFamilyMemberPayload,
 } from '@shared/types'
 
-interface UseFamilyMembersResult {
-  readonly members: readonly FamilyMember[]
-  readonly loading: boolean
-  readonly error: string | null
-  readonly refetch: () => Promise<void>
-  readonly createMember: (input: CreateFamilyMemberPayload) => Promise<void>
-  readonly updateMember: (
-    id: number,
-    input: UpdateFamilyMemberPayload,
-  ) => Promise<void>
-  readonly deleteMember: (id: number) => Promise<void>
-}
+const FAMILY_MEMBERS_KEY = ['family-members'] as const
 
-export function useFamilyMembers(): UseFamilyMembersResult {
-  const [members, setMembers] = useState<readonly FamilyMember[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export function useFamilyMembers() {
+  const queryClient = useQueryClient()
 
-  const refetch = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await api.familyMembers.list()
-      setMembers(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const { data: members = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey: FAMILY_MEMBERS_KEY,
+    queryFn: () => api.familyMembers.list(),
+  })
 
-  useEffect(() => {
-    refetch()
-  }, [refetch])
+  const createMutation = useMutation({
+    mutationFn: (input: CreateFamilyMemberPayload) =>
+      api.familyMembers.create(input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: FAMILY_MEMBERS_KEY }),
+  })
 
-  const createMember = useCallback(
-    async (input: CreateFamilyMemberPayload) => {
-      await api.familyMembers.create(input)
-      await refetch()
-    },
-    [refetch],
-  )
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { readonly id: number; readonly input: UpdateFamilyMemberPayload }) =>
+      api.familyMembers.update(id, input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: FAMILY_MEMBERS_KEY }),
+  })
 
-  const updateMember = useCallback(
-    async (id: number, input: UpdateFamilyMemberPayload) => {
-      await api.familyMembers.update(id, input)
-      await refetch()
-    },
-    [refetch],
-  )
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.familyMembers.delete(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: FAMILY_MEMBERS_KEY }),
+  })
 
-  const deleteMember = useCallback(
-    async (id: number) => {
-      await api.familyMembers.delete(id)
-      await refetch()
-    },
-    [refetch],
-  )
+  const error = queryError instanceof Error ? queryError.message : null
 
   return {
-    members,
+    members: members as readonly FamilyMember[],
     loading,
     error,
-    refetch,
-    createMember,
-    updateMember,
-    deleteMember,
-  }
+    createMember: async (input: CreateFamilyMemberPayload) => {
+      await createMutation.mutateAsync(input)
+    },
+    updateMember: async (id: number, input: UpdateFamilyMemberPayload) => {
+      await updateMutation.mutateAsync({ id, input })
+    },
+    deleteMember: async (id: number) => {
+      await deleteMutation.mutateAsync(id)
+    },
+  } as const
 }
