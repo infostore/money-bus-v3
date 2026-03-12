@@ -3,6 +3,9 @@ import type {
   ItemData,
   ItemSummary,
   CreateItemPayload,
+  FamilyMember,
+  CreateFamilyMemberPayload,
+  UpdateFamilyMemberPayload,
 } from '@shared/types'
 
 const BASE_URL = '/api'
@@ -33,6 +36,22 @@ export const api = {
       }),
     delete: (id: number) =>
       request<boolean>(`/items/${id}`, { method: 'DELETE' }),
+  },
+  // PRD-FEAT-001: Family Member Management
+  familyMembers: {
+    list: () => request<FamilyMember[]>('/family-members'),
+    create: (input: CreateFamilyMemberPayload) =>
+      request<FamilyMember>('/family-members', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    update: (id: number, input: UpdateFamilyMemberPayload) =>
+      request<FamilyMember>(`/family-members/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    delete: (id: number) =>
+      request<null>(`/family-members/${id}`, { method: 'DELETE' }),
   },
   settings: {
     getAll: () => request<Record<string, string>>('/settings'),
