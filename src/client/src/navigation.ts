@@ -1,0 +1,86 @@
+import {
+  LayoutDashboard,
+  Wallet,
+  PieChart,
+  Package,
+  BarChart3,
+  TrendingUp,
+  ShieldCheck,
+  Settings,
+  HelpCircle,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+
+export interface NavItem {
+  readonly id: string
+  readonly label: string
+  readonly icon: LucideIcon
+  readonly path: string
+}
+
+export interface NavGroup {
+  readonly id: string
+  readonly label: string
+  readonly icon: LucideIcon
+  readonly items: readonly NavItem[]
+}
+
+export const NAV_GROUPS: readonly NavGroup[] = [
+  {
+    id: 'overview',
+    label: '개요',
+    icon: LayoutDashboard,
+    items: [
+      { id: 'dashboard', label: '대시보드', icon: LayoutDashboard, path: '/dashboard' },
+    ],
+  },
+  {
+    id: 'assets',
+    label: '자산 관리',
+    icon: Wallet,
+    items: [
+      { id: 'portfolio', label: '포트폴리오', icon: PieChart, path: '/portfolio' },
+      { id: 'accounts', label: '계좌', icon: Wallet, path: '/accounts' },
+      { id: 'products', label: '종목 관리', icon: Package, path: '/products' },
+    ],
+  },
+  {
+    id: 'analysis',
+    label: '분석',
+    icon: BarChart3,
+    items: [
+      { id: 'analysis', label: '종목 분석', icon: BarChart3, path: '/analysis' },
+    ],
+  },
+  {
+    id: 'planning',
+    label: '재무 계획',
+    icon: TrendingUp,
+    items: [
+      { id: 'planning', label: '재무 목표', icon: TrendingUp, path: '/planning' },
+    ],
+  },
+  {
+    id: 'tax',
+    label: '세금',
+    icon: ShieldCheck,
+    items: [
+      { id: 'tax', label: '세금 허브', icon: ShieldCheck, path: '/tax' },
+    ],
+  },
+  {
+    id: 'system',
+    label: '시스템',
+    icon: Settings,
+    items: [
+      { id: 'settings', label: '설정', icon: Settings, path: '/settings' },
+      { id: 'help', label: '도움말', icon: HelpCircle, path: '/help' },
+    ],
+  },
+]
+
+export function findGroupForPath(pathname: string): string {
+  return NAV_GROUPS.find((g) =>
+    g.items.some((i) => pathname.startsWith(i.path)),
+  )?.id ?? 'overview'
+}
