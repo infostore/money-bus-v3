@@ -1,6 +1,6 @@
 ---
 name: create-adr
-description: Creates a new Architecture Decision Record from template. Use when architectural decisions need documentation.
+description: Creates a new Architecture Decision Record (ADR) from template. MUST be invoked proactively when adopting new libraries/dependencies, restructuring directories, choosing between architectural alternatives, or establishing patterns that shape future development. Also use when the user explicitly requests an ADR.
 argument-hint: '<title>'
 context: fork
 agent: architect
@@ -66,7 +66,13 @@ The ADR template has 3 sections to fill:
 
 ## When to Use
 
-- When making an architectural decision that future developers will question ("why was it done this way?")
-- New database schema design, external API integration approach, global state management changes
-- Called optionally by `build` Phase 2 (Step 7.5) when architectural decisions arise
-- Any decision that significantly constrains or shapes future development
+PROACTIVELY invoke this skill when ANY of the following occur — do NOT wait for the user to ask:
+
+- **New dependency adopted**: Adding a library (e.g., TanStack Query, Drizzle ORM) that changes how the project works
+- **Directory structure changed**: Restructuring files/folders in a way that establishes new conventions
+- **Pattern established**: Adopting a design pattern (e.g., repository pattern, domain-split routes) that future code must follow
+- **Technology choice made**: Choosing between alternatives (e.g., PostgreSQL vs SQLite, code-based vs file-based routing)
+- **Integration approach decided**: How to connect with external APIs, services, or systems
+- **Future developers would ask "why?"**: If the decision is non-obvious and would prompt questions
+
+Also called by `build` Phase 2 (Step 7.5) when architectural decisions arise during implementation.
