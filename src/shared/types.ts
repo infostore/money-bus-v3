@@ -68,3 +68,22 @@ export interface UpdateInstitutionPayload {
   readonly name?: string
   readonly category?: string
 }
+
+// PRD-FEAT-003: Account Type Management
+export interface AccountType {
+  readonly id: number
+  readonly name: string
+  readonly tax_treatment: string
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+export interface CreateAccountTypePayload {
+  readonly name: string
+  readonly tax_treatment?: string
+}
+
+export interface UpdateAccountTypePayload {
+  readonly name?: string
+  readonly tax_treatment?: string
+}

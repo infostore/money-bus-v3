@@ -9,6 +9,9 @@ import type {
   Institution,
   CreateInstitutionPayload,
   UpdateInstitutionPayload,
+  AccountType,
+  CreateAccountTypePayload,
+  UpdateAccountTypePayload,
 } from '@shared/types'
 
 const BASE_URL = '/api'
@@ -74,6 +77,22 @@ export const api = {
       }),
     delete: (id: number) =>
       request<null>(`/institutions/${id}`, { method: 'DELETE' }),
+  },
+  // PRD-FEAT-003: Account Type Management
+  accountTypes: {
+    list: () => request<AccountType[]>('/account-types'),
+    create: (input: CreateAccountTypePayload) =>
+      request<AccountType>('/account-types', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    update: (id: number, input: UpdateAccountTypePayload) =>
+      request<AccountType>(`/account-types/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    delete: (id: number) =>
+      request<null>(`/account-types/${id}`, { method: 'DELETE' }),
   },
   settings: {
     getAll: () => request<Record<string, string>>('/settings'),
