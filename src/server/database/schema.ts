@@ -22,3 +22,11 @@ export const familyMembers = pgTable('family_members', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+export const institutions = pgTable('institutions', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  category: text('category').notNull().default('증권'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})

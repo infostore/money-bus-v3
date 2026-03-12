@@ -6,6 +6,9 @@ import type {
   FamilyMember,
   CreateFamilyMemberPayload,
   UpdateFamilyMemberPayload,
+  Institution,
+  CreateInstitutionPayload,
+  UpdateInstitutionPayload,
 } from '@shared/types'
 
 const BASE_URL = '/api'
@@ -52,6 +55,25 @@ export const api = {
       }),
     delete: (id: number) =>
       request<null>(`/family-members/${id}`, { method: 'DELETE' }),
+  },
+  // PRD-FEAT-002: Institution Management
+  institutions: {
+    list: (category?: string) => {
+      const params = category ? `?category=${encodeURIComponent(category)}` : ''
+      return request<Institution[]>(`/institutions${params}`)
+    },
+    create: (input: CreateInstitutionPayload) =>
+      request<Institution>('/institutions', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    update: (id: number, input: UpdateInstitutionPayload) =>
+      request<Institution>(`/institutions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    delete: (id: number) =>
+      request<null>(`/institutions/${id}`, { method: 'DELETE' }),
   },
   settings: {
     getAll: () => request<Record<string, string>>('/settings'),
