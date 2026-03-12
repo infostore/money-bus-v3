@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface-50 text-surface-800 antialiased;
+  }
+}
+
+@layer utilities {
+  .bg-mesh {
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 90%, rgba(249, 115, 22, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 20%, rgba(234, 88, 12, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(52, 211, 153, 0.04) 0%, transparent 50%),
+      #faf8f5;
+    background-attachment: fixed;
+  }
+
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-black/[0.06] shadow-glass;
+  }
+
+  .glass-hover {
+    @apply hover:bg-white/80 hover:border-black/[0.08] hover:shadow-glass-glow;
+  }
+
+  .glass-subtle {
+    @apply bg-white/50 backdrop-blur-md border border-black/[0.04] shadow-glass-sm;
+  }
+}

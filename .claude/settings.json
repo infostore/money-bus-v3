@@ -1,0 +1,89 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/on-session-start.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/prd-gate.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/block-main-push.sh",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/block-dangerous-commands.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for f in $CLAUDE_FILE_PATHS; do case \"$f\" in *.ts|*.tsx|*.js|*.jsx) npx eslint --fix \"$f\" 2>/dev/null ;; esac; done",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/compact-guidance.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if source code was modified and verified. 1) Were .ts or .tsx files in src/ or tests/ edited using Write or Edit tools? (Ignore .claude/, docs/, *.md, *.json files) 2) If yes, were verification commands (vitest or tsc) run AFTER the last source edit? If source files were modified but NO verification was run after, return ok:false with reason 'Source code was modified but verification was not run. Please run: npx tsc --noEmit && npx vitest run'. If no source files were modified, or verification was already run, return ok:true.",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/skills/ralph-loop/stop-hook.sh",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude Code task completed\" with title \"Project\" sound name \"Glass\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

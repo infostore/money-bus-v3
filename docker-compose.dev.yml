@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    ports:
+      - "${PORT:-3001}:3001"
+      - "${VITE_PORT:-5173}:5173"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://app:secret@postgres:5432/app
+      - DB_POOL_MAX=5
+      - PORT=3001
+      - VITE_PORT=5173
+      - LOG_LEVEL=debug
+    volumes:
+      - ./src:/app/src
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.server.json:/app/tsconfig.server.json
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ./postcss.config.js:/app/postcss.config.js
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=app
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata_dev:
