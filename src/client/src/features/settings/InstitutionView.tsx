@@ -68,29 +68,27 @@ export function InstitutionView({ onCreateRef }: InstitutionViewProps) {
 
   return (
     <>
+      <div className="flex gap-2">
+        {CATEGORY_FILTERS.map((cat) => (
+          <Button
+            key={cat}
+            variant={categoryFilter === cat ? 'primary' : 'ghost'}
+            className="h-8 px-3 text-sm"
+            onClick={() => setCategoryFilter(cat)}
+          >
+            {cat}
+          </Button>
+        ))}
+      </div>
       <Card>
-        <CardContent>
+        <CardContent className="pt-6">
           {loading ? (
             <div className="flex justify-center py-8">
               <Spinner />
             </div>
           ) : error ? (
             <Alert variant="error">{error}</Alert>
-          ) : (
-            <>
-              <div className="mb-4 flex gap-2">
-                {CATEGORY_FILTERS.map((cat) => (
-                  <Button
-                    key={cat}
-                    variant={categoryFilter === cat ? 'primary' : 'ghost'}
-                    className="h-8 px-3 text-sm"
-                    onClick={() => setCategoryFilter(cat)}
-                  >
-                    {cat}
-                  </Button>
-                ))}
-              </div>
-              {filteredInstitutions.length === 0 ? (
+          ) : filteredInstitutions.length === 0 ? (
                 <EmptyState
                   icon={Building2}
                   title="등록된 금융기관이 없습니다"
@@ -104,14 +102,12 @@ export function InstitutionView({ onCreateRef }: InstitutionViewProps) {
                     ) : undefined
                   }
                 />
-              ) : (
-                <InstitutionTable
-                  institutions={filteredInstitutions}
-                  onEdit={handleEdit}
-                  onDelete={setDeleteTarget}
-                />
-              )}
-            </>
+          ) : (
+            <InstitutionTable
+              institutions={filteredInstitutions}
+              onEdit={handleEdit}
+              onDelete={setDeleteTarget}
+            />
           )}
         </CardContent>
       </Card>
