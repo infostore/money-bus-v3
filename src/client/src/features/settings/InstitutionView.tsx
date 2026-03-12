@@ -1,5 +1,5 @@
 // PRD-FEAT-002: Institution Management
-import { useState, useMemo } from 'react'
+import { useState, useMemo, type MutableRefObject } from 'react'
 import { Building2, Plus } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -18,7 +18,11 @@ import type {
 
 const CATEGORY_FILTERS = ['전체', '증권', '은행', '운용사'] as const
 
-export function InstitutionView() {
+interface InstitutionViewProps {
+  readonly onCreateRef?: MutableRefObject<(() => void) | undefined>
+}
+
+export function InstitutionView({ onCreateRef }: InstitutionViewProps) {
   const { institutions, loading, error, createInstitution, updateInstitution, deleteInstitution } =
     useInstitutions()
 
@@ -42,6 +46,10 @@ export function InstitutionView() {
     setFormOpen(true)
   }
 
+  if (onCreateRef) {
+    onCreateRef.current = handleCreate
+  }
+
   const handleFormSubmit = async (
     input: CreateInstitutionPayload | UpdateInstitutionPayload,
   ) => {
@@ -60,12 +68,6 @@ export function InstitutionView() {
 
   return (
     <>
-      <div className="flex justify-end">
-        <Button onClick={handleCreate} className="gap-1.5">
-          <Plus size={16} />
-          추가
-        </Button>
-      </div>
       <Card>
         <CardContent>
           {loading ? (
