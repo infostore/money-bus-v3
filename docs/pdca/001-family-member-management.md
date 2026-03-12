@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Family Member Management
 related-prd: PRD-FEAT-001
-phase: check
-status: in-progress
+phase: act
+status: completed
 created: 2026-03-12
 updated: 2026-03-12
 tags: [pdca, family, member, settings, crud]
@@ -60,20 +60,31 @@ tags: [pdca, family, member, settings, crud]
 ## Check
 
 - **Results**:
-  - 39 tests passing (19 repo + 17 route + 3 logger)
+  - 40 tests passing (19 repo + 18 route + 3 logger)
   - Coverage for new code: family-member-repository.ts 100%, family-members.ts (routes) 94.59%
   - Overall coverage 74.94% (dragged down by pre-existing untested files: shutdown.ts, setup.ts, items.ts)
   - TypeScript: `npx tsc --noEmit` — no errors
   - All PRD acceptance criteria met
+  - Code review completed: 3 CRITICAL, 3 HIGH, 1 MEDIUM issues found and fixed (PR #5)
 
 - **Evidence**:
-  - `npx vitest run --coverage` — 39/39 passed
+  - `npx vitest run --coverage` — 40/40 passed
   - `npx tsc --noEmit` — clean
+  - PR #4 merged (feat), PR #5 merged (review fixes)
 
 ## Act
 
 - **Learnings**:
-  1. [To be filled after Check phase]
+  1. Drizzle wraps pg errors in `cause` property — always check both direct and nested error codes
+  2. Zod v4 API differs from v3; verify method existence before using (e.g., `z.prettifyError` does not exist)
+  3. Module-level constants like `CURRENT_YEAR` become stale in long-running processes; use factory functions
+  4. Integration tests sharing PostgreSQL need `fileParallelism: false` + `singleFork: true` to avoid race conditions
+  5. Code review after initial merge caught 7 issues (3 CRITICAL) — validates the review-then-fix workflow
 
 - **Next Actions**:
-  1. [To be filled after Check phase]
+  1. Feature complete. No follow-up actions required.
+
+- **Progress Log** (continued):
+  - 2026-03-12: Code review completed. 3 CRITICAL, 3 HIGH, 1 MEDIUM issues identified.
+  - 2026-03-12: All review fixes implemented and merged (PR #5). 40/40 tests passing.
+  - 2026-03-12: Phase transition check → act. Status: completed.
