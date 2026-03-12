@@ -49,15 +49,15 @@ export class FamilyMemberRepository {
     id: number,
     input: UpdateFamilyMemberPayload,
   ): Promise<FamilyMember | undefined> {
-    const updates: Record<string, unknown> = {
+    const updates: Partial<typeof familyMembers.$inferInsert> = {
       updatedAt: new Date(),
     }
 
-    if (input.name !== undefined) updates['name'] = input.name
+    if (input.name !== undefined) updates.name = input.name
     if (input.relationship !== undefined)
-      updates['relationship'] = input.relationship
+      updates.relationship = input.relationship
     if (input.birth_year !== undefined)
-      updates['birthYear'] = input.birth_year
+      updates.birthYear = input.birth_year
 
     const rows = await this.db
       .update(familyMembers)

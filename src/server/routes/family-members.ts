@@ -4,23 +4,25 @@ import { z } from 'zod/v4'
 import type { FamilyMemberRepository } from '../database/family-member-repository.js'
 import type { ApiResponse, FamilyMember } from '../../shared/types.js'
 
-const CURRENT_YEAR = new Date().getFullYear()
-
-const createSchema = z.object({
-  name: z.string().trim().min(1).max(50),
-  relationship: z
-    .enum(['본인', '배우자', '자녀', '부모', '기타'])
-    .optional(),
-  birth_year: z.number().int().min(1900).max(CURRENT_YEAR).optional(),
-})
-
-const updateSchema = z.object({
-  name: z.string().trim().min(1).max(50).optional(),
-  relationship: z
-    .enum(['본인', '배우자', '자녀', '부모', '기타'])
-    .optional(),
-  birth_year: z.number().int().min(1900).max(CURRENT_YEAR).optional(),
-})
+function createSchemas() {
+  const currentYear = new Date().getFullYear()
+  return {
+    create: z.object({
+      name: z.string().trim().min(1).max(50),
+      relationship: z
+        .enum(['본인', '배우자', '자녀', '부모', '기타'])
+        .optional(),
+      birth_year: z.number().int().min(1900).max(currentYear).optional(),
+    }),
+    update: z.object({
+      name: z.string().trim().min(1).max(50).optional(),
+      relationship: z
+        .enum(['본인', '배우자', '자녀', '부모', '기타'])
+        .optional(),
+      birth_year: z.number().int().min(1900).max(currentYear).optional(),
+    }),
+  }
+}
 
 const PG_UNIQUE_VIOLATION = '23505'
 
@@ -46,10 +48,23 @@ function isUniqueViolation(error: unknown): boolean {
   return false
 }
 
+function formatZodError(error: z.ZodError): string {
+  return error.issues.map((i) => i.message).join('; ')
+}
+
+async function parseJsonBody(c: { req: { json: () => Promise<unknown> } }): Promise<unknown> {
+  try {
+    return await c.req.json()
+  } catch {
+    return null
+  }
+}
+
 export function createFamilyMemberRoutes(
   repo: FamilyMemberRepository,
 ): Hono {
   const app = new Hono()
+  const schemas = createSchemas()
 
   app.get('/', async (c) => {
     const data = await repo.findAll()
@@ -61,16 +76,19 @@ export function createFamilyMemberRoutes(
   })
 
   app.post('/', async (c) => {
-    const body = await c.req.json()
-    const parsed = createSchema.safeParse(body)
+    const body = await parseJsonBody(c)
+    if (body === null) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'Invalid JSON body' },
+        400,
+      )
+    }
+
+    const parsed = schemas.create.safeParse(body)
 
     if (!parsed.success) {
       return c.json<ApiResponse<null>>(
-        {
-          success: false,
-          data: null,
-          error: z.prettifyError(parsed.error),
-        },
+        { success: false, data: null, error: formatZodError(parsed.error) },
         400,
       )
     }
@@ -106,16 +124,27 @@ export function createFamilyMemberRoutes(
       )
     }
 
-    const body = await c.req.json()
-    const parsed = updateSchema.safeParse(body)
+    const body = await parseJsonBody(c)
+    if (body === null) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'Invalid JSON body' },
+        400,
+      )
+    }
+
+    const parsed = schemas.update.safeParse(body)
 
     if (!parsed.success) {
       return c.json<ApiResponse<null>>(
-        {
-          success: false,
-          data: null,
-          error: z.prettifyError(parsed.error),
-        },
+        { success: false, data: null, error: formatZodError(parsed.error) },
+        400,
+      )
+    }
+
+    const { name, relationship, birth_year } = parsed.data
+    if (name === undefined && relationship === undefined && birth_year === undefined) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'At least one field is required' },
         400,
       )
     }

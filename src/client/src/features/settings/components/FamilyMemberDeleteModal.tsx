@@ -1,5 +1,5 @@
 // PRD-FEAT-001: Family Member Management
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
 import { Alert } from '../../../components/ui/Alert'
@@ -20,6 +20,13 @@ export function FamilyMemberDeleteModal({
 }: FamilyMemberDeleteModalProps) {
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setError(null)
+      setDeleting(false)
+    }
+  }, [open])
 
   const handleConfirm = async () => {
     setDeleting(true)
