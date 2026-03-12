@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   Settings,
   HelpCircle,
+  Users,
+  Building2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -73,6 +75,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: '시스템',
     icon: Settings,
     items: [
+      { id: 'family-members', label: '가족구성원', icon: Users, path: '/family-members' },
+      { id: 'institutions', label: '금융기관', icon: Building2, path: '/institutions' },
       { id: 'settings', label: '설정', icon: Settings, path: '/settings' },
       { id: 'help', label: '도움말', icon: HelpCircle, path: '/help' },
     ],

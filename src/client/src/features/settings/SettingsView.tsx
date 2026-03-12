@@ -3,8 +3,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { api } from '../../lib/api'
-import { FamilyMemberView } from './FamilyMemberView'
-import { InstitutionView } from './InstitutionView'
 
 export function SettingsView() {
   const [settings, setSettings] = useState<Record<string, string>>({})
@@ -39,10 +37,6 @@ export function SettingsView() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">설정</h1>
-
-      <FamilyMemberView />
-
-      <InstitutionView />
 
       <Card>
         <CardHeader>
