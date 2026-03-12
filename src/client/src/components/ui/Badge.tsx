@@ -6,11 +6,11 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const variants = {
-  default: 'bg-primary-50 text-primary-700',
-  success: 'bg-success-50 text-success-700',
-  error: 'bg-error-50 text-error-700',
-  warning: 'bg-primary-100 text-primary-800',
-  outline: 'border border-surface-200 text-surface-600 bg-transparent',
+  default: 'bg-primary-500/15 text-primary-400',
+  success: 'bg-success-500/15 text-success-400',
+  error: 'bg-error-500/15 text-error-400',
+  warning: 'bg-primary-500/20 text-primary-300',
+  outline: 'border border-surface-600 text-surface-400 bg-transparent',
 }
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(

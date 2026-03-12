@@ -103,9 +103,9 @@ export default {
         'warm-sm': '0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.03)',
         'warm': '0 4px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04)',
         'warm-lg': '0 8px 24px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-        'glass': '0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        'glass-sm': '0 2px 16px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
-        'glass-glow': '0 8px 32px rgba(0, 0, 0, 0.08), 0 0 20px rgba(249, 115, 22, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        'glass-sm': '0 2px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+        'glass-glow': '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(249, 115, 22, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
       },
       backgroundImage: {
         'gradient-warm': 'linear-gradient(135deg, #ff6b6b, #ff8e53)',

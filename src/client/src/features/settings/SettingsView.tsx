@@ -79,9 +79,9 @@ export function SettingsView() {
               {Object.entries(settings).map(([k, v]) => (
                 <div
                   key={k}
-                  className="flex items-center justify-between rounded-xl border border-black/[0.04] bg-white/40 px-4 py-3 transition-all duration-300 hover:bg-white/60"
+                  className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-surface-800/40 px-4 py-3 transition-all duration-300 hover:bg-surface-800/60"
                 >
-                  <span className="font-medium text-surface-800">{k}</span>
+                  <span className="font-medium text-surface-200">{k}</span>
                   <span className="text-sm text-surface-500">{v}</span>
                 </div>
               ))}
