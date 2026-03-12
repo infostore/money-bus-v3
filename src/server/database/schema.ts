@@ -1,4 +1,4 @@
-import { pgTable, serial, text, real, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, serial, text, real, integer, timestamp } from 'drizzle-orm/pg-core'
 
 export const items = pgTable('items', {
   id: serial('id').primaryKey(),
@@ -12,4 +12,13 @@ export const items = pgTable('items', {
 export const settings = pgTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
+})
+
+export const familyMembers = pgTable('family_members', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  relationship: text('relationship').notNull().default('본인'),
+  birthYear: integer('birth_year'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

@@ -4,7 +4,9 @@ import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { db, runMigrations, checkConnection, closeDatabase } from './database/setup.js'
 import { ItemRepository, SettingsRepository } from './database/repositories.js'
+import { FamilyMemberRepository } from './database/family-member-repository.js'
 import { createItemRoutes } from './routes/items.js'
+import { createFamilyMemberRoutes } from './routes/family-members.js'
 import { requestLogger, log } from './middleware/logger.js'
 import { registerCleanupHandler, setupShutdownHandlers } from './shutdown.js'
 import type { ApiResponse } from '../shared/types.js'
@@ -28,6 +30,7 @@ registerCleanupHandler(async () => {
 
 const itemRepo = new ItemRepository(db)
 const settingsRepo = new SettingsRepository(db)
+const familyMemberRepo = new FamilyMemberRepository(db)
 
 const app = new Hono()
 
@@ -47,6 +50,7 @@ app.get('/api/health', async (c) => {
 })
 
 app.route('/api/items', createItemRoutes(itemRepo))
+app.route('/api/family-members', createFamilyMemberRoutes(familyMemberRepo))
 
 app.get('/api/settings', async (c) => {
   const data = await settingsRepo.getAll()

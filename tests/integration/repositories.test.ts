@@ -5,6 +5,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { sql } from 'drizzle-orm'
 import * as schema from '../../src/server/database/schema.js'
 import { ItemRepository, SettingsRepository } from '../../src/server/database/repositories.js'
+import { FamilyMemberRepository } from '../../src/server/database/family-member-repository.js'
 
 const TEST_DATABASE_URL = process.env['DATABASE_URL'] ?? 'postgresql://app:secret@localhost:5432/app'
 
@@ -12,6 +13,7 @@ let pool: pg.Pool
 let db: ReturnType<typeof drizzle>
 let itemRepo: ItemRepository
 let settingsRepo: SettingsRepository
+let familyMemberRepo: FamilyMemberRepository
 
 beforeAll(async () => {
   pool = new pg.Pool({ connectionString: TEST_DATABASE_URL, max: 2 })
@@ -19,6 +21,12 @@ beforeAll(async () => {
   await migrate(db, { migrationsFolder: './drizzle' })
   itemRepo = new ItemRepository(db)
   settingsRepo = new SettingsRepository(db)
+  familyMemberRepo = new FamilyMemberRepository(db)
+
+  // Clean slate for all tables before tests start
+  await db.execute(sql`TRUNCATE TABLE items RESTART IDENTITY CASCADE`)
+  await db.execute(sql`TRUNCATE TABLE settings`)
+  await db.execute(sql`TRUNCATE TABLE family_members RESTART IDENTITY CASCADE`)
 })
 
 afterAll(async () => {
@@ -28,6 +36,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await db.execute(sql`TRUNCATE TABLE items RESTART IDENTITY CASCADE`)
   await db.execute(sql`TRUNCATE TABLE settings`)
+  await db.execute(sql`TRUNCATE TABLE family_members RESTART IDENTITY CASCADE`)
 })
 
 describe('ItemRepository', () => {
@@ -109,5 +118,81 @@ describe('SettingsRepository', () => {
 
     const all = await settingsRepo.getAll()
     expect(all).toEqual({ a: '1', b: '2' })
+  })
+})
+
+describe('FamilyMemberRepository', () => {
+  it('findAll returns empty array initially', async () => {
+    const all = await familyMemberRepo.findAll()
+    expect(all).toEqual([])
+  })
+
+  it('creates and retrieves a member by id', async () => {
+    const created = await familyMemberRepo.create({ name: '홍길동', relationship: '본인' })
+    expect(created.id).toBeGreaterThan(0)
+    expect(created.name).toBe('홍길동')
+    expect(created.relationship).toBe('본인')
+    expect(created.birth_year).toBeNull()
+
+    const found = await familyMemberRepo.findById(created.id)
+    expect(found).toBeDefined()
+    expect(found!.name).toBe('홍길동')
+  })
+
+  it('findAll returns members sorted by id ASC', async () => {
+    await familyMemberRepo.create({ name: '홍길동', relationship: '본인' })
+    await familyMemberRepo.create({ name: '홍길순', relationship: '배우자' })
+
+    const all = await familyMemberRepo.findAll()
+    expect(all).toHaveLength(2)
+    expect(all[0].name).toBe('홍길동')
+    expect(all[1].name).toBe('홍길순')
+  })
+
+  it('updates existing member with partial fields', async () => {
+    const created = await familyMemberRepo.create({ name: '홍길동', relationship: '본인' })
+    const updated = await familyMemberRepo.update(created.id, { birth_year: 1990 })
+
+    expect(updated).toBeDefined()
+    expect(updated!.name).toBe('홍길동')
+    expect(updated!.birth_year).toBe(1990)
+    expect(updated!.relationship).toBe('본인')
+  })
+
+  it('update sets updated_at timestamp', async () => {
+    const created = await familyMemberRepo.create({ name: '홍길동' })
+    const originalUpdatedAt = created.updated_at
+
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    const updated = await familyMemberRepo.update(created.id, { name: '홍길순' })
+
+    expect(updated).toBeDefined()
+    expect(new Date(updated!.updated_at).getTime()).toBeGreaterThanOrEqual(
+      new Date(originalUpdatedAt).getTime(),
+    )
+  })
+
+  it('update returns undefined for non-existent id', async () => {
+    const result = await familyMemberRepo.update(999, { name: '없음' })
+    expect(result).toBeUndefined()
+  })
+
+  it('deletes existing member', async () => {
+    const created = await familyMemberRepo.create({ name: '홍길동' })
+    const deleted = await familyMemberRepo.delete(created.id)
+    expect(deleted).toBe(true)
+
+    const found = await familyMemberRepo.findById(created.id)
+    expect(found).toBeUndefined()
+  })
+
+  it('delete returns false for non-existent id', async () => {
+    const deleted = await familyMemberRepo.delete(999)
+    expect(deleted).toBe(false)
+  })
+
+  it('create with duplicate name throws unique constraint error', async () => {
+    await familyMemberRepo.create({ name: '홍길동' })
+    await expect(familyMemberRepo.create({ name: '홍길동' })).rejects.toThrow()
   })
 })
