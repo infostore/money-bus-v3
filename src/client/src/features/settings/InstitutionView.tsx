@@ -1,7 +1,7 @@
 // PRD-FEAT-002: Institution Management
 import { useState, useMemo } from 'react'
 import { Building2, Plus } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
+import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Spinner } from '../../components/ui/Spinner'
 import { Alert } from '../../components/ui/Alert'
@@ -60,16 +60,13 @@ export function InstitutionView() {
 
   return (
     <>
+      <div className="flex justify-end">
+        <Button onClick={handleCreate} className="gap-1.5">
+          <Plus size={16} />
+          추가
+        </Button>
+      </div>
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">금융기관</CardTitle>
-            <Button onClick={handleCreate} className="gap-1.5">
-              <Plus size={16} />
-              추가
-            </Button>
-          </div>
-        </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8">
