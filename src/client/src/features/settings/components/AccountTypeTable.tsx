@@ -21,16 +21,14 @@ export function AccountTypeTable({
           key={accountType.id}
           className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-surface-800/40 px-4 py-3 transition-all duration-300 hover:bg-surface-800/60 hover:border-white/[0.08]"
         >
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <span className="font-medium text-surface-200 truncate">
-              {accountType.short_code ?? accountType.name}
+          <div className="grid grid-cols-[5rem_1fr_4rem] items-center gap-3 flex-1 min-w-0">
+            <span className="text-sm font-medium text-surface-300 truncate">
+              {accountType.short_code ?? ''}
             </span>
-            {accountType.short_code && (
-              <span className="text-sm text-surface-500 truncate hidden sm:inline">
-                {accountType.name}
-              </span>
-            )}
-            <span className="shrink-0 rounded-full bg-surface-700/60 px-2 py-0.5 text-xs text-surface-400">
+            <span className="font-medium text-surface-200 truncate">
+              {accountType.name}
+            </span>
+            <span className="text-xs text-surface-500 text-right">
               {accountType.tax_treatment}
             </span>
           </div>
