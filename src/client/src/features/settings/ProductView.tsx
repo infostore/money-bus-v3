@@ -113,7 +113,7 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
         <Select
           value={exchangeFilter}
           onChange={(e) => setExchangeFilter(e.target.value)}
-          className="h-8 w-36 text-sm"
+          className="h-8 w-36 py-1 text-sm"
           aria-label="시장 필터"
         >
           {exchangeOptions.map((opt) => (
