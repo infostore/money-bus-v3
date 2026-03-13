@@ -11,7 +11,7 @@ interface EtfHoldingsTabProps {
 function formatWeight(weight: string | null): string {
   if (weight === null) return '—'
   const num = parseFloat(weight)
-  return `${(num * 100).toFixed(2)}%`
+  return `${num.toFixed(2)}%`
 }
 
 function formatShares(shares: number | null): string {
