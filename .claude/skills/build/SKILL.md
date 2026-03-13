@@ -123,12 +123,8 @@ Report detected state. In interactive mode, confirm starting phase with user. In
 
 20. **Update PDCA** `phase: act, status: completed` using `update-pdca` skill
 21. **Commit**: Semantic commit format per `git-workflow` rule
-22. **Finish branch**:
-    - If `--auto-approve`: squash merge to main + delete branch automatically.
-    - Otherwise: use `SP:finishing-a-development-branch` (merge/PR/cleanup options)
-23. **Summary**:
-    - If `--auto-approve`: log completion summary (no user checkpoint).
-    - Otherwise: **USER CHECKPOINT**: Present summary. User selects merge, PR, or additional work.
+22. **Finish branch**: Push → create PR via `gh pr create` → squash merge via `gh pr merge --squash --delete-branch` → checkout main → pull → verify sync. Always automatic, no user checkpoint needed.
+23. **Summary**: Log completion summary (PRD-ID, PR number, merge commit).
 
 ## Failure Handling
 
