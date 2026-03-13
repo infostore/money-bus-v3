@@ -20,7 +20,17 @@ export function createSchedulerRoutes(
       )
     }
 
-    const executionPromise = service.run()
+    let fromDate: string | undefined
+    try {
+      const body = await c.req.json<{ from?: string }>()
+      if (body.from && /^\d{4}-\d{2}-\d{2}$/.test(body.from)) {
+        fromDate = body.from
+      }
+    } catch {
+      // no body or invalid JSON — use default incremental behavior
+    }
+
+    const executionPromise = service.run(fromDate)
     executionPromise.catch(() => {
       /* errors handled inside service */
     })

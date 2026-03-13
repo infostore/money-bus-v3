@@ -1,10 +1,29 @@
 // PRD-FEAT-005: Price Scheduler
 // PRD-FEAT-008: Scheduler Execution History Delete
 // PRD-FEAT-009: Scheduler Execution Stop
+import { useState } from 'react'
 import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Trash2, Square } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useScheduler } from './use-scheduler'
 import type { TaskExecution } from '@shared/types'
+
+const PERIOD_OPTIONS = [
+  { label: '1D', days: 1 },
+  { label: '1W', days: 7 },
+  { label: '1M', days: 30 },
+  { label: '3M', days: 90 },
+  { label: '6M', days: 180 },
+  { label: '1Y', days: 365 },
+] as const
+
+function calcFromDate(days: number): string {
+  const d = new Date()
+  d.setUTCDate(d.getUTCDate() - days)
+  const y = d.getUTCFullYear()
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(d.getUTCDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
+}
 
 const STATUS_CONFIG: Record<
   TaskExecution['status'],
@@ -109,8 +128,15 @@ export function SchedulerPage() {
     stopRun, isStopping, stopError,
     deleteExecution, deletingId, deleteError,
   } = useScheduler()
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null)
 
   const displayError = error ?? runError ?? stopError ?? deleteError
+
+  const handleRun = () => {
+    const option = PERIOD_OPTIONS.find((o) => o.label === selectedPeriod)
+    const from = option ? calcFromDate(option.days) : undefined
+    triggerRun(from)
+  }
 
   return (
     <div className="space-y-6">
@@ -122,6 +148,21 @@ export function SchedulerPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {PERIOD_OPTIONS.map((opt) => (
+              <Button
+                key={opt.label}
+                variant={selectedPeriod === opt.label ? 'primary' : 'ghost'}
+                className="h-8 px-2.5 text-xs"
+                disabled={isRunning}
+                onClick={() => setSelectedPeriod(
+                  selectedPeriod === opt.label ? null : opt.label,
+                )}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
           {isRunning && (
             <Button
               variant="secondary"
@@ -143,7 +184,7 @@ export function SchedulerPage() {
             </Button>
           )}
           <Button
-            onClick={() => triggerRun()}
+            onClick={handleRun}
             disabled={isRunning}
             className="gap-1.5"
           >
