@@ -20,7 +20,7 @@ export interface ProgressUpdate {
 }
 
 interface CompleteExecutionResult extends ProgressUpdate {
-  readonly status: 'success' | 'partial' | 'failed'
+  readonly status: 'success' | 'partial' | 'failed' | 'aborted'
   readonly message: string | null
 }
 
