@@ -35,7 +35,7 @@ export function ProductTable({
               key={product.id}
               className="transition-colors hover:bg-surface-800/40"
             >
-              <td className="py-2.5 pr-3">
+              <td className="py-2.5 pr-3 tabular-nums">
                 {onDetail ? (
                   <button
                     type="button"

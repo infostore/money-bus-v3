@@ -44,7 +44,7 @@ export function AccountTable({
               <td className="py-2.5 pr-3 font-medium text-surface-200 max-w-xs truncate">
                 {account.account_name}
               </td>
-              <td className="py-2.5 pr-3 text-surface-400">
+              <td className="py-2.5 pr-3 tabular-nums text-surface-400">
                 {account.account_number
                   ? maskAccountNumber(account.account_number)
                   : '-'}
