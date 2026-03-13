@@ -25,8 +25,8 @@ export const ETF_PROFILE_SEEDS: readonly EtfProfileSeedEntry[] = [
   { productCode: '495230', manager: 'samsung-active', expenseRatio: null, downloadUrl: 'https://www.samsungactive.co.kr/excel_pdf.do?fId=2ETFP3&gijunYMD=', downloadType: 'xls' },
   { productCode: '497780', manager: 'samsung-active', expenseRatio: null, downloadUrl: 'https://www.samsungactive.co.kr/excel_pdf.do?fId=2ETFO9&gijunYMD=', downloadType: 'xls' },
 
-  // Samsung Fund (KODEX): same XLS format, uses samsung-active adapter
-  { productCode: '445290', manager: 'samsung-active', expenseRatio: null, downloadUrl: 'https://www.samsungfund.com/fund/etf/pdf/down.do?fId=2ETFH5&gijunYMD=', downloadType: 'xls' },
+  // Samsung Fund (KODEX): samsungfund.com download API removed, use samsungactive.co.kr instead
+  { productCode: '445290', manager: 'samsung-active', expenseRatio: null, downloadUrl: 'https://www.samsungactive.co.kr/excel_pdf.do?fId=2ETFH5&gijunYMD=', downloadType: 'xls' },
 
   // TIMEFOLIO: HTML scrape — pdfDate= and mode=pdf appended at runtime
   { productCode: '0019K0', manager: 'timefolio', expenseRatio: null, downloadUrl: 'https://timeetf.co.kr/m11_view.php?idx=10&cate=001', downloadType: 'html' },
