@@ -96,12 +96,20 @@ export function createProductRoutes(
     })
   })
 
-  // Latest prices for all products (must be before /:id param route)
+  // Latest prices with returns for all products (must be before /:id param route)
   if (priceHistoryRepo) {
     app.get('/latest-prices', async (c) => {
-      const priceMap = await priceHistoryRepo.findLatestPrices()
+      const priceMap = await priceHistoryRepo.findLatestPricesWithReturns()
       const data: readonly LatestPrice[] = Array.from(priceMap.entries()).map(
-        ([productId, { close, date }]) => ({ product_id: productId, close, date }),
+        ([productId, v]) => ({
+          product_id: productId,
+          close: v.close,
+          date: v.date,
+          return_1w: v.return_1w,
+          return_1m: v.return_1m,
+          return_3m: v.return_3m,
+          return_1y: v.return_1y,
+        }),
       )
       return c.json<ApiResponse<readonly LatestPrice[]>>({
         success: true,

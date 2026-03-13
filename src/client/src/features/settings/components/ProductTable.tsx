@@ -11,9 +11,31 @@ function formatPrice(value: string): string {
   return KO_NUMBER_FORMAT.format(num)
 }
 
+function formatReturn(value: number | null | undefined): string {
+  if (value == null) return ''
+  const sign = value > 0 ? '+' : ''
+  return `${sign}${value.toFixed(2)}%`
+}
+
+function returnColor(value: number | null | undefined): string {
+  if (value == null) return 'text-surface-500'
+  if (value > 0) return 'text-error-400'
+  if (value < 0) return 'text-primary-400'
+  return 'text-surface-500'
+}
+
+interface PriceData {
+  readonly close: string
+  readonly date: string
+  readonly return_1w: number | null
+  readonly return_1m: number | null
+  readonly return_3m: number | null
+  readonly return_1y: number | null
+}
+
 interface ProductTableProps {
   readonly products: readonly Product[]
-  readonly priceMap?: ReadonlyMap<number, { readonly close: string; readonly date: string }>
+  readonly priceMap?: ReadonlyMap<number, PriceData>
   readonly onEdit: (product: Product) => void
   readonly onDelete: (product: Product) => void
   readonly onDetail?: (product: Product) => void
@@ -34,6 +56,10 @@ export function ProductTable({
             <th className="py-2 pr-3 text-left font-medium">코드</th>
             <th className="py-2 pr-3 text-left font-medium">종목명</th>
             <th className="py-2 pr-3 text-right font-medium">현재가</th>
+            <th className="py-2 pr-3 text-right font-medium">1주</th>
+            <th className="py-2 pr-3 text-right font-medium">1개월</th>
+            <th className="py-2 pr-3 text-right font-medium">3개월</th>
+            <th className="py-2 pr-3 text-right font-medium">1년</th>
             <th className="py-2 pl-3 text-right font-medium w-20" />
           </tr>
         </thead>
@@ -66,6 +92,25 @@ export function ProductTable({
                   ? formatPrice(priceMap.get(product.id)!.close)
                   : ''}
               </td>
+              {(() => {
+                const p = priceMap?.get(product.id)
+                return (
+                  <>
+                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1w)}`}>
+                      {formatReturn(p?.return_1w)}
+                    </td>
+                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1m)}`}>
+                      {formatReturn(p?.return_1m)}
+                    </td>
+                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_3m)}`}>
+                      {formatReturn(p?.return_3m)}
+                    </td>
+                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1y)}`}>
+                      {formatReturn(p?.return_1y)}
+                    </td>
+                  </>
+                )
+              })()}
               <td className="py-2.5 pl-3 text-right">
                 <div className="flex items-center justify-end gap-1">
                   <Button

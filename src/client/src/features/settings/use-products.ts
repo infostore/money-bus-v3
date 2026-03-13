@@ -75,9 +75,17 @@ export function useLatestPrices() {
     queryFn: () => api.products.latestPrices(),
   })
 
-  const priceMap = new Map<number, { readonly close: string; readonly date: string }>()
+  const priceMap = new Map<number, {
+    readonly close: string; readonly date: string;
+    readonly return_1w: number | null; readonly return_1m: number | null;
+    readonly return_3m: number | null; readonly return_1y: number | null;
+  }>()
   for (const p of latestPrices as readonly LatestPrice[]) {
-    priceMap.set(p.product_id, { close: p.close, date: p.date })
+    priceMap.set(p.product_id, {
+      close: p.close, date: p.date,
+      return_1w: p.return_1w, return_1m: p.return_1m,
+      return_3m: p.return_3m, return_1y: p.return_1y,
+    })
   }
 
   return { priceMap, loading } as const
