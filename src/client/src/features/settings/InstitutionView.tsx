@@ -10,11 +10,25 @@ import { InstitutionTable } from './components/InstitutionTable'
 import { InstitutionFormModal } from './components/InstitutionFormModal'
 import { InstitutionDeleteModal } from './components/InstitutionDeleteModal'
 import { useInstitutions } from './use-institutions'
+import { useProducts } from './use-products'
 import type {
   Institution,
   CreateInstitutionPayload,
   UpdateInstitutionPayload,
 } from '@shared/types'
+
+const ETF_BRAND_TO_INSTITUTION: ReadonlyMap<string, string> = new Map([
+  ['KODEX', '삼성자산운용'],
+  ['TIGER', '미래에셋자산운용'],
+  ['ACE', '한국투자신탁운용'],
+  ['RISE', 'KB자산운용'],
+  ['SOL', '신한자산운용'],
+  ['HANARO', 'NH-Amundi자산운용'],
+  ['KIWOOM', '키움투자자산운용'],
+  ['KoAct', 'KoAct자산운용'],
+  ['TIME', '타임폴리오자산운용'],
+  ['PLUS', '한화자산운용'],
+])
 
 const CATEGORY_FILTERS = ['전체', '증권', '은행', '운용사'] as const
 
@@ -25,11 +39,25 @@ interface InstitutionViewProps {
 export function InstitutionView({ onCreateRef }: InstitutionViewProps) {
   const { institutions, loading, error, createInstitution, updateInstitution, deleteInstitution } =
     useInstitutions()
+  const { products } = useProducts()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editInstitution, setEditInstitution] = useState<Institution | undefined>()
   const [deleteTarget, setDeleteTarget] = useState<Institution | null>(null)
-  const [categoryFilter, setCategoryFilter] = useState<string>('전체')
+  const [categoryFilter, setCategoryFilter] = useState<string>('운용사')
+
+  const etfCountByInstitution = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const p of products) {
+      if (p.asset_type !== 'ETF') continue
+      const brand = p.name.split(' ')[0] ?? ''
+      const instName = ETF_BRAND_TO_INSTITUTION.get(brand)
+      if (instName) {
+        counts.set(instName, (counts.get(instName) ?? 0) + 1)
+      }
+    }
+    return counts
+  }, [products])
 
   const filteredInstitutions = useMemo(() => {
     if (categoryFilter === '전체') return institutions
@@ -105,6 +133,7 @@ export function InstitutionView({ onCreateRef }: InstitutionViewProps) {
           ) : (
             <InstitutionTable
               institutions={filteredInstitutions}
+              etfCountMap={etfCountByInstitution}
               onEdit={handleEdit}
               onDelete={setDeleteTarget}
             />
