@@ -33,9 +33,6 @@ export function ProductTable({
           <tr className="border-b border-white/[0.06] text-xs text-surface-500">
             <th className="py-2 pr-3 text-left font-medium">코드</th>
             <th className="py-2 pr-3 text-left font-medium">종목명</th>
-            <th className="py-2 pr-3 text-right font-medium">유형</th>
-            <th className="py-2 pr-3 text-right font-medium">통화</th>
-            <th className="py-2 pr-3 text-right font-medium">시장</th>
             <th className="py-2 pr-3 text-right font-medium">현재가</th>
             <th className="py-2 pl-3 text-right font-medium w-20" />
           </tr>
@@ -63,15 +60,6 @@ export function ProductTable({
               </td>
               <td className="py-2.5 pr-3 font-medium text-surface-200 max-w-xs truncate">
                 {product.name}
-              </td>
-              <td className="py-2.5 pr-3 text-right text-surface-500">
-                {product.asset_type}
-              </td>
-              <td className="py-2.5 pr-3 text-right text-surface-500">
-                {product.currency}
-              </td>
-              <td className="py-2.5 pr-3 text-right text-surface-500">
-                {product.exchange ?? ''}
               </td>
               <td className="py-2.5 pr-3 text-right tabular-nums text-surface-300">
                 {priceMap?.get(product.id)
