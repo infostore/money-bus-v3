@@ -24,9 +24,19 @@ export function ProductTable({
           className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-surface-800/40 px-4 py-3 transition-all duration-300 hover:bg-surface-800/60 hover:border-white/[0.08]"
         >
           <div className="grid grid-cols-[4rem_1fr_3rem_3rem_4rem] items-center gap-3 flex-1 min-w-0">
-            <span className="text-sm font-medium text-surface-300 truncate">
-              {product.code ?? ''}
-            </span>
+            {onDetail ? (
+              <button
+                type="button"
+                className="text-sm font-medium text-surface-300 truncate hover:text-primary-400 transition-colors text-left cursor-pointer"
+                onClick={() => onDetail(product)}
+              >
+                {product.code ?? ''}
+              </button>
+            ) : (
+              <span className="text-sm font-medium text-surface-300 truncate">
+                {product.code ?? ''}
+              </span>
+            )}
             <span className="font-medium text-surface-200 truncate">
               {product.name}
             </span>

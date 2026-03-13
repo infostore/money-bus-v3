@@ -22,15 +22,19 @@ const ASSET_TYPE_FILTERS = [
   '전체',
   '주식',
   'ETF',
-  '펀드',
-  '채권',
-  '예적금',
-  '암호화폐',
-  '기타',
 ] as const
+
+const ETF_SUB_FILTERS = ['전체', '액티브', '패시브'] as const
+type EtfSubFilter = (typeof ETF_SUB_FILTERS)[number]
 
 const STORAGE_KEY_ASSET_TYPE = 'product-filter-asset-type'
 const STORAGE_KEY_EXCHANGE = 'product-filter-exchange'
+const STORAGE_KEY_ETF_SUB = 'product-filter-etf-sub'
+const STORAGE_KEY_ETF_BRAND = 'product-filter-etf-brand'
+
+function extractEtfBrand(name: string): string {
+  return name.split(' ')[0] ?? ''
+}
 
 function loadFilter(key: string, fallback: string): string {
   try {
@@ -72,16 +76,51 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
   const [exchangeFilter, setExchangeFilter] = useState<string>(
     () => loadFilter(STORAGE_KEY_EXCHANGE, '전체'),
   )
+  const [etfSubFilter, setEtfSubFilter] = useState<EtfSubFilter>(
+    () => loadFilter(STORAGE_KEY_ETF_SUB, '전체') as EtfSubFilter,
+  )
+  const [etfBrandFilter, setEtfBrandFilter] = useState<string>(
+    () => loadFilter(STORAGE_KEY_ETF_BRAND, '전체'),
+  )
 
   const handleAssetTypeChange = useCallback((value: string) => {
     setAssetTypeFilter(value)
     saveFilter(STORAGE_KEY_ASSET_TYPE, value)
+    if (value !== 'ETF') {
+      setEtfSubFilter('전체')
+      saveFilter(STORAGE_KEY_ETF_SUB, '전체')
+      setEtfBrandFilter('전체')
+      saveFilter(STORAGE_KEY_ETF_BRAND, '전체')
+    }
   }, [])
 
   const handleExchangeChange = useCallback((value: string) => {
     setExchangeFilter(value)
     saveFilter(STORAGE_KEY_EXCHANGE, value)
   }, [])
+
+  const handleEtfSubChange = useCallback((value: EtfSubFilter) => {
+    setEtfSubFilter(value)
+    saveFilter(STORAGE_KEY_ETF_SUB, value)
+  }, [])
+
+  const handleEtfBrandChange = useCallback((value: string) => {
+    setEtfBrandFilter(value)
+    saveFilter(STORAGE_KEY_ETF_BRAND, value)
+  }, [])
+
+  const etfBrandOptions = useMemo(() => {
+    const brands = new Map<string, number>()
+    for (const p of products) {
+      if (p.asset_type !== 'ETF') continue
+      const brand = extractEtfBrand(p.name)
+      if (brand) brands.set(brand, (brands.get(brand) ?? 0) + 1)
+    }
+    const sorted = Array.from(brands.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }))
+    return sorted
+  }, [products])
 
   const exchangeOptions = useMemo(() => {
     const exchanges = new Set(
@@ -96,9 +135,17 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
     return products.filter((p) => {
       if (assetTypeFilter !== '전체' && p.asset_type !== assetTypeFilter) return false
       if (exchangeFilter !== '전체' && p.exchange !== exchangeFilter) return false
+      if (assetTypeFilter === 'ETF') {
+        if (etfSubFilter !== '전체') {
+          const isActive = p.name.includes('액티브')
+          if (etfSubFilter === '액티브' && !isActive) return false
+          if (etfSubFilter === '패시브' && isActive) return false
+        }
+        if (etfBrandFilter !== '전체' && extractEtfBrand(p.name) !== etfBrandFilter) return false
+      }
       return true
     })
-  }, [products, assetTypeFilter, exchangeFilter])
+  }, [products, assetTypeFilter, exchangeFilter, etfSubFilter, etfBrandFilter])
 
   const handleEdit = (product: Product) => {
     setEditProduct(product)
@@ -157,6 +204,42 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
             </option>
           ))}
         </Select>
+        {assetTypeFilter === 'ETF' && (
+          <>
+            <div className="flex gap-1 border-l border-white/[0.08] pl-4">
+              {ETF_SUB_FILTERS.map((sub) => (
+                <Button
+                  key={sub}
+                  variant={etfSubFilter === sub ? 'primary' : 'ghost'}
+                  className="h-8 px-3 text-sm"
+                  onClick={() => handleEtfSubChange(sub)}
+                >
+                  {sub}
+                </Button>
+              ))}
+            </div>
+            <Select
+              value={etfBrandFilter}
+              onChange={(e) => handleEtfBrandChange(e.target.value)}
+              className="h-8 w-44 py-1 text-sm"
+              aria-label="운용사 필터"
+            >
+              <option value="전체">전체 운용사</option>
+              {etfBrandOptions.map((opt) => (
+                <option key={opt.name} value={opt.name}>
+                  {opt.name} ({opt.count})
+                </option>
+              ))}
+            </Select>
+          </>
+        )}
+        {!loading && !error && (
+          <span className="text-sm tabular-nums text-surface-500">
+            {filteredProducts.length === products.length
+              ? `${products.length}건`
+              : `${filteredProducts.length} / ${products.length}건`}
+          </span>
+        )}
       </div>
       <Card>
         <CardContent className="pt-6">
