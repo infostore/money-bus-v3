@@ -5,35 +5,10 @@ import { products } from './schema.js'
 import type * as schemaTypes from './schema.js'
 import type {
   Product,
-  CreateProductPayload,
   UpdateProductPayload,
 } from '../../shared/types.js'
 
 type Database = NodePgDatabase<typeof schemaTypes>
-
-const DEFAULT_PRODUCTS: readonly CreateProductPayload[] = [
-  // 주식 — 국내
-  { name: '삼성전자', code: '005930', asset_type: '주식', currency: 'KRW', exchange: 'KOSPI' },
-  { name: 'SK하이닉스', code: '000660', asset_type: '주식', currency: 'KRW', exchange: 'KOSPI' },
-  { name: 'LG에너지솔루션', code: '373220', asset_type: '주식', currency: 'KRW', exchange: 'KOSPI' },
-  // 주식 — 미국
-  { name: 'Apple', code: 'AAPL', asset_type: '주식', currency: 'USD', exchange: 'NASDAQ' },
-  { name: 'Microsoft', code: 'MSFT', asset_type: '주식', currency: 'USD', exchange: 'NASDAQ' },
-  { name: 'NVIDIA', code: 'NVDA', asset_type: '주식', currency: 'USD', exchange: 'NASDAQ' },
-  // ETF — 국내
-  { name: 'KODEX 200', code: '069500', asset_type: 'ETF', currency: 'KRW', exchange: 'KOSPI' },
-  { name: 'TIGER 미국S&P500', code: '360750', asset_type: 'ETF', currency: 'KRW', exchange: 'KOSPI' },
-  // ETF — 미국
-  { name: 'VOO', code: 'VOO', asset_type: 'ETF', currency: 'USD', exchange: 'NYSE' },
-  { name: 'QQQ', code: 'QQQ', asset_type: 'ETF', currency: 'USD', exchange: 'NASDAQ' },
-  { name: 'SCHD', code: 'SCHD', asset_type: 'ETF', currency: 'USD', exchange: 'NYSE' },
-  // 암호화폐
-  { name: '비트코인', code: 'BTC', asset_type: '암호화폐', currency: 'KRW', exchange: 'UPBIT' },
-  { name: '이더리움', code: 'ETH', asset_type: '암호화폐', currency: 'KRW', exchange: 'UPBIT' },
-  // 예적금
-  { name: '정기예금', code: null, asset_type: '예적금', currency: 'KRW', exchange: null },
-  { name: '정기적금', code: null, asset_type: '예적금', currency: 'KRW', exchange: null },
-] as const
 
 export class ProductRepository {
   constructor(private readonly db: Database) {}
@@ -111,22 +86,6 @@ export class ProductRepository {
     return result?.value ?? 0
   }
 
-  async seed(): Promise<void> {
-    await this.db.transaction(async (tx) => {
-      await tx
-        .insert(products)
-        .values(
-          DEFAULT_PRODUCTS.map((p) => ({
-            name: p.name,
-            code: p.code ?? null,
-            assetType: p.asset_type ?? '기타',
-            currency: p.currency ?? 'KRW',
-            exchange: p.exchange ?? null,
-          })),
-        )
-        .onConflictDoNothing()
-    })
-  }
 }
 
 function toProduct(

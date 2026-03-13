@@ -245,30 +245,3 @@ describe('DELETE /api/institutions/:id', () => {
     expect(res.status).toBe(400)
   })
 })
-
-describe('InstitutionRepository.seed', () => {
-  it('seeds 25 default institutions', async () => {
-    const repo = new InstitutionRepository(db)
-    await repo.seed()
-    const all = await repo.findAll()
-    expect(all).toHaveLength(25)
-  })
-
-  it('count returns correct number', async () => {
-    const repo = new InstitutionRepository(db)
-    expect(await repo.count()).toBe(0)
-    await repo.seed()
-    expect(await repo.count()).toBe(25)
-  })
-
-  it('seed respects category filter', async () => {
-    const repo = new InstitutionRepository(db)
-    await repo.seed()
-    const securities = await repo.findAll('증권')
-    expect(securities).toHaveLength(10)
-    const banks = await repo.findAll('은행')
-    expect(banks).toHaveLength(5)
-    const assetManagers = await repo.findAll('운용사')
-    expect(assetManagers).toHaveLength(10)
-  })
-})

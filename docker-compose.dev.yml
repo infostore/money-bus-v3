@@ -20,6 +20,7 @@ services:
       - ./tsconfig.server.json:/app/tsconfig.server.json
       - ./tailwind.config.js:/app/tailwind.config.js
       - ./postcss.config.js:/app/postcss.config.js
+      - ./data:/app/data
       - /app/node_modules
     depends_on:
       postgres:

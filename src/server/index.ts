@@ -8,6 +8,7 @@ import { FamilyMemberRepository } from './database/family-member-repository.js'
 import { InstitutionRepository } from './database/institution-repository.js'
 import { AccountTypeRepository } from './database/account-type-repository.js'
 import { ProductRepository } from './database/product-repository.js'
+import { syncInitialData } from './database/initial-data-loader.js'
 import { PriceHistoryRepository } from './database/price-history-repository.js'
 import { ScheduledTaskRepository } from './database/scheduled-task-repository.js'
 import { TaskExecutionRepository } from './database/task-execution-repository.js'
@@ -49,34 +50,21 @@ const institutionRepo = new InstitutionRepository(db)
 const accountTypeRepo = new AccountTypeRepository(db)
 const productRepo = new ProductRepository(db)
 
+// PRD-FEAT-006: Bidirectional sync with initial data SQLite file
 try {
-  const institutionCount = await institutionRepo.count()
-  if (institutionCount === 0) {
-    await institutionRepo.seed()
-    log('info', 'Default institutions seeded (25 records)')
-  }
-} catch (error) {
-  log('error', `Institution seed failed: ${error}`)
-}
+  const result = await syncInitialData(db, './data/initial.db')
+  const { institutions: inst, accountTypes: at, products: prod } = result
+  const totalChanges = inst.pgInserted + inst.pgUpdated + inst.sqliteInserted + inst.sqliteUpdated
+    + at.pgInserted + at.pgUpdated + at.sqliteInserted + at.sqliteUpdated
+    + prod.pgInserted + prod.pgUpdated + prod.sqliteInserted + prod.sqliteUpdated
 
-try {
-  const accountTypeCount = await accountTypeRepo.count()
-  if (accountTypeCount === 0) {
-    await accountTypeRepo.seed()
-    log('info', 'Default account types seeded (13 records)')
+  if (totalChanges > 0) {
+    log('info', `Initial data sync completed: institutions(pg+${inst.pgInserted}/↑${inst.pgUpdated}, sl+${inst.sqliteInserted}/↑${inst.sqliteUpdated}), account_types(pg+${at.pgInserted}/↑${at.pgUpdated}, sl+${at.sqliteInserted}/↑${at.sqliteUpdated}), products(pg+${prod.pgInserted}/↑${prod.pgUpdated}, sl+${prod.sqliteInserted}/↑${prod.sqliteUpdated})`)
+  } else {
+    log('info', 'Initial data sync: already in sync')
   }
 } catch (error) {
-  log('error', `Account type seed failed: ${error}`)
-}
-
-try {
-  const productCount = await productRepo.count()
-  if (productCount === 0) {
-    await productRepo.seed()
-    log('info', 'Default products seeded (15 records)')
-  }
-} catch (error) {
-  log('error', `Product seed failed: ${error}`)
+  log('error', `Initial data sync failed: ${error}`)
 }
 
 // PRD-FEAT-005: Price Scheduler setup
