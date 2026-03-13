@@ -16,6 +16,14 @@ import { TaskExecutionRepository } from './database/task-execution-repository.js
 import { NaverFinanceAdapter } from './scheduler/naver-finance-adapter.js'
 import { YahooFinanceAdapter } from './scheduler/yahoo-finance-adapter.js'
 import { PriceCollectorService } from './scheduler/price-collector-service.js'
+import { EtfProfileRepository } from './database/etf-profile-repository.js'
+import { EtfComponentRepository } from './database/etf-component-repository.js'
+import { SamsungActiveAdapter } from './scheduler/samsung-active-adapter.js'
+import { TimefolioAdapter } from './scheduler/timefolio-adapter.js'
+import { RiseAdapter } from './scheduler/rise-adapter.js'
+import { EtfComponentCollectorService } from './scheduler/etf-component-collector-service.js'
+import type { EtfComponentAdapter } from './scheduler/etf-component-adapter.js'
+import { ETF_PROFILE_SEEDS, VALID_MANAGERS } from './scheduler/etf-profile-seed.js'
 import { startSchedulers } from './scheduler/index.js'
 import { createItemRoutes } from './routes/items.js'
 import { createFamilyMemberRoutes } from './routes/family-members.js'
@@ -24,9 +32,11 @@ import { createAccountTypeRoutes } from './routes/account-types.js'
 import { createProductRoutes } from './routes/products.js'
 import { createAccountRoutes } from './routes/accounts.js'
 import { createSchedulerRoutes } from './routes/scheduler.js'
+import { createEtfSchedulerRoutes } from './routes/etf-component-scheduler.js'
+import { createEtfComponentRoutes } from './routes/etf-components.js'
 import { requestLogger, log } from './middleware/logger.js'
 import { registerCleanupHandler, setupShutdownHandlers } from './shutdown.js'
-import type { ApiResponse } from '../shared/types.js'
+import type { ApiResponse, EtfManager } from '../shared/types.js'
 
 const PORT = Number(process.env['PORT'] ?? 3001)
 
@@ -98,10 +108,55 @@ try {
     task.id,
   )
 
-  await startSchedulers(scheduledTaskRepo, taskExecutionRepo, collectorService)
   log('info', 'Price scheduler initialized')
 } catch (error) {
-  log('error', `Scheduler setup failed: ${error}`)
+  log('error', `Price scheduler setup failed: ${error}`)
+}
+
+// PRD-FEAT-012: ETF Component Collection Scheduler
+const etfProfileRepo = new EtfProfileRepository(db)
+const etfComponentRepo = new EtfComponentRepository(db)
+
+let etfCollectorService: EtfComponentCollectorService | null = null
+let etfSchedulerTaskId = 0
+try {
+  const allProducts = await productRepo.findAll()
+  const productEntries = allProducts.map((p) => ({ id: p.id, code: p.code }))
+  await etfProfileRepo.seedProfiles(ETF_PROFILE_SEEDS, productEntries, VALID_MANAGERS)
+
+  const etfTask = await scheduledTaskRepo.seedDefault({
+    name: 'etf-component-collection-daily',
+    cronExpression: '0 12 * * *',
+    enabled: false,
+  })
+  etfSchedulerTaskId = etfTask.id
+
+  const adapters = new Map<EtfManager, EtfComponentAdapter>([
+    ['samsung-active', new SamsungActiveAdapter()],
+    ['timefolio', new TimefolioAdapter()],
+    ['rise', new RiseAdapter()],
+  ])
+
+  etfCollectorService = new EtfComponentCollectorService(
+    etfProfileRepo,
+    etfComponentRepo,
+    taskExecutionRepo,
+    adapters,
+    etfTask.id,
+  )
+
+  log('info', 'ETF component scheduler initialized')
+} catch (error) {
+  log('error', `ETF scheduler setup failed: ${error}`)
+}
+
+// Start cron schedulers after both services are constructed
+if (collectorService) {
+  try {
+    await startSchedulers(scheduledTaskRepo, taskExecutionRepo, collectorService, etfCollectorService)
+  } catch (error) {
+    log('error', `Scheduler startup failed: ${error}`)
+  }
 }
 
 const app = new Hono()
@@ -140,6 +195,26 @@ if (collectorService && schedulerTaskId > 0) {
   app.post('/api/scheduler/price-collection/run', (c) =>
     c.json<ApiResponse<null>>(
       { success: false, data: null, error: '스케줄러가 초기화되지 않았습니다' },
+      503,
+    ),
+  )
+}
+
+// PRD-FEAT-012: ETF component routes
+app.route('/api/etf-components', createEtfComponentRoutes(etfComponentRepo))
+
+if (etfCollectorService && etfSchedulerTaskId > 0) {
+  app.route(
+    '/api/scheduler/etf-components',
+    createEtfSchedulerRoutes(etfCollectorService, taskExecutionRepo, etfSchedulerTaskId),
+  )
+} else {
+  app.get('/api/scheduler/etf-components/status', (c) =>
+    c.json<ApiResponse<readonly never[]>>({ success: true, data: [], error: null }),
+  )
+  app.post('/api/scheduler/etf-components/run', (c) =>
+    c.json<ApiResponse<null>>(
+      { success: false, data: null, error: 'ETF 스케줄러가 초기화되지 않았습니다' },
       503,
     ),
   )
