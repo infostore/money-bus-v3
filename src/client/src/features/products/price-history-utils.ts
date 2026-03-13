@@ -91,3 +91,26 @@ export function rangeToFromDate(
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
+
+function getLatestRow(rows: readonly PriceHistory[]): PriceHistory | null {
+  if (rows.length === 0) return null
+  return rows.reduce((latest, row) =>
+    row.date.localeCompare(latest.date) > 0 ? row : latest,
+  )
+}
+
+export function getLatestOpen(rows: readonly PriceHistory[]): string | null {
+  return getLatestRow(rows)?.open ?? null
+}
+
+export function getLatestHigh(rows: readonly PriceHistory[]): string | null {
+  return getLatestRow(rows)?.high ?? null
+}
+
+export function getLatestLow(rows: readonly PriceHistory[]): string | null {
+  return getLatestRow(rows)?.low ?? null
+}
+
+export function getLatestVolume(rows: readonly PriceHistory[]): number | null {
+  return getLatestRow(rows)?.volume ?? null
+}
