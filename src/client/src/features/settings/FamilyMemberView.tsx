@@ -61,7 +61,7 @@ export function FamilyMemberView({ onCreateRef }: FamilyMemberViewProps) {
   return (
     <>
       <Card>
-        <CardContent>
+        <CardContent className="pt-6">
           {loading ? (
             <div className="flex justify-center py-8">
               <Spinner />
