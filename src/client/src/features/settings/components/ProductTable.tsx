@@ -1,5 +1,5 @@
 // PRD-FEAT-004: Product Management
-import { ChevronRight, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import type { Product } from '@shared/types'
 
@@ -26,7 +26,7 @@ export function ProductTable({
             <th className="py-2 pr-3 text-right font-medium">유형</th>
             <th className="py-2 pr-3 text-right font-medium">통화</th>
             <th className="py-2 pr-3 text-right font-medium">시장</th>
-            <th className="py-2 pl-3 text-right font-medium w-24" />
+            <th className="py-2 pl-3 text-right font-medium w-20" />
           </tr>
         </thead>
         <tbody className="divide-y divide-white/[0.04]">
@@ -80,16 +80,6 @@ export function ProductTable({
                   >
                     <Trash2 size={14} />
                   </Button>
-                  {onDetail && (
-                    <Button
-                      variant="ghost"
-                      className="h-7 w-7 p-0 text-surface-400 hover:text-surface-200"
-                      onClick={() => onDetail(product)}
-                      aria-label={`${product.name} 상세`}
-                    >
-                      <ChevronRight size={14} />
-                    </Button>
-                  )}
                 </div>
               </td>
             </tr>
