@@ -11,6 +11,8 @@ services:
       - DB_POOL_MAX=${DB_POOL_MAX:-10}
       - PORT=3001
       - LOG_LEVEL=info
+    volumes:
+      - ./data:/app/data
     depends_on:
       postgres:
         condition: service_healthy
