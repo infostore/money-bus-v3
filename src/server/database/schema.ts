@@ -103,3 +103,21 @@ export const accountTypes = pgTable('account_types', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// PRD-FEAT-010: Account Management
+export const accounts = pgTable('accounts', {
+  id: serial('id').primaryKey(),
+  accountName: text('account_name').notNull().unique(),
+  accountNumber: text('account_number'),
+  familyMemberId: integer('family_member_id')
+    .notNull()
+    .references(() => familyMembers.id, { onDelete: 'restrict' }),
+  institutionId: integer('institution_id')
+    .notNull()
+    .references(() => institutions.id, { onDelete: 'restrict' }),
+  accountTypeId: integer('account_type_id')
+    .notNull()
+    .references(() => accountTypes.id, { onDelete: 'restrict' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})

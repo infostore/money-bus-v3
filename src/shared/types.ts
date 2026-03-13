@@ -133,6 +133,48 @@ export interface TaskExecution {
   readonly created_at: string
 }
 
+// PRD-FEAT-010: Account Management
+export interface Account {
+  readonly id: number
+  readonly account_name: string
+  readonly account_number: string | null
+  readonly family_member_id: number
+  readonly institution_id: number
+  readonly account_type_id: number
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+export interface AccountWithDetails {
+  readonly id: number
+  readonly account_name: string
+  readonly account_number: string | null
+  readonly family_member_id: number
+  readonly family_member_name: string
+  readonly institution_id: number
+  readonly institution_name: string
+  readonly account_type_id: number
+  readonly account_type_name: string
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+export interface CreateAccountPayload {
+  readonly account_name: string
+  readonly account_number?: string | null
+  readonly family_member_id: number
+  readonly institution_id: number
+  readonly account_type_id: number
+}
+
+export interface UpdateAccountPayload {
+  readonly account_name?: string
+  readonly account_number?: string | null
+  readonly family_member_id?: number
+  readonly institution_id?: number
+  readonly account_type_id?: number
+}
+
 // PRD-FEAT-003: Account Type Management
 export interface AccountType {
   readonly id: number

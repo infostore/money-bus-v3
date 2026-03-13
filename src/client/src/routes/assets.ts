@@ -15,6 +15,13 @@ const ProductDetailPage = lazy(() =>
   })),
 )
 
+// PRD-FEAT-010: Account Management
+const AccountPage = lazy(() =>
+  import('../features/settings/AccountPage').then((m) => ({
+    default: m.AccountPage,
+  })),
+)
+
 export const portfolioRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/portfolio',
@@ -24,7 +31,7 @@ export const portfolioRoute = createRoute({
 export const accountsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/accounts',
-  component: ComingSoon,
+  component: AccountPage,
 })
 
 export const productsRoute = createRoute({

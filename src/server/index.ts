@@ -8,6 +8,7 @@ import { FamilyMemberRepository } from './database/family-member-repository.js'
 import { InstitutionRepository } from './database/institution-repository.js'
 import { AccountTypeRepository } from './database/account-type-repository.js'
 import { ProductRepository } from './database/product-repository.js'
+import { AccountRepository } from './database/account-repository.js'
 import { syncInitialData } from './database/initial-data-loader.js'
 import { PriceHistoryRepository } from './database/price-history-repository.js'
 import { ScheduledTaskRepository } from './database/scheduled-task-repository.js'
@@ -21,6 +22,7 @@ import { createFamilyMemberRoutes } from './routes/family-members.js'
 import { createInstitutionRoutes } from './routes/institutions.js'
 import { createAccountTypeRoutes } from './routes/account-types.js'
 import { createProductRoutes } from './routes/products.js'
+import { createAccountRoutes } from './routes/accounts.js'
 import { createSchedulerRoutes } from './routes/scheduler.js'
 import { requestLogger, log } from './middleware/logger.js'
 import { registerCleanupHandler, setupShutdownHandlers } from './shutdown.js'
@@ -49,6 +51,7 @@ const familyMemberRepo = new FamilyMemberRepository(db)
 const institutionRepo = new InstitutionRepository(db)
 const accountTypeRepo = new AccountTypeRepository(db)
 const productRepo = new ProductRepository(db)
+const accountRepo = new AccountRepository(db)
 
 // PRD-FEAT-006: Bidirectional sync with initial data SQLite file
 try {
@@ -123,6 +126,7 @@ app.route('/api/family-members', createFamilyMemberRoutes(familyMemberRepo))
 app.route('/api/institutions', createInstitutionRoutes(institutionRepo))
 app.route('/api/account-types', createAccountTypeRoutes(accountTypeRepo))
 app.route('/api/products', createProductRoutes(productRepo, priceHistoryRepo))
+app.route('/api/accounts', createAccountRoutes(accountRepo))
 
 if (collectorService && schedulerTaskId > 0) {
   app.route(
