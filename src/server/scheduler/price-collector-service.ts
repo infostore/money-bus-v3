@@ -29,7 +29,7 @@ interface CollectionCounters {
   skipped: number
 }
 
-type AdapterFetchFn = (product: Product, range: DateRange) => Promise<readonly PriceRow[]>
+type AdapterFetchFn = (product: Product, range: DateRange, signal?: AbortSignal) => Promise<readonly PriceRow[]>
 
 export function formatDateYYYYMMDD(date: Date): string {
   const y = date.getFullYear()
@@ -102,11 +102,11 @@ export class PriceCollectorService {
     counters.total = naverProducts.length + yahooProducts.length
     await this.updateExecutionProgress(execution.id, counters)
 
-    const naverFetch: AdapterFetchFn = (p, r) => this.naverAdapter.fetchPrices(
-      p.code!, p.id, formatDateYYYYMMDD(r.startDate), formatDateYYYYMMDD(r.endDate),
+    const naverFetch: AdapterFetchFn = (p, r, s) => this.naverAdapter.fetchPrices(
+      p.code!, p.id, formatDateYYYYMMDD(r.startDate), formatDateYYYYMMDD(r.endDate), s,
     )
-    const yahooFetch: AdapterFetchFn = (p, r) => this.yahooAdapter.fetchPrices(
-      p.code!, p.id, r.startDate, r.endDate,
+    const yahooFetch: AdapterFetchFn = (p, r, s) => this.yahooAdapter.fetchPrices(
+      p.code!, p.id, r.startDate, r.endDate, s,
     )
 
     const aborted =
@@ -194,7 +194,14 @@ export class PriceCollectorService {
   ): Promise<boolean> {
     for (const product of batch) {
       if (signal.aborted) return true
-      await this.processOneProduct(product, fetchFn, counters)
+      try {
+        await this.processOneProduct(product, fetchFn, counters, signal)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return true
+        }
+        throw error
+      }
       await this.updateExecutionProgress(executionId, counters)
     }
     return false
@@ -204,6 +211,7 @@ export class PriceCollectorService {
     product: Product,
     fetchFn: AdapterFetchFn,
     counters: CollectionCounters,
+    signal?: AbortSignal,
   ): Promise<void> {
     const dateRange = await this.calculateDateRange(product.id)
 
@@ -213,10 +221,16 @@ export class PriceCollectorService {
     }
 
     try {
-      const rows = await withRetry(() => fetchFn(product, dateRange))
+      const rows = await withRetry(
+        () => fetchFn(product, dateRange, signal),
+        { signal },
+      )
       await this.priceHistoryRepo.upsertMany(rows)
       counters.succeeded++
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error
+      }
       counters.failed++
       const message = error instanceof Error ? error.message : String(error)
       log('error', `Failed to fetch prices for ${product.name} (id=${product.id}): ${message}`)

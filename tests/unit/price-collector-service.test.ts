@@ -6,7 +6,7 @@ import type { PriceRow } from '../../src/server/database/price-history-repositor
 
 // Mock withRetry to pass through directly (no delays)
 vi.mock('../../src/server/scheduler/with-retry.js', () => ({
-  withRetry: vi.fn((fn: () => Promise<unknown>) => fn()),
+  withRetry: vi.fn((fn: () => Promise<unknown>, _opts?: unknown) => fn()),
 }))
 
 // Mock logger to suppress output
@@ -162,6 +162,7 @@ describe('PriceCollectorService', () => {
       1,
       '20260311',
       '20260313',
+      expect.any(AbortSignal),
     )
   })
 
@@ -178,6 +179,7 @@ describe('PriceCollectorService', () => {
       1,
       '20250313',
       '20260313',
+      expect.any(AbortSignal),
     )
   })
 

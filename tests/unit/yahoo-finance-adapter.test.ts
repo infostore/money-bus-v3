@@ -127,4 +127,34 @@ describe('YahooFinanceAdapter', () => {
     expect(result[2]?.date).toBe('2024-06-12')
     expect(result.every((r) => r.productId === 7)).toBe(true)
   })
+
+  // PRD-FEAT-009 v1.1: Abort signal support
+  it('throws when abort signal is already aborted', async () => {
+    const client = createMockClient([makeRow()])
+    const adapter = new YahooFinanceAdapter(client)
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(
+      adapter.fetchPrices('AAPL', 1, startDate, endDate, controller.signal),
+    ).rejects.toThrow()
+  })
+
+  it('throws when abort signal fires during fetch', async () => {
+    const controller = new AbortController()
+    const client: YahooFinanceClient = {
+      historical: vi.fn().mockImplementation(async () => {
+        controller.abort()
+        // Simulate slow response — abort should be checked after
+        return [makeRow()]
+      }),
+    }
+    const adapter = new YahooFinanceAdapter(client)
+
+    // Even though historical returns data, the signal was aborted during the call
+    // The adapter should check signal after await and throw
+    await expect(
+      adapter.fetchPrices('AAPL', 1, startDate, endDate, controller.signal),
+    ).rejects.toThrow()
+  })
 })

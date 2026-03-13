@@ -166,7 +166,7 @@ export class EtfComponentCollectorService {
         return { counters: current, aborted: true }
       }
 
-      current = await this.processOneEtf(profile, snapshotDate, current)
+      current = await this.processOneEtf(profile, snapshotDate, current, signal)
       await this.updateProgress(executionId, current)
     }
 
@@ -177,6 +177,7 @@ export class EtfComponentCollectorService {
     profile: EtfProfile,
     snapshotDate: string,
     counters: CollectionCounters,
+    signal?: AbortSignal,
   ): Promise<CollectionCounters> {
     const adapter = this.adapters.get(profile.manager)
     if (!adapter) {
@@ -190,7 +191,10 @@ export class EtfComponentCollectorService {
     }
 
     try {
-      const rows = await withRetry(() => adapter.fetchComponents(profile, snapshotDate))
+      const rows = await withRetry(
+        () => adapter.fetchComponents(profile, snapshotDate),
+        { signal },
+      )
 
       if (rows.length > 0) {
         await this.componentRepo.upsertMany(rows)

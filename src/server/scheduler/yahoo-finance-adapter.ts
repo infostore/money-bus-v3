@@ -33,6 +33,8 @@ function toPriceRow(productId: number, row: YahooHistoricalRow): PriceRow {
   }
 }
 
+const FETCH_TIMEOUT_MS = parseInt(process.env['PRICE_FETCH_TIMEOUT_MS'] ?? '30000', 10)
+
 export class YahooFinanceAdapter {
   constructor(private readonly client: YahooFinanceClient) {}
 
@@ -42,6 +44,7 @@ export class YahooFinanceAdapter {
    * @param productId - Product ID for PriceRow mapping
    * @param startDate - Start date as Date object
    * @param endDate - End date as Date object
+   * @param signal - Optional AbortSignal for cancellation
    * @returns Array of PriceRow
    */
   async fetchPrices(
@@ -49,12 +52,29 @@ export class YahooFinanceAdapter {
     productId: number,
     startDate: Date,
     endDate: Date,
+    signal?: AbortSignal,
   ): Promise<readonly PriceRow[]> {
-    const rows = await this.client.historical(code, {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      const timer = setTimeout(
+        () => reject(new DOMException('Timeout', 'TimeoutError')),
+        FETCH_TIMEOUT_MS,
+      )
+      signal?.addEventListener('abort', () => {
+        clearTimeout(timer)
+        reject(new DOMException('Aborted', 'AbortError'))
+      })
+    })
+
+    const fetchPromise = this.client.historical(code, {
       period1: startDate,
       period2: endDate,
       interval: '1d',
     })
+
+    const rows = await Promise.race([fetchPromise, timeoutPromise])
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
 
     return rows.map((row) => toPriceRow(productId, row))
   }
