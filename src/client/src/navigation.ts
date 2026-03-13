@@ -13,6 +13,7 @@ import {
   Landmark,
   CalendarClock,
   Timer,
+  Layers,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -78,6 +79,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     icon: CalendarClock,
     items: [
       { id: 'price-collection', label: '가격수집', icon: Timer, path: '/scheduler/price-collection' },
+      { id: 'etf-components', label: 'ETF 구성종목', icon: Layers, path: '/scheduler/etf-components' },
     ],
   },
   {

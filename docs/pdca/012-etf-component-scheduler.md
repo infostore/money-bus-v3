@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: ETF Component Collection Scheduler
 related-prd: PRD-FEAT-012
-phase: check
-status: in-progress
+phase: act
+status: completed
 created: 2026-03-13
 updated: 2026-03-13
 tags: [pdca, scheduler, etf, components, samsung, timefolio, rise, batch]
@@ -100,19 +100,29 @@ tags: [pdca, scheduler, etf, components, samsung, timefolio, rise, batch]
 - **Progress Log**:
   - 2026-03-13: PDCA plan created. Implementation not started.
   - 2026-03-13: Waves 0-7 complete. All 347 tests passing (28 test files). Wave 8 (real URLs + verification) pending.
+  - 2026-03-13: Code review passed. PR #36 squash-merged to main. PDCA completed.
 
 ## Check
 
 - **Results**:
-  - (to be filled after implementation)
+  - Waves 0-7 implemented successfully. All 347 tests passing across 28 test files.
+  - Coverage: 86.82% statements, 85.18% branches, 91.53% functions — exceeds 80% threshold.
+  - TypeScript compilation clean (`npx tsc --noEmit` passes).
+  - Code review: 0 CRITICAL, 0 HIGH (3 HIGH found and fixed during review), 3 MEDIUM (acceptable).
+  - Wave 8 (real URL population) deferred to future work — requires real fund manager download URLs.
 
 - **Evidence**:
-  - (to be filled after implementation)
+  - PR #36 merged to main via squash merge (2026-03-13)
+  - 33 new tests added across 6 test files (2 integration, 4 unit)
+  - All adapters (Samsung XLS, TIMEFOLIO HTML, RISE HTML) verified via fixture-based unit tests
 
 ## Act
 
 - **Learnings**:
-  1. (to be filled after implementation)
+  1. Adapter pattern with `ReadonlyMap<EtfManager, EtfComponentAdapter>` enables clean extension for new fund managers
+  2. `abortablePromise` helper is essential for clean abort during long-running async operations
+  3. Chunked processing with inter-chunk delays prevents rate limiting from fund manager websites
+  4. Fixture-based adapter testing (XLS/HTML files) provides reliable, deterministic test coverage
 
 - **Next Actions**:
   1. Phase 2: Component change tracking / delta detection between snapshots
