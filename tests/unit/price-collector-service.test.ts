@@ -62,6 +62,7 @@ function createMocks() {
         Promise.resolve(makeExecution({ status: result.status as TaskExecution['status'], finished_at: '2026-03-13T01:00:00.000Z' })),
     ),
     trimOldExecutions: vi.fn<(taskId: number, keep?: number) => Promise<number>>().mockResolvedValue(0),
+    updateProgress: vi.fn().mockResolvedValue(undefined),
   }
 
   const naverAdapter = {

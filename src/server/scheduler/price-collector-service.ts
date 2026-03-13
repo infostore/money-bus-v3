@@ -90,6 +90,10 @@ export class PriceCollectorService {
     const counters: CollectionCounters = { total: 0, succeeded: 0, failed: 0, skipped: 0 }
     const { naverProducts, yahooProducts } = this.groupProducts(products, counters)
 
+    // Set total count so UI shows progress immediately
+    counters.total = naverProducts.length + yahooProducts.length
+    await this.taskExecutionRepo.updateProgress(execution.id, counters)
+
     const naverFetch: AdapterFetchFn = (p, r) => this.naverAdapter.fetchPrices(
       p.code!, p.id, formatDateYYYYMMDD(r.startDate), formatDateYYYYMMDD(r.endDate),
     )
@@ -97,8 +101,8 @@ export class PriceCollectorService {
       p.code!, p.id, r.startDate, r.endDate,
     )
 
-    await this.processProducts(naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_DELAY_MS, counters)
-    await this.processProducts(yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_DELAY_MS, counters)
+    await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_DELAY_MS, counters)
+    await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_DELAY_MS, counters)
 
     const status = this.determineStatus(counters)
     const completed = await this.taskExecutionRepo.complete(execution.id, {
@@ -146,6 +150,7 @@ export class PriceCollectorService {
   }
 
   private async processProducts(
+    executionId: number,
     products: readonly Product[],
     fetchFn: AdapterFetchFn,
     batchSize: number,
@@ -154,7 +159,7 @@ export class PriceCollectorService {
   ): Promise<void> {
     for (let i = 0; i < products.length; i += batchSize) {
       const batch = products.slice(i, i + batchSize)
-      await this.processBatch(batch, fetchFn, counters)
+      await this.processBatch(executionId, batch, fetchFn, counters)
 
       const isLastBatch = i + batchSize >= products.length
       if (!isLastBatch) {
@@ -164,13 +169,14 @@ export class PriceCollectorService {
   }
 
   private async processBatch(
+    executionId: number,
     batch: readonly Product[],
     fetchFn: AdapterFetchFn,
     counters: CollectionCounters,
   ): Promise<void> {
     for (const product of batch) {
-      counters.total++
       await this.processOneProduct(product, fetchFn, counters)
+      await this.taskExecutionRepo.updateProgress(executionId, counters)
     }
   }
 

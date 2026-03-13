@@ -12,12 +12,15 @@ interface CreateExecutionInput {
   readonly startedAt: Date
 }
 
-interface CompleteExecutionResult {
-  readonly status: 'success' | 'partial' | 'failed'
+interface ProgressUpdate {
   readonly productsTotal: number
   readonly productsSucceeded: number
   readonly productsFailed: number
   readonly productsSkipped: number
+}
+
+interface CompleteExecutionResult extends ProgressUpdate {
+  readonly status: 'success' | 'partial' | 'failed'
   readonly message: string | null
 }
 
@@ -58,6 +61,18 @@ export class TaskExecutionRepository {
       .returning()
 
     return rows[0] ? toTaskExecution(rows[0]) : undefined
+  }
+
+  async updateProgress(id: number, progress: ProgressUpdate): Promise<void> {
+    await this.db
+      .update(taskExecutions)
+      .set({
+        productsTotal: progress.productsTotal,
+        productsSucceeded: progress.productsSucceeded,
+        productsFailed: progress.productsFailed,
+        productsSkipped: progress.productsSkipped,
+      })
+      .where(eq(taskExecutions.id, id))
   }
 
   // PRD-FEAT-008: Find single execution by PK
