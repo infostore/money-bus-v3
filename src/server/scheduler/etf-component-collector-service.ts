@@ -103,7 +103,8 @@ export class EtfComponentCollectorService {
         message: '사용자 요청으로 중지됨',
       })
       await this.taskExecutionRepo.trimOldExecutions(this.taskId)
-      return completed!
+      if (!completed) throw new Error(`Failed to complete execution ${execution.id}`)
+      return completed
     }
     const snapshotDate = formatDateYYYYMMDD(new Date())
     let counters: CollectionCounters = {

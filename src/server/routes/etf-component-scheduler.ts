@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import type { EtfComponentCollectorService } from '../scheduler/etf-component-collector-service.js'
 import type { TaskExecutionRepository } from '../database/task-execution-repository.js'
 import type { ApiResponse, TaskExecution } from '../../shared/types.js'
+import { log } from '../middleware/logger.js'
 
 export function createEtfSchedulerRoutes(
   service: EtfComponentCollectorService,
@@ -20,7 +21,7 @@ export function createEtfSchedulerRoutes(
     }
 
     const runPromise = service.run()
-    runPromise.catch(() => { /* errors handled inside service */ })
+    runPromise.catch((err) => log('error', `ETF collection run error: ${err}`))
 
     return c.json<ApiResponse<{ readonly message: string }>>(
       { success: true, data: { message: 'Collection started' }, error: null },

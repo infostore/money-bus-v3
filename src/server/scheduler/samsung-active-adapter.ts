@@ -45,15 +45,17 @@ export async function parseXlsBuffer(
     const rawWeight = weightCol ? row.getCell(weightCol).value : null
     const rawShares = sharesCol ? row.getCell(sharesCol).value : null
 
-    const weight = rawWeight != null ? Number(rawWeight).toFixed(4) : null
-    const sharesNum = rawShares != null ? Number(rawShares) : null
+    const weightNum = rawWeight != null ? Number(rawWeight) : NaN
+    const sharesNum = rawShares != null ? Number(rawShares) : NaN
+
+    const weight = !isNaN(weightNum) ? weightNum.toFixed(4) : null
 
     results.push({
       etf_product_id: productId,
       component_symbol: symbol,
       component_name: name,
       weight,
-      shares: sharesNum != null && !isNaN(sharesNum) ? sharesNum : null,
+      shares: !isNaN(sharesNum) ? sharesNum : null,
       snapshot_date: snapshotDate,
     })
   }
