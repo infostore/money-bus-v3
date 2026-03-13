@@ -17,69 +17,85 @@ export function ProductTable({
   onDetail,
 }: ProductTableProps) {
   return (
-    <div className="space-y-2">
-      {products.map((product) => (
-        <div
-          key={product.id}
-          className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-surface-800/40 px-4 py-3 transition-all duration-300 hover:bg-surface-800/60 hover:border-white/[0.08]"
-        >
-          <div className="grid grid-cols-[4rem_1fr_3rem_3rem_4rem] items-center gap-3 flex-1 min-w-0">
-            {onDetail ? (
-              <button
-                type="button"
-                className="text-sm font-medium text-surface-300 truncate hover:text-primary-400 transition-colors text-left cursor-pointer"
-                onClick={() => onDetail(product)}
-              >
-                {product.code ?? ''}
-              </button>
-            ) : (
-              <span className="text-sm font-medium text-surface-300 truncate">
-                {product.code ?? ''}
-              </span>
-            )}
-            <span className="font-medium text-surface-200 truncate">
-              {product.name}
-            </span>
-            <span className="text-xs text-surface-500 text-right truncate">
-              {product.asset_type}
-            </span>
-            <span className="text-xs text-surface-500 text-right truncate">
-              {product.currency}
-            </span>
-            <span className="text-xs text-surface-500 text-right truncate">
-              {product.exchange ?? ''}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              className="h-8 w-8 p-0 text-surface-400 hover:text-primary-400"
-              onClick={() => onEdit(product)}
-              aria-label={`${product.name} 수정`}
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-white/[0.06] text-xs text-surface-500">
+            <th className="py-2 pr-3 text-left font-medium">코드</th>
+            <th className="py-2 pr-3 text-left font-medium">종목명</th>
+            <th className="py-2 pr-3 text-right font-medium">유형</th>
+            <th className="py-2 pr-3 text-right font-medium">통화</th>
+            <th className="py-2 pr-3 text-right font-medium">시장</th>
+            <th className="py-2 pl-3 text-right font-medium w-24" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/[0.04]">
+          {products.map((product) => (
+            <tr
+              key={product.id}
+              className="transition-colors hover:bg-surface-800/40"
             >
-              <Pencil size={14} />
-            </Button>
-            <Button
-              variant="ghost"
-              className="h-8 w-8 p-0 text-surface-400 hover:text-error-500"
-              onClick={() => onDelete(product)}
-              aria-label={`${product.name} 삭제`}
-            >
-              <Trash2 size={14} />
-            </Button>
-            {onDetail && (
-              <Button
-                variant="ghost"
-                className="h-8 w-8 p-0 text-surface-400 hover:text-surface-200"
-                onClick={() => onDetail(product)}
-                aria-label={`${product.name} 상세`}
-              >
-                <ChevronRight size={14} />
-              </Button>
-            )}
-          </div>
-        </div>
-      ))}
+              <td className="py-2.5 pr-3">
+                {onDetail ? (
+                  <button
+                    type="button"
+                    className="font-medium text-surface-300 hover:text-primary-400 transition-colors cursor-pointer"
+                    onClick={() => onDetail(product)}
+                  >
+                    {product.code ?? ''}
+                  </button>
+                ) : (
+                  <span className="font-medium text-surface-300">
+                    {product.code ?? ''}
+                  </span>
+                )}
+              </td>
+              <td className="py-2.5 pr-3 font-medium text-surface-200 max-w-xs truncate">
+                {product.name}
+              </td>
+              <td className="py-2.5 pr-3 text-right text-surface-500">
+                {product.asset_type}
+              </td>
+              <td className="py-2.5 pr-3 text-right text-surface-500">
+                {product.currency}
+              </td>
+              <td className="py-2.5 pr-3 text-right text-surface-500">
+                {product.exchange ?? ''}
+              </td>
+              <td className="py-2.5 pl-3 text-right">
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-surface-400 hover:text-primary-400"
+                    onClick={() => onEdit(product)}
+                    aria-label={`${product.name} 수정`}
+                  >
+                    <Pencil size={14} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-surface-400 hover:text-error-500"
+                    onClick={() => onDelete(product)}
+                    aria-label={`${product.name} 삭제`}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                  {onDetail && (
+                    <Button
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-surface-400 hover:text-surface-200"
+                      onClick={() => onDetail(product)}
+                      aria-label={`${product.name} 상세`}
+                    >
+                      <ChevronRight size={14} />
+                    </Button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
