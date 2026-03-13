@@ -128,7 +128,7 @@ export function SchedulerPage() {
     stopRun, isStopping, stopError,
     deleteExecution, deletingId, deleteError,
   } = useScheduler()
-  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null)
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>('1D')
 
   const displayError = error ?? runError ?? stopError ?? deleteError
 
