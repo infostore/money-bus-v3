@@ -83,13 +83,14 @@ try {
 const priceHistoryRepo = new PriceHistoryRepository(db)
 const scheduledTaskRepo = new ScheduledTaskRepository(db)
 const taskExecutionRepo = new TaskExecutionRepository(db)
-const naverAdapter = new NaverFinanceAdapter()
-const yahooModule = await import('yahoo-finance2')
-const yahooAdapter = new YahooFinanceAdapter(yahooModule.default as never)
 
 let collectorService: PriceCollectorService | undefined
 let schedulerTaskId = 0
 try {
+  const naverAdapter = new NaverFinanceAdapter()
+  const yahooModule = await import('yahoo-finance2')
+  const yahooAdapter = new YahooFinanceAdapter(yahooModule.default as never)
+
   const task = await scheduledTaskRepo.seedDefault({
     name: 'price-collection-daily',
     cronExpression: '0 11 * * *',
@@ -139,6 +140,16 @@ if (collectorService && schedulerTaskId > 0) {
   app.route(
     '/api/scheduler/price-collection',
     createSchedulerRoutes(collectorService, taskExecutionRepo, schedulerTaskId),
+  )
+} else {
+  app.get('/api/scheduler/price-collection/status', (c) =>
+    c.json<ApiResponse<readonly never[]>>({ success: true, data: [], error: null }),
+  )
+  app.post('/api/scheduler/price-collection/run', (c) =>
+    c.json<ApiResponse<null>>(
+      { success: false, data: null, error: '스케줄러가 초기화되지 않았습니다' },
+      503,
+    ),
   )
 }
 
