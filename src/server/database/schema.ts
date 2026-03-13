@@ -10,6 +10,7 @@ import {
   timestamp,
   boolean,
   unique,
+  index,
 } from 'drizzle-orm/pg-core'
 
 export const items = pgTable('items', {
@@ -103,6 +104,41 @@ export const accountTypes = pgTable('account_types', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// PRD-FEAT-012: ETF Component Collection Scheduler
+export const etfProfiles = pgTable('etf_profiles', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id')
+    .notNull()
+    .unique()
+    .references(() => products.id, { onDelete: 'cascade' }),
+  manager: text('manager').notNull(),
+  expenseRatio: numeric('expense_ratio', { precision: 6, scale: 4 }),
+  downloadUrl: text('download_url').notNull(),
+  downloadType: text('download_type').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const etfComponents = pgTable('etf_components', {
+  id: serial('id').primaryKey(),
+  etfProductId: integer('etf_product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
+  componentSymbol: text('component_symbol').notNull(),
+  componentName: text('component_name').notNull(),
+  weight: numeric('weight', { precision: 8, scale: 4 }),
+  shares: bigint('shares', { mode: 'number' }),
+  snapshotDate: date('snapshot_date').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('etf_components_product_symbol_date_uniq').on(
+    t.etfProductId, t.componentSymbol, t.snapshotDate,
+  ),
+  index('etf_components_product_date_idx').on(
+    t.etfProductId, t.snapshotDate,
+  ),
+])
 
 // PRD-FEAT-010: Account Management
 export const accounts = pgTable('accounts', {
