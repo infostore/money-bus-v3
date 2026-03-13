@@ -23,51 +23,65 @@ export function AccountTable({
   onDelete,
 }: AccountTableProps) {
   return (
-    <div className="space-y-2">
-      {accounts.map((account) => (
-        <div
-          key={account.id}
-          className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-surface-800/40 px-4 py-3 transition-all duration-300 hover:bg-surface-800/60 hover:border-white/[0.08]"
-        >
-          <div className="grid grid-cols-[1fr_7rem_6rem_6rem_5rem] items-center gap-3 flex-1 min-w-0">
-            <span className="font-medium text-surface-200 truncate">
-              {account.account_name}
-            </span>
-            <span className="text-sm text-surface-400 truncate">
-              {account.account_number
-                ? maskAccountNumber(account.account_number)
-                : '-'}
-            </span>
-            <span className="text-xs text-surface-500 truncate">
-              {account.family_member_name}
-            </span>
-            <span className="text-xs text-surface-500 truncate">
-              {account.institution_name}
-            </span>
-            <span className="text-xs text-surface-500 truncate">
-              {account.account_type_short_code ?? account.account_type_name}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              className="h-8 w-8 p-0 text-surface-400 hover:text-primary-400"
-              onClick={() => onEdit(account)}
-              aria-label={`${account.account_name} 수정`}
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-white/[0.06] text-xs text-surface-500">
+            <th className="py-2 pr-3 text-left font-medium">계좌명</th>
+            <th className="py-2 pr-3 text-left font-medium">계좌번호</th>
+            <th className="py-2 pr-3 text-left font-medium">소유자</th>
+            <th className="py-2 pr-3 text-left font-medium">금융기관</th>
+            <th className="py-2 pr-3 text-right font-medium">계좌유형</th>
+            <th className="py-2 pl-3 text-right font-medium w-20" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/[0.04]">
+          {accounts.map((account) => (
+            <tr
+              key={account.id}
+              className="transition-colors hover:bg-surface-800/40"
             >
-              <Pencil size={14} />
-            </Button>
-            <Button
-              variant="ghost"
-              className="h-8 w-8 p-0 text-surface-400 hover:text-error-500"
-              onClick={() => onDelete(account)}
-              aria-label={`${account.account_name} 삭제`}
-            >
-              <Trash2 size={14} />
-            </Button>
-          </div>
-        </div>
-      ))}
+              <td className="py-2.5 pr-3 font-medium text-surface-200 max-w-xs truncate">
+                {account.account_name}
+              </td>
+              <td className="py-2.5 pr-3 text-surface-400">
+                {account.account_number
+                  ? maskAccountNumber(account.account_number)
+                  : '-'}
+              </td>
+              <td className="py-2.5 pr-3 text-surface-500">
+                {account.family_member_name}
+              </td>
+              <td className="py-2.5 pr-3 text-surface-500">
+                {account.institution_name}
+              </td>
+              <td className="py-2.5 pr-3 text-right text-surface-500">
+                {account.account_type_short_code ?? account.account_type_name}
+              </td>
+              <td className="py-2.5 pl-3 text-right">
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-surface-400 hover:text-primary-400"
+                    onClick={() => onEdit(account)}
+                    aria-label={`${account.account_name} 수정`}
+                  >
+                    <Pencil size={14} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-surface-400 hover:text-error-500"
+                    onClick={() => onDelete(account)}
+                    aria-label={`${account.account_name} 삭제`}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
