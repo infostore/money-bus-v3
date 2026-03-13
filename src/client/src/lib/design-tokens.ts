@@ -38,6 +38,15 @@ export const CHART_COLORS = {
   surface: '#78716c',
 } as const
 
+export const CHART_TOOLTIP_STYLE = {
+  backgroundColor: '#1c1917',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '8px',
+  fontSize: '12px',
+} as const
+
+export const CHART_GRID_STROKE = 'rgba(255,255,255,0.06)' as const
+
 export const CHART_COLOR_ARRAY = [
   CHART_COLORS.primary,
   CHART_COLORS.mint,

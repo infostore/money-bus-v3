@@ -21,7 +21,6 @@ import { createFamilyMemberRoutes } from './routes/family-members.js'
 import { createInstitutionRoutes } from './routes/institutions.js'
 import { createAccountTypeRoutes } from './routes/account-types.js'
 import { createProductRoutes } from './routes/products.js'
-import { createPriceHistoryRoutes } from './routes/price-history.js'
 import { createSchedulerRoutes } from './routes/scheduler.js'
 import { requestLogger, log } from './middleware/logger.js'
 import { registerCleanupHandler, setupShutdownHandlers } from './shutdown.js'
@@ -123,8 +122,7 @@ app.route('/api/items', createItemRoutes(itemRepo))
 app.route('/api/family-members', createFamilyMemberRoutes(familyMemberRepo))
 app.route('/api/institutions', createInstitutionRoutes(institutionRepo))
 app.route('/api/account-types', createAccountTypeRoutes(accountTypeRepo))
-app.route('/api/products', createPriceHistoryRoutes(priceHistoryRepo, productRepo))
-app.route('/api/products', createProductRoutes(productRepo))
+app.route('/api/products', createProductRoutes(productRepo, priceHistoryRepo))
 
 if (collectorService && schedulerTaskId > 0) {
   app.route(

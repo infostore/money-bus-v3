@@ -34,7 +34,7 @@ export function useProductDetail(id: number, range: RangeKey) {
     product: (productQuery.data ?? null) as Product | null,
     priceHistory: (priceHistoryQuery.data ?? []) as readonly PriceHistory[],
     summaryHistory: (summaryQuery.data ?? []) as readonly PriceHistory[],
-    loading: productQuery.isLoading || priceHistoryQuery.isLoading,
+    loading: productQuery.isLoading || priceHistoryQuery.isLoading || summaryQuery.isLoading,
     productError: productQuery.error instanceof Error ? productQuery.error.message : null,
     priceError: priceHistoryQuery.error instanceof Error ? priceHistoryQuery.error.message : null,
   } as const

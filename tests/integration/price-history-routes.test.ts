@@ -8,7 +8,7 @@ import { Hono } from 'hono'
 import * as schema from '../../src/server/database/schema.js'
 import { ProductRepository } from '../../src/server/database/product-repository.js'
 import { PriceHistoryRepository, type PriceRow } from '../../src/server/database/price-history-repository.js'
-import { createPriceHistoryRoutes } from '../../src/server/routes/price-history.js'
+import { createProductRoutes } from '../../src/server/routes/products.js'
 import { TEST_DATABASE_URL } from './test-database.js'
 
 let pool: pg.Pool
@@ -24,7 +24,7 @@ beforeAll(async () => {
   productRepo = new ProductRepository(db)
   priceHistoryRepo = new PriceHistoryRepository(db)
   app = new Hono()
-  app.route('/api/products', createPriceHistoryRoutes(priceHistoryRepo, productRepo))
+  app.route('/api/products', createProductRoutes(productRepo, priceHistoryRepo))
 })
 
 afterAll(async () => {

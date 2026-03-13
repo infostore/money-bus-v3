@@ -14,7 +14,7 @@ import type { PriceHistory } from '@shared/types'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/Card'
 import { Button } from '../../../components/ui/Button'
 import { EmptyState } from '../../../components/ui/EmptyState'
-import { CHART_COLORS } from '../../../lib/design-tokens'
+import { CHART_COLORS, CHART_TOOLTIP_STYLE, CHART_GRID_STROKE } from '../../../lib/design-tokens'
 import type { RangeKey } from '../price-history-utils'
 
 interface PriceHistoryChartProps {
@@ -75,6 +75,7 @@ export function PriceHistoryChart({
                 variant={range === opt.key ? 'primary' : 'ghost'}
                 className="h-7 px-2.5 text-xs"
                 onClick={() => onRangeChange(opt.key)}
+                aria-pressed={range === opt.key}
               >
                 {opt.label}
               </Button>
@@ -90,18 +91,18 @@ export function PriceHistoryChart({
           />
         ) : (
           <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={chartData as ChartDataPoint[]}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+            <LineChart data={chartData as unknown as ChartDataPoint[]}>
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} />
               <XAxis
                 dataKey="date"
                 tickFormatter={formatTick}
-                stroke="#78716c"
+                stroke={CHART_COLORS.surface}
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="#78716c"
+                stroke={CHART_COLORS.surface}
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -110,12 +111,7 @@ export function PriceHistoryChart({
                 width={64}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1c1917',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                }}
+                contentStyle={CHART_TOOLTIP_STYLE}
                 labelFormatter={(label) => formatTooltipDate(String(label))}
                 formatter={(value) => [
                   `${Number(value).toLocaleString('ko-KR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency}`,

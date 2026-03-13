@@ -1,8 +1,10 @@
 // PRD-FEAT-004: Product Management
+// PRD-FEAT-007: ETF Detail Page (price-history endpoint)
 import { Hono } from 'hono'
 import { z } from 'zod/v4'
 import type { ProductRepository } from '../database/product-repository.js'
-import type { ApiResponse, Product } from '../../shared/types.js'
+import type { PriceHistoryRepository } from '../database/price-history-repository.js'
+import type { ApiResponse, PriceHistory, Product } from '../../shared/types.js'
 
 const ASSET_TYPES = ['주식', 'ETF', '펀드', '채권', '예적금', '암호화폐', '기타'] as const
 
@@ -34,6 +36,14 @@ function createSchemas() {
       })
       .strict(),
   }
+}
+
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
+
+function isValidDate(s: string): boolean {
+  if (!DATE_REGEX.test(s)) return false
+  const d = new Date(s + 'T00:00:00Z')
+  return !isNaN(d.getTime())
 }
 
 const PG_UNIQUE_VIOLATION = '23505'
@@ -70,7 +80,10 @@ async function parseJsonBody(c: { req: { json: () => Promise<unknown> } }): Prom
   }
 }
 
-export function createProductRoutes(repo: ProductRepository): Hono {
+export function createProductRoutes(
+  repo: ProductRepository,
+  priceHistoryRepo?: PriceHistoryRepository,
+): Hono {
   const app = new Hono()
   const schemas = createSchemas()
 
@@ -109,6 +122,61 @@ export function createProductRoutes(repo: ProductRepository): Hono {
     })
   })
 
+  // PRD-FEAT-007: Price history for a product
+  if (priceHistoryRepo) {
+    app.get('/:id/price-history', async (c) => {
+      const id = parseInt(c.req.param('id'), 10)
+
+      if (isNaN(id)) {
+        return c.json<ApiResponse<null>>(
+          { success: false, data: null, error: '유효하지 않은 종목 ID입니다.' },
+          400,
+        )
+      }
+
+      const product = await repo.findById(id)
+
+      if (!product) {
+        return c.json<ApiResponse<null>>(
+          { success: false, data: null, error: '종목을 찾을 수 없습니다.' },
+          404,
+        )
+      }
+
+      const from = c.req.query('from')
+      const to = c.req.query('to')
+
+      if (from && !isValidDate(from)) {
+        return c.json<ApiResponse<null>>(
+          { success: false, data: null, error: '날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)' },
+          400,
+        )
+      }
+
+      if (to && !isValidDate(to)) {
+        return c.json<ApiResponse<null>>(
+          { success: false, data: null, error: '날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)' },
+          400,
+        )
+      }
+
+      if (from && to && from > to) {
+        return c.json<ApiResponse<null>>(
+          { success: false, data: null, error: '시작일은 종료일보다 이전이어야 합니다.' },
+          400,
+        )
+      }
+
+      const priceData = await priceHistoryRepo.findByProductIdInRange(id, from, to)
+
+      return c.json<ApiResponse<readonly PriceHistory[]>>({
+        success: true,
+        data: priceData,
+        error: null,
+      })
+    })
+  }
+
   app.post('/', async (c) => {
     const body = await parseJsonBody(c)
     if (body === null) {
@@ -145,11 +213,11 @@ export function createProductRoutes(repo: ProductRepository): Hono {
   })
 
   app.put('/:id', async (c) => {
-    const id = Number(c.req.param('id'))
+    const id = parseInt(c.req.param('id'), 10)
 
     if (isNaN(id)) {
       return c.json<ApiResponse<null>>(
-        { success: false, data: null, error: 'Invalid id' },
+        { success: false, data: null, error: '유효하지 않은 종목 ID입니다.' },
         400,
       )
     }
@@ -206,11 +274,11 @@ export function createProductRoutes(repo: ProductRepository): Hono {
   })
 
   app.delete('/:id', async (c) => {
-    const id = Number(c.req.param('id'))
+    const id = parseInt(c.req.param('id'), 10)
 
     if (isNaN(id)) {
       return c.json<ApiResponse<null>>(
-        { success: false, data: null, error: 'Invalid id' },
+        { success: false, data: null, error: '유효하지 않은 종목 ID입니다.' },
         400,
       )
     }

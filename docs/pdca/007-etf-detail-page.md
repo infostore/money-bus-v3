@@ -2,7 +2,7 @@
 type: pdca-plan
 plan-name: ETF Detail Page
 related-prd: PRD-FEAT-007
-phase: do
+phase: check
 status: in-progress
 created: 2026-03-13
 updated: 2026-03-13
@@ -82,14 +82,21 @@ tags: [pdca, etf, product, detail, price-history, chart, recharts]
 - **Progress Log**:
   - 2026-03-13: PDCA plan created
   - 2026-03-13: Phase transition plan → do. Implementation started.
+  - 2026-03-13: All 7 waves implemented. Phase transition do → check. Verification started.
 
 ## Check
 
 - **Results**:
-  - [To be filled after implementation]
+  - All 249 tests passing (19 test files)
+  - TypeScript: 0 errors (`npx tsc --noEmit`)
+  - 17 new unit tests (price-history-utils)
+  - 16 new integration tests (7 repository + 3 product route + 6 price-history route)
+  - All 7 waves completed: server endpoints, tests, client utils, data layer, UI, chart, routing
 
 - **Evidence**:
-  - [To be filled after implementation]
+  - Test run: `npx vitest run` — 249/249 passed
+  - TypeScript check: `npx tsc --noEmit` — no errors
+  - Commit: feat(server,client): add ETF detail page with price history chart (PRD-FEAT-007)
 
 ## Act
 
