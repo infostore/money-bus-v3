@@ -1,5 +1,5 @@
 // PRD-FEAT-012: ETF Component Collection Scheduler
-import ExcelJS from 'exceljs'
+import * as XLSX from 'xlsx'
 import type { EtfProfile } from '../../shared/types.js'
 import type { EtfComponentRow, EtfComponentAdapter } from './etf-component-adapter.js'
 
@@ -23,49 +23,49 @@ function cleanEquitySuffix(code: string): string {
   return code.replace(/\s+[A-Z]{2}\s+EQUITY$/i, '').trim()
 }
 
-function parseNumeric(value: unknown): number {
+function parseNumeric(value: string | number | null | undefined): number {
   if (value == null) return NaN
   const cleaned = String(value).replace(/,/g, '').replace(/%/g, '').trim()
-  const num = Number(cleaned)
-  return num
+  return Number(cleaned)
 }
 
 /**
- * Parse Samsung XLS buffer using row-index based parsing (matches v1 format).
- * Row 2: date string (e.g. "2026/03/13")
- * Row 4+: data rows — cells[1]=name, cells[3]=code, cells[4]=qty, cells[5]=weight
+ * Parse Samsung XLS buffer using SheetJS (supports binary .xls format).
+ * Row layout (0-indexed arrays from sheet_to_json):
+ *   rows[1]: date string (e.g. "2026/03/13")
+ *   rows[3]+: data — cells[1]=name, cells[3]=code, cells[4]=qty, cells[5]=weight
  */
-export async function parseXlsBuffer(
-  buffer: Buffer,
+export function parseXlsBuffer(
+  buffer: ArrayBuffer,
   productId: number,
   snapshotDate: string,
-): Promise<readonly EtfComponentRow[]> {
-  const workbook = new ExcelJS.Workbook()
-  await workbook.xlsx.load(buffer)
+): readonly EtfComponentRow[] {
+  const workbook = XLSX.read(buffer, { type: 'array' })
+  const sheet = workbook.Sheets[workbook.SheetNames[0]]
+  if (!sheet) return []
 
-  const sheet = workbook.worksheets[0]
-  if (!sheet || sheet.rowCount < 4) return []
+  const rows = XLSX.utils.sheet_to_json<(string | number)[]>(sheet, { header: 1, defval: '' })
+  if (rows.length < 4) return []
 
   const results: EtfComponentRow[] = []
 
-  for (let i = 4; i <= sheet.rowCount; i++) {
-    const row = sheet.getRow(i)
-    const cellCount = row.cellCount
-    if (cellCount < 6) continue
+  for (let i = 3; i < rows.length; i++) {
+    const cells = rows[i]
+    if (!cells || cells.length < 6) continue
 
-    const name = String(row.getCell(2).value ?? '').trim()
-    let code = String(row.getCell(4).value ?? '').trim()
+    const name = String(cells[1] ?? '').trim()
+    let code = String(cells[3] ?? '').trim()
 
     if (!name || name.includes('합계') || name.includes('예금')) continue
 
     code = cleanEquitySuffix(code)
     if (!code) continue
 
-    const qty = parseNumeric(row.getCell(5).value)
-    let weight = parseNumeric(row.getCell(6).value)
+    const qty = parseNumeric(cells[4])
+    let weight = parseNumeric(cells[5])
 
-    // ExcelJS returns percentage-formatted cells as decimals (0.2341 for 23.41%)
-    if (typeof row.getCell(6).value === 'number' && weight > 0 && weight < 1) {
+    // SheetJS returns Excel percentage-formatted cells as decimals (0.2341 for 23.41%)
+    if (typeof cells[5] === 'number' && weight > 0 && weight < 1) {
       weight = Math.round(weight * 10000) / 100
     }
 
@@ -108,7 +108,6 @@ export class SamsungActiveAdapter implements EtfComponentAdapter {
     const arrayBuffer = await response.arrayBuffer()
     if (arrayBuffer.byteLength === 0) return []
 
-    const buffer = Buffer.from(arrayBuffer)
-    return parseXlsBuffer(buffer, profile.product_id, snapshotDate)
+    return parseXlsBuffer(arrayBuffer, profile.product_id, snapshotDate)
   }
 }
