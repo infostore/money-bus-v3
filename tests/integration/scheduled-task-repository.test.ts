@@ -6,9 +6,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { sql } from 'drizzle-orm'
 import * as schema from '../../src/server/database/schema.js'
 import { ScheduledTaskRepository } from '../../src/server/database/scheduled-task-repository.js'
-
-const TEST_DATABASE_URL =
-  process.env['DATABASE_URL'] ?? 'postgresql://app:secret@localhost:5432/app'
+import { TEST_DATABASE_URL } from './test-database.js'
 
 let pool: pg.Pool
 let db: ReturnType<typeof drizzle>

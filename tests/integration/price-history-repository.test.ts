@@ -10,9 +10,7 @@ import {
   PriceHistoryRepository,
   type PriceRow,
 } from '../../src/server/database/price-history-repository.js'
-
-const TEST_DATABASE_URL =
-  process.env['DATABASE_URL'] ?? 'postgresql://app:secret@localhost:5432/app'
+import { TEST_DATABASE_URL } from './test-database.js'
 
 let pool: pg.Pool
 let db: ReturnType<typeof drizzle>
