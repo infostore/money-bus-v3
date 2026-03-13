@@ -2,7 +2,7 @@
 type: pdca-plan
 plan-name: ETF Component Collection Scheduler
 related-prd: PRD-FEAT-012
-phase: do
+phase: check
 status: in-progress
 created: 2026-03-13
 updated: 2026-03-13
