@@ -15,6 +15,7 @@ import type {
   Product,
   CreateProductPayload,
   UpdateProductPayload,
+  TaskExecution,
 } from '@shared/types'
 
 const BASE_URL = '/api'
@@ -112,6 +113,24 @@ export const api = {
       }),
     delete: (id: number) =>
       request<null>(`/products/${id}`, { method: 'DELETE' }),
+  },
+  // PRD-FEAT-005: Price Scheduler
+  scheduler: {
+    status: () => request<TaskExecution[]>('/scheduler/price-collection/status'),
+    run: () =>
+      fetch(`${BASE_URL}/scheduler/price-collection/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).then(async (res) => {
+        const body = await res.json()
+        if (res.status === 409) {
+          throw new Error(body.error ?? '이미 실행 중입니다')
+        }
+        if (!body.success) {
+          throw new Error(body.error ?? 'Unknown error')
+        }
+        return body.data as { readonly run_id: number }
+      }),
   },
   settings: {
     getAll: () => request<Record<string, string>>('/settings'),

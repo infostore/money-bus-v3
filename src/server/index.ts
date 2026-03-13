@@ -8,11 +8,19 @@ import { FamilyMemberRepository } from './database/family-member-repository.js'
 import { InstitutionRepository } from './database/institution-repository.js'
 import { AccountTypeRepository } from './database/account-type-repository.js'
 import { ProductRepository } from './database/product-repository.js'
+import { PriceHistoryRepository } from './database/price-history-repository.js'
+import { ScheduledTaskRepository } from './database/scheduled-task-repository.js'
+import { TaskExecutionRepository } from './database/task-execution-repository.js'
+import { NaverFinanceAdapter } from './scheduler/naver-finance-adapter.js'
+import { YahooFinanceAdapter } from './scheduler/yahoo-finance-adapter.js'
+import { PriceCollectorService } from './scheduler/price-collector-service.js'
+import { startSchedulers } from './scheduler/index.js'
 import { createItemRoutes } from './routes/items.js'
 import { createFamilyMemberRoutes } from './routes/family-members.js'
 import { createInstitutionRoutes } from './routes/institutions.js'
 import { createAccountTypeRoutes } from './routes/account-types.js'
 import { createProductRoutes } from './routes/products.js'
+import { createSchedulerRoutes } from './routes/scheduler.js'
 import { requestLogger, log } from './middleware/logger.js'
 import { registerCleanupHandler, setupShutdownHandlers } from './shutdown.js'
 import type { ApiResponse } from '../shared/types.js'
@@ -71,6 +79,39 @@ try {
   log('error', `Product seed failed: ${error}`)
 }
 
+// PRD-FEAT-005: Price Scheduler setup
+const priceHistoryRepo = new PriceHistoryRepository(db)
+const scheduledTaskRepo = new ScheduledTaskRepository(db)
+const taskExecutionRepo = new TaskExecutionRepository(db)
+const naverAdapter = new NaverFinanceAdapter()
+const yahooModule = await import('yahoo-finance2')
+const yahooAdapter = new YahooFinanceAdapter(yahooModule.default as never)
+
+let collectorService: PriceCollectorService | undefined
+let schedulerTaskId = 0
+try {
+  const task = await scheduledTaskRepo.seedDefault({
+    name: 'price-collection-daily',
+    cronExpression: '0 11 * * *',
+    enabled: true,
+  })
+  schedulerTaskId = task.id
+
+  collectorService = new PriceCollectorService(
+    productRepo,
+    priceHistoryRepo,
+    taskExecutionRepo,
+    naverAdapter,
+    yahooAdapter,
+    task.id,
+  )
+
+  await startSchedulers(scheduledTaskRepo, taskExecutionRepo, collectorService)
+  log('info', 'Price scheduler initialized')
+} catch (error) {
+  log('error', `Scheduler setup failed: ${error}`)
+}
+
 const app = new Hono()
 
 app.use('*', requestLogger)
@@ -93,6 +134,13 @@ app.route('/api/family-members', createFamilyMemberRoutes(familyMemberRepo))
 app.route('/api/institutions', createInstitutionRoutes(institutionRepo))
 app.route('/api/account-types', createAccountTypeRoutes(accountTypeRepo))
 app.route('/api/products', createProductRoutes(productRepo))
+
+if (collectorService && schedulerTaskId > 0) {
+  app.route(
+    '/api/scheduler/price-collection',
+    createSchedulerRoutes(collectorService, taskExecutionRepo, schedulerTaskId),
+  )
+}
 
 app.get('/api/settings', async (c) => {
   const data = await settingsRepo.getAll()

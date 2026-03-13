@@ -97,6 +97,42 @@ export interface UpdateProductPayload {
   readonly exchange?: string | null
 }
 
+// PRD-FEAT-005: Price History Scheduler
+export interface PriceHistory {
+  readonly id: number
+  readonly product_id: number
+  readonly date: string
+  readonly open: string | null
+  readonly high: string | null
+  readonly low: string | null
+  readonly close: string
+  readonly volume: number | null
+  readonly created_at: string
+}
+
+export interface ScheduledTask {
+  readonly id: number
+  readonly name: string
+  readonly cron_expression: string
+  readonly enabled: boolean
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+export interface TaskExecution {
+  readonly id: number
+  readonly task_id: number
+  readonly started_at: string
+  readonly finished_at: string | null
+  readonly status: 'running' | 'success' | 'partial' | 'failed'
+  readonly products_total: number
+  readonly products_succeeded: number
+  readonly products_failed: number
+  readonly products_skipped: number
+  readonly message: string | null
+  readonly created_at: string
+}
+
 // PRD-FEAT-003: Account Type Management
 export interface AccountType {
   readonly id: number
