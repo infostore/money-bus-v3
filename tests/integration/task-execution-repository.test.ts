@@ -175,6 +175,51 @@ describe('TaskExecutionRepository.trimOldExecutions', () => {
   })
 })
 
+// PRD-FEAT-008: Scheduler Execution History Delete
+describe('TaskExecutionRepository.findById', () => {
+  it('returns the execution when found', async () => {
+    const task = await taskRepo.seedDefault({
+      name: 'price-fetch',
+      cronExpression: '0 18 * * 1-5',
+      enabled: true,
+    })
+    const exec = await execRepo.create({ taskId: task.id, startedAt: new Date('2026-03-13T18:00:00Z') })
+
+    const found = await execRepo.findById(exec.id)
+    expect(found).toBeDefined()
+    expect(found!.id).toBe(exec.id)
+    expect(found!.task_id).toBe(task.id)
+    expect(found!.status).toBe('running')
+  })
+
+  it('returns undefined for non-existent id', async () => {
+    const result = await execRepo.findById(999)
+    expect(result).toBeUndefined()
+  })
+})
+
+describe('TaskExecutionRepository.delete', () => {
+  it('deletes the execution and returns true', async () => {
+    const task = await taskRepo.seedDefault({
+      name: 'price-fetch',
+      cronExpression: '0 18 * * 1-5',
+      enabled: true,
+    })
+    const exec = await execRepo.create({ taskId: task.id, startedAt: new Date() })
+
+    const deleted = await execRepo.delete(exec.id)
+    expect(deleted).toBe(true)
+
+    const found = await execRepo.findById(exec.id)
+    expect(found).toBeUndefined()
+  })
+
+  it('returns false for non-existent id', async () => {
+    const deleted = await execRepo.delete(999)
+    expect(deleted).toBe(false)
+  })
+})
+
 describe('TaskExecutionRepository.recoverStaleRuns', () => {
   it('marks running executions as failed', async () => {
     const task = await taskRepo.seedDefault({

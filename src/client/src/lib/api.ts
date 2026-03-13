@@ -124,6 +124,7 @@ export const api = {
       request<null>(`/products/${id}`, { method: 'DELETE' }),
   },
   // PRD-FEAT-005: Price Scheduler
+  // PRD-FEAT-008: Scheduler Execution History Delete
   scheduler: {
     status: () => request<TaskExecution[]>('/scheduler/price-collection/status'),
     run: () =>
@@ -139,6 +140,10 @@ export const api = {
           throw new Error(body.error ?? 'Unknown error')
         }
         return body.data as { readonly run_id: number }
+      }),
+    deleteExecution: (id: number) =>
+      request<null>(`/scheduler/price-collection/executions/${id}`, {
+        method: 'DELETE',
       }),
   },
   settings: {

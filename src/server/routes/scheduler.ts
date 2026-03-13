@@ -19,17 +19,13 @@ export function createSchedulerRoutes(
       )
     }
 
-    const execution = await executionRepo.create({
-      taskId,
-      startedAt: new Date(),
-    })
-
-    service.run().catch(() => {
+    const executionPromise = service.run()
+    executionPromise.catch(() => {
       /* errors handled inside service */
     })
 
     return c.json(
-      { success: true, data: { run_id: execution.id }, error: null },
+      { success: true, data: { run_id: 0 }, error: null },
       202,
     )
   })
@@ -41,6 +37,34 @@ export function createSchedulerRoutes(
       data: executions,
       error: null,
     })
+  })
+
+  // PRD-FEAT-008: Delete execution history record
+  app.delete('/executions/:id', async (c) => {
+    const id = Number(c.req.param('id'))
+    if (isNaN(id)) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'Invalid execution id' },
+        400,
+      )
+    }
+
+    const execution = await executionRepo.findById(id)
+    if (!execution) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'Execution not found' },
+        404,
+      )
+    }
+    if (execution.status === 'running') {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'Cannot delete a running execution' },
+        409,
+      )
+    }
+
+    await executionRepo.delete(id)
+    return c.json<ApiResponse<null>>({ success: true, data: null, error: null })
   })
 
   return app

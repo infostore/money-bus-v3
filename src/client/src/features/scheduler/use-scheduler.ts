@@ -1,4 +1,5 @@
 // PRD-FEAT-005: Price Scheduler
+// PRD-FEAT-008: Scheduler Execution History Delete
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import type { TaskExecution } from '@shared/types'
@@ -24,6 +25,12 @@ export function useScheduler() {
       queryClient.invalidateQueries({ queryKey: SCHEDULER_KEY }),
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.scheduler.deleteExecution(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: SCHEDULER_KEY }),
+  })
+
   const error = queryError instanceof Error ? queryError.message : null
 
   const isRunning = executions.some(
@@ -39,5 +46,10 @@ export function useScheduler() {
       await runMutation.mutateAsync()
     },
     runError: runMutation.error instanceof Error ? runMutation.error.message : null,
+    deleteExecution: async (id: number) => {
+      await deleteMutation.mutateAsync(id)
+    },
+    deletingId: deleteMutation.isPending ? (deleteMutation.variables as number | undefined) ?? null : null,
+    deleteError: deleteMutation.error instanceof Error ? deleteMutation.error.message : null,
   } as const
 }
