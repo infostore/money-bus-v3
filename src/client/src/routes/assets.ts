@@ -1,7 +1,12 @@
 import { lazy } from 'react'
 import { createRoute } from '@tanstack/react-router'
+import { z } from 'zod/v4'
 import { rootRoute } from './root'
 import { ComingSoon } from './shared'
+
+const productDetailSearchSchema = z.object({
+  tab: z.enum(['chart', 'table']).optional().default('chart'),
+})
 
 const ProductPage = lazy(() =>
   import('../features/settings/ProductPage').then((m) => ({
@@ -40,11 +45,12 @@ export const productsRoute = createRoute({
   component: ProductPage,
 })
 
-// PRD-FEAT-007: ETF Detail Page
+// PRD-FEAT-007 + PRD-FEAT-011: ETF Detail Page with tabs
 export const productDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/products/$id',
   component: ProductDetailPage,
+  validateSearch: productDetailSearchSchema,
 })
 
 export const assetRoutes = [

@@ -1,6 +1,7 @@
-// PRD-FEAT-007: ETF Detail Page
+// PRD-FEAT-007 + PRD-FEAT-011: ETF Detail Page with Tabs
 import { useState } from 'react'
 import { useNavigate, getRouteApi } from '@tanstack/react-router'
+import { cn } from '../../lib/utils'
 import { Alert } from '../../components/ui/Alert'
 import { Button } from '../../components/ui/Button'
 import { Spinner } from '../../components/ui/Spinner'
@@ -8,20 +9,37 @@ import { useProductDetail } from './use-product-detail'
 import { ProductDetailHeader } from './components/ProductDetailHeader'
 import { PriceSummaryCard } from './components/PriceSummaryCard'
 import { PriceHistoryChart } from './components/PriceHistoryChart'
+import { PriceDataTab } from './components/PriceDataTab'
 import type { RangeKey } from './price-history-utils'
+
+type TabKey = 'chart' | 'table'
+
+const TAB_OPTIONS: readonly { readonly key: TabKey; readonly label: string }[] = [
+  { key: 'chart', label: '가격 차트' },
+  { key: 'table', label: '가격 데이터' },
+] as const
 
 const routeApi = getRouteApi('/products/$id')
 
 export function ProductDetailPage() {
   const { id: rawId } = routeApi.useParams()
+  const { tab } = routeApi.useSearch()
   const navigate = useNavigate()
   const [range, setRange] = useState<RangeKey>('1Y')
 
   const id = parseInt(rawId, 10)
 
+  const handleTabChange = (newTab: TabKey) => {
+    navigate({
+      to: '/products/$id',
+      params: { id: rawId },
+      search: { tab: newTab },
+    })
+  }
+
   if (isNaN(id)) {
     return (
-      <div className="mx-auto max-w-4xl p-6">
+      <div className="mx-auto p-6">
         <Alert variant="error">
           <div className="flex items-center justify-between">
             <span>종목을 찾을 수 없습니다.</span>
@@ -38,16 +56,32 @@ export function ProductDetailPage() {
     )
   }
 
-  return <ProductDetailContent id={id} range={range} onRangeChange={setRange} />
+  return (
+    <ProductDetailContent
+      id={id}
+      range={range}
+      onRangeChange={setRange}
+      tab={tab}
+      onTabChange={handleTabChange}
+    />
+  )
 }
 
 interface ProductDetailContentProps {
   readonly id: number
   readonly range: RangeKey
   readonly onRangeChange: (range: RangeKey) => void
+  readonly tab: TabKey
+  readonly onTabChange: (tab: TabKey) => void
 }
 
-function ProductDetailContent({ id, range, onRangeChange }: ProductDetailContentProps) {
+function ProductDetailContent({
+  id,
+  range,
+  onRangeChange,
+  tab,
+  onTabChange,
+}: ProductDetailContentProps) {
   const navigate = useNavigate()
   const { product, priceHistory, summaryHistory, loading, productError } =
     useProductDetail(id, range)
@@ -62,7 +96,7 @@ function ProductDetailContent({ id, range, onRangeChange }: ProductDetailContent
 
   if (productError) {
     return (
-      <div className="mx-auto max-w-4xl p-6">
+      <div className="mx-auto p-6">
         <Alert variant="error" title="오류">
           <div className="flex items-center justify-between">
             <span>{productError}</span>
@@ -81,7 +115,7 @@ function ProductDetailContent({ id, range, onRangeChange }: ProductDetailContent
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-4xl p-6">
+      <div className="mx-auto p-6">
         <Alert variant="error">
           <div className="flex items-center justify-between">
             <span>종목을 찾을 수 없습니다.</span>
@@ -99,18 +133,41 @@ function ProductDetailContent({ id, range, onRangeChange }: ProductDetailContent
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
+    <div className="mx-auto space-y-6 p-6">
       <ProductDetailHeader product={product} />
       <PriceSummaryCard
         summaryHistory={summaryHistory}
         currency={product.currency}
       />
-      <PriceHistoryChart
-        priceHistory={priceHistory}
-        range={range}
-        onRangeChange={onRangeChange}
-        currency={product.currency}
-      />
+      <div className="flex gap-1">
+        {TAB_OPTIONS.map((opt) => (
+          <Button
+            key={opt.key}
+            variant={tab === opt.key ? 'primary' : 'ghost'}
+            className={cn(
+              'h-9 px-4 text-sm',
+              tab === opt.key && 'shadow-glow-sm',
+            )}
+            onClick={() => onTabChange(opt.key)}
+            aria-pressed={tab === opt.key}
+          >
+            {opt.label}
+          </Button>
+        ))}
+      </div>
+      {tab === 'chart' ? (
+        <PriceHistoryChart
+          priceHistory={priceHistory}
+          range={range}
+          onRangeChange={onRangeChange}
+          currency={product.currency}
+        />
+      ) : (
+        <PriceDataTab
+          priceHistory={priceHistory}
+          currency={product.currency}
+        />
+      )}
     </div>
   )
 }

@@ -6,6 +6,10 @@ import {
   get52WeekLow,
   getDateRange,
   rangeToFromDate,
+  getLatestOpen,
+  getLatestHigh,
+  getLatestLow,
+  getLatestVolume,
 } from '../price-history-utils'
 
 /** Helper to create a minimal PriceHistory row */
@@ -21,6 +25,18 @@ function makeRow(date: string, close: string): PriceHistory {
     volume: null,
     created_at: '2026-01-01T00:00:00.000Z',
   }
+}
+
+/** Helper to create a full OHLCV PriceHistory row */
+function makeFullRow(
+  date: string,
+  close: string,
+  open: string | null = null,
+  high: string | null = null,
+  low: string | null = null,
+  volume: number | null = null,
+): PriceHistory {
+  return { id: 1, product_id: 1, date, open, high, low, close, volume, created_at: '2026-01-01T00:00:00.000Z' }
 }
 
 describe('price-history-utils', () => {
@@ -132,6 +148,114 @@ describe('price-history-utils', () => {
 
     it('returns 1 year ago for 1Y', () => {
       expect(rangeToFromDate('1Y', refDate)).toBe('2025-03-13')
+    })
+  })
+
+  describe('getLatestOpen', () => {
+    it('returns null for empty array', () => {
+      expect(getLatestOpen([])).toBeNull()
+    })
+
+    it('returns open from most recent date row (unsorted input)', () => {
+      const rows = [
+        makeFullRow('2025-01-01', '100.00', '98.00'),
+        makeFullRow('2025-03-01', '120.00', '118.00'),
+        makeFullRow('2025-02-01', '110.00', '108.00'),
+      ]
+      expect(getLatestOpen(rows)).toBe('118.00')
+    })
+
+    it('returns null when latest row has null open', () => {
+      const rows = [
+        makeFullRow('2025-01-01', '100.00', '98.00'),
+        makeFullRow('2025-03-01', '120.00', null),
+      ]
+      expect(getLatestOpen(rows)).toBeNull()
+    })
+
+    it('handles single row', () => {
+      expect(getLatestOpen([makeFullRow('2025-06-01', '100.00', '99.00')])).toBe('99.00')
+    })
+  })
+
+  describe('getLatestHigh', () => {
+    it('returns null for empty array', () => {
+      expect(getLatestHigh([])).toBeNull()
+    })
+
+    it('returns high from most recent date row (unsorted input)', () => {
+      const rows = [
+        makeFullRow('2025-01-01', '100.00', null, '102.00'),
+        makeFullRow('2025-03-01', '120.00', null, '125.00'),
+        makeFullRow('2025-02-01', '110.00', null, '112.00'),
+      ]
+      expect(getLatestHigh(rows)).toBe('125.00')
+    })
+
+    it('returns null when latest row has null high', () => {
+      const rows = [
+        makeFullRow('2025-01-01', '100.00', null, '102.00'),
+        makeFullRow('2025-03-01', '120.00', null, null),
+      ]
+      expect(getLatestHigh(rows)).toBeNull()
+    })
+
+    it('handles single row', () => {
+      expect(getLatestHigh([makeFullRow('2025-06-01', '100.00', null, '105.00')])).toBe('105.00')
+    })
+  })
+
+  describe('getLatestLow', () => {
+    it('returns null for empty array', () => {
+      expect(getLatestLow([])).toBeNull()
+    })
+
+    it('returns low from most recent date row (unsorted input)', () => {
+      const rows = [
+        makeFullRow('2025-01-01', '100.00', null, null, '95.00'),
+        makeFullRow('2025-03-01', '120.00', null, null, '115.00'),
+        makeFullRow('2025-02-01', '110.00', null, null, '107.00'),
+      ]
+      expect(getLatestLow(rows)).toBe('115.00')
+    })
+
+    it('returns null when latest row has null low', () => {
+      const rows = [
+        makeFullRow('2025-01-01', '100.00', null, null, '95.00'),
+        makeFullRow('2025-03-01', '120.00', null, null, null),
+      ]
+      expect(getLatestLow(rows)).toBeNull()
+    })
+
+    it('handles single row', () => {
+      expect(getLatestLow([makeFullRow('2025-06-01', '100.00', null, null, '97.00')])).toBe('97.00')
+    })
+  })
+
+  describe('getLatestVolume', () => {
+    it('returns null for empty array', () => {
+      expect(getLatestVolume([])).toBeNull()
+    })
+
+    it('returns volume from most recent date row (unsorted input)', () => {
+      const rows = [
+        makeFullRow('2025-01-01', '100.00', null, null, null, 1000),
+        makeFullRow('2025-03-01', '120.00', null, null, null, 3000),
+        makeFullRow('2025-02-01', '110.00', null, null, null, 2000),
+      ]
+      expect(getLatestVolume(rows)).toBe(3000)
+    })
+
+    it('returns null when latest row has null volume', () => {
+      const rows = [
+        makeFullRow('2025-01-01', '100.00', null, null, null, 1000),
+        makeFullRow('2025-03-01', '120.00', null, null, null, null),
+      ]
+      expect(getLatestVolume(rows)).toBeNull()
+    })
+
+    it('handles single row', () => {
+      expect(getLatestVolume([makeFullRow('2025-06-01', '100.00', null, null, null, 500)])).toBe(500)
     })
   })
 })

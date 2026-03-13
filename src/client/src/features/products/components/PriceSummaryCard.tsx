@@ -6,6 +6,10 @@ import {
   get52WeekHigh,
   get52WeekLow,
   getDateRange,
+  getLatestOpen,
+  getLatestHigh,
+  getLatestLow,
+  getLatestVolume,
 } from '../price-history-utils'
 
 interface PriceSummaryCardProps {
@@ -14,9 +18,14 @@ interface PriceSummaryCardProps {
 }
 
 function formatPrice(value: string | null, currency: string): string {
-  if (value === null) return '-'
+  if (value === null) return '—'
   const num = parseFloat(value)
   return `${num.toLocaleString('ko-KR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency}`
+}
+
+function formatVolume(value: number | null): string {
+  if (value === null) return '—'
+  return value.toLocaleString('ko-KR')
 }
 
 function formatDate(dateStr: string): string {
@@ -39,14 +48,26 @@ export function PriceSummaryCard({ summaryHistory, currency }: PriceSummaryCardP
   const low52w = get52WeekLow(summaryHistory)
   const dateRange = getDateRange(summaryHistory)
 
-  const stats = [
+  const latestOpen = getLatestOpen(summaryHistory)
+  const latestHigh = getLatestHigh(summaryHistory)
+  const latestLow = getLatestLow(summaryHistory)
+  const latestVolume = getLatestVolume(summaryHistory)
+
+  const primaryStats = [
     { label: '최근 종가', value: formatPrice(latestClose, currency) },
     { label: '52주 최고', value: formatPrice(high52w, currency) },
     { label: '52주 최저', value: formatPrice(low52w, currency) },
     {
       label: '데이터 기간',
-      value: dateRange ? `${formatDate(dateRange.from)} ~ ${formatDate(dateRange.to)}` : '-',
+      value: dateRange ? `${formatDate(dateRange.from)} ~ ${formatDate(dateRange.to)}` : '—',
     },
+  ]
+
+  const latestDayStats = [
+    { label: '시가', value: formatPrice(latestOpen, currency) },
+    { label: '고가', value: formatPrice(latestHigh, currency) },
+    { label: '저가', value: formatPrice(latestLow, currency) },
+    { label: '거래량', value: formatVolume(latestVolume) },
   ]
 
   return (
@@ -54,9 +75,19 @@ export function PriceSummaryCard({ summaryHistory, currency }: PriceSummaryCardP
       <CardHeader className="pb-2">
         <CardTitle className="text-base">가격 요약</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((stat) => (
+          {primaryStats.map((stat) => (
+            <div key={stat.label}>
+              <p className="text-xs text-surface-400">{stat.label}</p>
+              <p className="mt-1 text-sm font-semibold text-surface-100">
+                {stat.value}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {latestDayStats.map((stat) => (
             <div key={stat.label}>
               <p className="text-xs text-surface-400">{stat.label}</p>
               <p className="mt-1 text-sm font-semibold text-surface-100">
