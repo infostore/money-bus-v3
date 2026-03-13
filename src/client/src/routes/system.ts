@@ -9,9 +9,9 @@ const SchedulerPage = lazy(() =>
   })),
 )
 
-export const schedulerRoute = createRoute({
+export const priceCollectionRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/scheduler',
+  path: '/scheduler/price-collection',
   component: SchedulerPage,
 })
 
@@ -21,4 +21,4 @@ export const helpRoute = createRoute({
   component: ComingSoon,
 })
 
-export const systemRoutes = [schedulerRoute, helpRoute] as const
+export const systemRoutes = [priceCollectionRoute, helpRoute] as const
