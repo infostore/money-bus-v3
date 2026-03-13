@@ -1,6 +1,7 @@
 // PRD-FEAT-005: Price Scheduler
 // PRD-FEAT-008: Scheduler Execution History Delete
-import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Trash2 } from 'lucide-react'
+// PRD-FEAT-009: Scheduler Execution Stop
+import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Trash2, Square } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useScheduler } from './use-scheduler'
 import type { TaskExecution } from '@shared/types'
@@ -13,6 +14,7 @@ const STATUS_CONFIG: Record<
   success: { label: '성공', icon: CheckCircle2, className: 'text-success-500' },
   partial: { label: '부분 성공', icon: AlertTriangle, className: 'text-primary-500' },
   failed: { label: '실패', icon: XCircle, className: 'text-error-500' },
+  aborted: { label: '중지됨', icon: Square, className: 'text-surface-400' },
 }
 
 function formatDateTime(iso: string): string {
@@ -101,7 +103,14 @@ function ExecutionRow({ execution, onDelete, isDeleting }: ExecutionRowProps) {
 }
 
 export function SchedulerPage() {
-  const { executions, loading, error, isRunning, triggerRun, runError, deleteExecution, deletingId, deleteError } = useScheduler()
+  const {
+    executions, loading, error, isRunning,
+    triggerRun, runError,
+    stopRun, isStopping, stopError,
+    deleteExecution, deletingId, deleteError,
+  } = useScheduler()
+
+  const displayError = error ?? runError ?? stopError ?? deleteError
 
   return (
     <div className="space-y-6">
@@ -112,28 +121,50 @@ export function SchedulerPage() {
             매일 20:00 KST 자동 실행 · 최근 10건 실행 이력
           </p>
         </div>
-        <Button
-          onClick={() => triggerRun()}
-          disabled={isRunning}
-          className="gap-1.5"
-        >
-          {isRunning ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              수집 중...
-            </>
-          ) : (
-            <>
-              <Play size={16} />
-              수동 실행
-            </>
+        <div className="flex items-center gap-2">
+          {isRunning && (
+            <Button
+              variant="secondary"
+              onClick={() => stopRun()}
+              disabled={isStopping}
+              className="gap-1.5"
+            >
+              {isStopping ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  중지 중...
+                </>
+              ) : (
+                <>
+                  <Square size={16} />
+                  중지
+                </>
+              )}
+            </Button>
           )}
-        </Button>
+          <Button
+            onClick={() => triggerRun()}
+            disabled={isRunning}
+            className="gap-1.5"
+          >
+            {isRunning ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                수집 중...
+              </>
+            ) : (
+              <>
+                <Play size={16} />
+                수동 실행
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      {(error ?? runError ?? deleteError) && (
+      {displayError && (
         <div className="rounded-xl bg-error-500/10 border border-error-500/20 px-4 py-3 text-sm text-error-500">
-          {error ?? runError ?? deleteError}
+          {displayError}
         </div>
       )}
 

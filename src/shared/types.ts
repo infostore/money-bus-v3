@@ -124,7 +124,7 @@ export interface TaskExecution {
   readonly task_id: number
   readonly started_at: string
   readonly finished_at: string | null
-  readonly status: 'running' | 'success' | 'partial' | 'failed'
+  readonly status: 'running' | 'success' | 'partial' | 'failed' | 'aborted'
   readonly products_total: number
   readonly products_succeeded: number
   readonly products_failed: number

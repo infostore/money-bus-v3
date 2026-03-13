@@ -1,4 +1,5 @@
 // PRD-FEAT-005: Price History Scheduler
+// PRD-FEAT-009: Scheduler Execution Stop
 import type { Product, TaskExecution } from '../../shared/types.js'
 import type { ProductRepository } from '../database/product-repository.js'
 import type { PriceHistoryRepository } from '../database/price-history-repository.js'
@@ -53,6 +54,7 @@ export function sleep(ms: number): Promise<void> {
 
 export class PriceCollectorService {
   private isRunning = false
+  private abortController: AbortController | null = null
 
   constructor(
     private readonly productRepo: ProductRepository,
@@ -67,20 +69,26 @@ export class PriceCollectorService {
     return this.isRunning
   }
 
+  abort(): void {
+    this.abortController?.abort()
+  }
+
   async run(): Promise<TaskExecution> {
     if (this.isRunning) {
       throw new Error('Collection is already running')
     }
 
+    this.abortController = new AbortController()
     this.isRunning = true
     try {
-      return await this.executeCollection()
+      return await this.executeCollection(this.abortController.signal)
     } finally {
       this.isRunning = false
+      this.abortController = null
     }
   }
 
-  private async executeCollection(): Promise<TaskExecution> {
+  private async executeCollection(signal: AbortSignal): Promise<TaskExecution> {
     const execution = await this.taskExecutionRepo.create({
       taskId: this.taskId,
       startedAt: new Date(),
@@ -101,17 +109,19 @@ export class PriceCollectorService {
       p.code!, p.id, r.startDate, r.endDate,
     )
 
-    await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_DELAY_MS, counters)
-    await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_DELAY_MS, counters)
+    const aborted =
+      await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_DELAY_MS, counters, signal) ||
+      await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_DELAY_MS, counters, signal)
 
-    const status = this.determineStatus(counters)
+    const status = aborted ? 'aborted' : this.determineStatus(counters)
+    const message = aborted ? '사용자 요청으로 중지됨' : null
     const completed = await this.taskExecutionRepo.complete(execution.id, {
       status,
       productsTotal: counters.total,
       productsSucceeded: counters.succeeded,
       productsFailed: counters.failed,
       productsSkipped: counters.skipped,
-      message: null,
+      message,
     })
 
     await this.taskExecutionRepo.trimOldExecutions(this.taskId)
@@ -149,6 +159,7 @@ export class PriceCollectorService {
     return { naverProducts, yahooProducts }
   }
 
+  /** Returns true if aborted */
   private async processProducts(
     executionId: number,
     products: readonly Product[],
@@ -156,28 +167,37 @@ export class PriceCollectorService {
     batchSize: number,
     delayMs: number,
     counters: CollectionCounters,
-  ): Promise<void> {
+    signal: AbortSignal,
+  ): Promise<boolean> {
     for (let i = 0; i < products.length; i += batchSize) {
+      if (signal.aborted) return true
+
       const batch = products.slice(i, i + batchSize)
-      await this.processBatch(executionId, batch, fetchFn, counters)
+      const batchAborted = await this.processBatch(executionId, batch, fetchFn, counters, signal)
+      if (batchAborted) return true
 
       const isLastBatch = i + batchSize >= products.length
       if (!isLastBatch) {
         await sleep(delayMs)
       }
     }
+    return false
   }
 
+  /** Returns true if aborted */
   private async processBatch(
     executionId: number,
     batch: readonly Product[],
     fetchFn: AdapterFetchFn,
     counters: CollectionCounters,
-  ): Promise<void> {
+    signal: AbortSignal,
+  ): Promise<boolean> {
     for (const product of batch) {
+      if (signal.aborted) return true
       await this.processOneProduct(product, fetchFn, counters)
       await this.updateExecutionProgress(executionId, counters)
     }
+    return false
   }
 
   private async processOneProduct(

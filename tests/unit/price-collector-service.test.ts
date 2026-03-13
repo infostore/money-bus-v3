@@ -308,6 +308,43 @@ describe('PriceCollectorService', () => {
     expect(service.running).toBe(false)
   })
 
+  // PRD-FEAT-009: Abort behavior
+  it('aborts execution and returns aborted status', async () => {
+    const p1 = makeProduct({ id: 1, code: '005930', exchange: 'KOSPI' })
+    const p2 = makeProduct({ id: 2, code: '000660', exchange: 'KOSPI' })
+    mocks.productRepo.findAll.mockResolvedValue([p1, p2])
+    // First product succeeds, then we abort before second
+    mocks.naverAdapter.fetchPrices
+      .mockImplementationOnce(async () => {
+        service.abort()
+        return [{ productId: 1, date: '2026-03-12', open: '100', high: '110', low: '90', close: '105', volume: 1000 }]
+      })
+
+    const result = await service.run()
+
+    expect(result.status).toBe('aborted')
+    expect(mocks.taskExecutionRepo.complete).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ status: 'aborted', message: '사용자 요청으로 중지됨' }),
+    )
+  })
+
+  it('resets isRunning and abortController after abort', async () => {
+    mocks.productRepo.findAll.mockResolvedValue([makeProduct({ id: 1, code: '005930', exchange: 'KOSPI' })])
+    mocks.naverAdapter.fetchPrices.mockImplementation(async () => {
+      service.abort()
+      return []
+    })
+
+    await service.run()
+
+    expect(service.running).toBe(false)
+  })
+
+  it('abort() is safe to call when not running', () => {
+    expect(() => service.abort()).not.toThrow()
+  })
+
   it('upserts fetched price rows into priceHistoryRepo', async () => {
     const product = makeProduct({ id: 1, code: '005930', exchange: 'KOSPI' })
     mocks.productRepo.findAll.mockResolvedValue([product])
