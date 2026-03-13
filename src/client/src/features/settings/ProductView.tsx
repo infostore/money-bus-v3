@@ -1,7 +1,7 @@
 // PRD-FEAT-004: Product Management
 import { useState, useMemo, useCallback, type MutableRefObject } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Package, Plus } from 'lucide-react'
+import { Package } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Select } from '../../components/ui/Select'
@@ -19,9 +19,9 @@ import type {
 } from '@shared/types'
 
 const ASSET_TYPE_FILTERS = [
-  '전체',
-  '주식',
   'ETF',
+  '주식',
+  '기타',
 ] as const
 
 const STORAGE_KEY_ASSET_TYPE = 'product-filter-asset-type'
@@ -68,7 +68,7 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
   const [editProduct, setEditProduct] = useState<Product | undefined>()
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
   const [assetTypeFilter, setAssetTypeFilter] = useState<string>(
-    () => loadFilter(STORAGE_KEY_ASSET_TYPE, '전체'),
+    () => loadFilter(STORAGE_KEY_ASSET_TYPE, 'ETF'),
   )
   const [exchangeFilter, setExchangeFilter] = useState<string>(
     () => loadFilter(STORAGE_KEY_EXCHANGE, '전체'),
@@ -120,7 +120,11 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      if (assetTypeFilter !== '전체' && p.asset_type !== assetTypeFilter) return false
+      if (assetTypeFilter === '기타') {
+        if (p.asset_type === 'ETF' || p.asset_type === '주식') return false
+      } else if (p.asset_type !== assetTypeFilter) {
+        return false
+      }
       if (exchangeFilter !== '전체' && p.exchange !== exchangeFilter) return false
       if (assetTypeFilter === 'ETF') {
         if (etfBrandFilter !== '전체' && extractEtfBrand(p.name) !== etfBrandFilter) return false
@@ -222,24 +226,7 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
           ) : filteredProducts.length === 0 ? (
             <EmptyState
               icon={Package}
-              title={
-                assetTypeFilter === '전체' && exchangeFilter === '전체'
-                  ? '등록된 종목이 없습니다'
-                  : '조건에 맞는 종목이 없습니다.'
-              }
-              description={
-                assetTypeFilter === '전체' && exchangeFilter === '전체'
-                  ? '종목을 추가하여 보유자산을 관리하세요.'
-                  : undefined
-              }
-              action={
-                assetTypeFilter === '전체' && exchangeFilter === '전체' ? (
-                  <Button onClick={handleCreate} className="gap-1.5">
-                    <Plus size={16} />
-                    종목 추가
-                  </Button>
-                ) : undefined
-              }
+              title="조건에 맞는 종목이 없습니다."
             />
           ) : (
             <ProductTable
