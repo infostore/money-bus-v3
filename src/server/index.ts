@@ -122,7 +122,7 @@ app.route('/api/items', createItemRoutes(itemRepo))
 app.route('/api/family-members', createFamilyMemberRoutes(familyMemberRepo))
 app.route('/api/institutions', createInstitutionRoutes(institutionRepo))
 app.route('/api/account-types', createAccountTypeRoutes(accountTypeRepo))
-app.route('/api/products', createProductRoutes(productRepo))
+app.route('/api/products', createProductRoutes(productRepo, priceHistoryRepo))
 
 if (collectorService && schedulerTaskId > 0) {
   app.route(

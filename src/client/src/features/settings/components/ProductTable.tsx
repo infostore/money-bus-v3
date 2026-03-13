@@ -1,5 +1,5 @@
 // PRD-FEAT-004: Product Management
-import { Pencil, Trash2 } from 'lucide-react'
+import { ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import type { Product } from '@shared/types'
 
@@ -7,12 +7,14 @@ interface ProductTableProps {
   readonly products: readonly Product[]
   readonly onEdit: (product: Product) => void
   readonly onDelete: (product: Product) => void
+  readonly onDetail?: (product: Product) => void
 }
 
 export function ProductTable({
   products,
   onEdit,
   onDelete,
+  onDetail,
 }: ProductTableProps) {
   return (
     <div className="space-y-2">
@@ -55,6 +57,16 @@ export function ProductTable({
             >
               <Trash2 size={14} />
             </Button>
+            {onDetail && (
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 text-surface-400 hover:text-surface-200"
+                onClick={() => onDetail(product)}
+                aria-label={`${product.name} 상세`}
+              >
+                <ChevronRight size={14} />
+              </Button>
+            )}
           </div>
         </div>
       ))}

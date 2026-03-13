@@ -67,6 +67,41 @@ describe('GET /api/products', () => {
   })
 })
 
+describe('GET /api/products/:id', () => {
+  it('returns 200 with product data for valid ID', async () => {
+    const createRes = await request('POST', '/api/products', {
+      name: '삼성전자',
+      code: '005930',
+      asset_type: '주식',
+    })
+    const { id } = (await createRes.json()).data
+
+    const res = await request('GET', `/api/products/${id}`)
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.success).toBe(true)
+    expect(json.data.id).toBe(id)
+    expect(json.data.name).toBe('삼성전자')
+    expect(json.data.code).toBe('005930')
+  })
+
+  it('returns 404 for non-existent ID', async () => {
+    const res = await request('GET', '/api/products/999')
+    expect(res.status).toBe(404)
+    const json = await res.json()
+    expect(json.success).toBe(false)
+    expect(json.error).toContain('종목을 찾을 수 없습니다.')
+  })
+
+  it('returns 400 for non-numeric ID', async () => {
+    const res = await request('GET', '/api/products/abc')
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.success).toBe(false)
+    expect(json.error).toContain('유효하지 않은 종목 ID입니다.')
+  })
+})
+
 describe('POST /api/products', () => {
   it('creates a product and returns 201', async () => {
     const res = await request('POST', '/api/products', {

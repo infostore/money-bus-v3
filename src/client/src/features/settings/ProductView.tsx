@@ -1,5 +1,6 @@
 // PRD-FEAT-004: Product Management
 import { useState, useMemo, useCallback, type MutableRefObject } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { Package, Plus } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -52,6 +53,7 @@ interface ProductViewProps {
 }
 
 export function ProductView({ onCreateRef }: ProductViewProps) {
+  const navigate = useNavigate()
   const {
     products,
     loading,
@@ -191,6 +193,7 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
               products={filteredProducts}
               onEdit={handleEdit}
               onDelete={setDeleteTarget}
+              onDetail={(product) => navigate({ to: '/products/$id', params: { id: String(product.id) } })}
             />
           )}
         </CardContent>

@@ -103,6 +103,98 @@ describe('PriceHistoryRepository.findLastDate', () => {
   })
 })
 
+describe('PriceHistoryRepository.findByProductIdInRange', () => {
+  it('returns all rows when no date filters', async () => {
+    const product = await productRepo.create({ name: 'Apple', code: 'AAPL', asset_type: '주식' })
+
+    await repo.upsertMany([
+      { productId: product.id, date: '2024-01-01', open: null, high: null, low: null, close: '100.0000', volume: null },
+      { productId: product.id, date: '2024-01-02', open: null, high: null, low: null, close: '101.0000', volume: null },
+      { productId: product.id, date: '2024-01-03', open: null, high: null, low: null, close: '102.0000', volume: null },
+    ])
+
+    const result = await repo.findByProductIdInRange(product.id)
+    expect(result).toHaveLength(3)
+  })
+
+  it('filters by from only', async () => {
+    const product = await productRepo.create({ name: 'Apple', code: 'AAPL', asset_type: '주식' })
+
+    await repo.upsertMany([
+      { productId: product.id, date: '2024-01-01', open: null, high: null, low: null, close: '100.0000', volume: null },
+      { productId: product.id, date: '2024-01-02', open: null, high: null, low: null, close: '101.0000', volume: null },
+      { productId: product.id, date: '2024-01-03', open: null, high: null, low: null, close: '102.0000', volume: null },
+    ])
+
+    const result = await repo.findByProductIdInRange(product.id, '2024-01-02')
+    expect(result).toHaveLength(2)
+    expect(result[0].date).toBe('2024-01-02')
+    expect(result[1].date).toBe('2024-01-03')
+  })
+
+  it('filters by to only', async () => {
+    const product = await productRepo.create({ name: 'Apple', code: 'AAPL', asset_type: '주식' })
+
+    await repo.upsertMany([
+      { productId: product.id, date: '2024-01-01', open: null, high: null, low: null, close: '100.0000', volume: null },
+      { productId: product.id, date: '2024-01-02', open: null, high: null, low: null, close: '101.0000', volume: null },
+      { productId: product.id, date: '2024-01-03', open: null, high: null, low: null, close: '102.0000', volume: null },
+    ])
+
+    const result = await repo.findByProductIdInRange(product.id, undefined, '2024-01-02')
+    expect(result).toHaveLength(2)
+    expect(result[0].date).toBe('2024-01-01')
+    expect(result[1].date).toBe('2024-01-02')
+  })
+
+  it('filters by both from and to', async () => {
+    const product = await productRepo.create({ name: 'Apple', code: 'AAPL', asset_type: '주식' })
+
+    await repo.upsertMany([
+      { productId: product.id, date: '2024-01-01', open: null, high: null, low: null, close: '100.0000', volume: null },
+      { productId: product.id, date: '2024-01-02', open: null, high: null, low: null, close: '101.0000', volume: null },
+      { productId: product.id, date: '2024-01-03', open: null, high: null, low: null, close: '102.0000', volume: null },
+      { productId: product.id, date: '2024-01-04', open: null, high: null, low: null, close: '103.0000', volume: null },
+    ])
+
+    const result = await repo.findByProductIdInRange(product.id, '2024-01-02', '2024-01-03')
+    expect(result).toHaveLength(2)
+    expect(result[0].date).toBe('2024-01-02')
+    expect(result[1].date).toBe('2024-01-03')
+  })
+
+  it('returns empty array when no rows match', async () => {
+    const product = await productRepo.create({ name: 'Apple', code: 'AAPL', asset_type: '주식' })
+
+    await repo.upsertMany([
+      { productId: product.id, date: '2024-01-01', open: null, high: null, low: null, close: '100.0000', volume: null },
+    ])
+
+    const result = await repo.findByProductIdInRange(product.id, '2024-02-01', '2024-02-28')
+    expect(result).toEqual([])
+  })
+
+  it('returns empty array for non-existent product', async () => {
+    const result = await repo.findByProductIdInRange(999)
+    expect(result).toEqual([])
+  })
+
+  it('results are sorted by date ascending', async () => {
+    const product = await productRepo.create({ name: 'Apple', code: 'AAPL', asset_type: '주식' })
+
+    await repo.upsertMany([
+      { productId: product.id, date: '2024-01-03', open: null, high: null, low: null, close: '102.0000', volume: null },
+      { productId: product.id, date: '2024-01-01', open: null, high: null, low: null, close: '100.0000', volume: null },
+      { productId: product.id, date: '2024-01-02', open: null, high: null, low: null, close: '101.0000', volume: null },
+    ])
+
+    const result = await repo.findByProductIdInRange(product.id)
+    expect(result[0].date).toBe('2024-01-01')
+    expect(result[1].date).toBe('2024-01-02')
+    expect(result[2].date).toBe('2024-01-03')
+  })
+})
+
 describe('PriceHistoryRepository.findByProductId', () => {
   it('returns rows sorted by date DESC', async () => {
     const product = await productRepo.create({ name: 'Apple', code: 'AAPL', asset_type: '주식' })
