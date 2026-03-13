@@ -83,6 +83,32 @@ export function createProductRoutes(repo: ProductRepository): Hono {
     })
   })
 
+  app.get('/:id', async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+
+    if (isNaN(id)) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: '유효하지 않은 종목 ID입니다.' },
+        400,
+      )
+    }
+
+    const data = await repo.findById(id)
+
+    if (!data) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: '종목을 찾을 수 없습니다.' },
+        404,
+      )
+    }
+
+    return c.json<ApiResponse<Product>>({
+      success: true,
+      data,
+      error: null,
+    })
+  })
+
   app.post('/', async (c) => {
     const body = await parseJsonBody(c)
     if (body === null) {

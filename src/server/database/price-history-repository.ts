@@ -1,5 +1,5 @@
 // PRD-FEAT-005: Price History Scheduler
-import { eq, desc, max, sql } from 'drizzle-orm'
+import { eq, desc, asc, max, sql, and, gte, lte } from 'drizzle-orm'
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { priceHistory } from './schema.js'
 import type * as schemaTypes from './schema.js'
@@ -60,6 +60,29 @@ export class PriceHistoryRepository {
       .where(eq(priceHistory.productId, productId))
 
     return result?.maxDate ?? undefined
+  }
+
+  async findByProductIdInRange(
+    productId: number,
+    from?: string,
+    to?: string,
+  ): Promise<readonly PriceHistory[]> {
+    const conditions = [eq(priceHistory.productId, productId)]
+
+    if (from) {
+      conditions.push(gte(priceHistory.date, from))
+    }
+    if (to) {
+      conditions.push(lte(priceHistory.date, to))
+    }
+
+    const rows = await this.db
+      .select()
+      .from(priceHistory)
+      .where(and(...conditions))
+      .orderBy(asc(priceHistory.date))
+
+    return rows.map(toPriceHistory)
   }
 
   async findByProductId(productId: number): Promise<readonly PriceHistory[]> {

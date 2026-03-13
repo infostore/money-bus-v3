@@ -2,10 +2,11 @@
 type: pdca-plan
 plan-name: ETF Detail Page
 related-prd: PRD-FEAT-007
-phase: plan
-status: not-started
+phase: do
+status: in-progress
 created: 2026-03-13
 updated: 2026-03-13
+
 tags: [pdca, etf, product, detail, price-history, chart, recharts]
 ---
 
@@ -80,6 +81,7 @@ tags: [pdca, etf, product, detail, price-history, chart, recharts]
 
 - **Progress Log**:
   - 2026-03-13: PDCA plan created
+  - 2026-03-13: Phase transition plan → do. Implementation started.
 
 ## Check
 

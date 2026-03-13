@@ -9,6 +9,12 @@ const ProductPage = lazy(() =>
   })),
 )
 
+const ProductDetailPage = lazy(() =>
+  import('../features/products/ProductDetailPage').then((m) => ({
+    default: m.ProductDetailPage,
+  })),
+)
+
 export const portfolioRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/portfolio',
@@ -27,8 +33,16 @@ export const productsRoute = createRoute({
   component: ProductPage,
 })
 
+// PRD-FEAT-007: ETF Detail Page
+export const productDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/products/$id',
+  component: ProductDetailPage,
+})
+
 export const assetRoutes = [
   portfolioRoute,
   accountsRoute,
   productsRoute,
+  productDetailRoute,
 ] as const
