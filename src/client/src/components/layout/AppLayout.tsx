@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import {
   Outlet,
   Link,
+  useNavigate,
   useRouterState,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
@@ -20,8 +21,11 @@ export function AppLayout() {
   const currentGroupId = activeGroup ?? findGroupForPath(currentPath)
   const currentGroup = NAV_GROUPS.find((g) => g.id === currentGroupId) ?? NAV_GROUPS[0]
 
+  const navigate = useNavigate()
+
   const handleGroupClick = (group: NavGroup) => {
     setActiveGroup(group.id)
+    navigate({ to: group.items[0].path })
   }
 
   return (
