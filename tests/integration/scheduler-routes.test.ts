@@ -1,4 +1,5 @@
 // PRD-FEAT-008: Scheduler Execution History Delete - Route Tests
+// PRD-FEAT-009: Scheduler Execution Stop - Route Tests
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import pg from 'pg'
 import { drizzle } from 'drizzle-orm/node-postgres'
@@ -19,7 +20,13 @@ let taskRepo: ScheduledTaskRepository
 let execRepo: TaskExecutionRepository
 let taskId: number
 
-const mockService = { running: false, run: async () => ({}) } as unknown as PriceCollectorService
+let mockRunning = false
+let mockAbortCalled = false
+const mockService = {
+  get running() { return mockRunning },
+  run: async () => ({}),
+  abort: () => { mockAbortCalled = true },
+} as unknown as PriceCollectorService
 
 beforeAll(async () => {
   pool = new pg.Pool({ connectionString: TEST_DATABASE_URL, max: 2 })
@@ -43,6 +50,8 @@ beforeEach(async () => {
     enabled: true,
   })
   taskId = task.id
+  mockRunning = false
+  mockAbortCalled = false
   app = new Hono()
   app.route('/api/scheduler/price-collection', createSchedulerRoutes(mockService, execRepo, taskId))
 })
@@ -53,6 +62,30 @@ async function request(
 ): Promise<Response> {
   return app.request(path, { method })
 }
+
+// PRD-FEAT-009: Scheduler Execution Stop
+describe('POST /api/scheduler/price-collection/stop', () => {
+  it('returns 200 and calls abort when running', async () => {
+    mockRunning = true
+
+    const res = await request('POST', '/api/scheduler/price-collection/stop')
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.success).toBe(true)
+    expect(mockAbortCalled).toBe(true)
+  })
+
+  it('returns 409 when not running', async () => {
+    mockRunning = false
+
+    const res = await request('POST', '/api/scheduler/price-collection/stop')
+    expect(res.status).toBe(409)
+    const json = await res.json()
+    expect(json.success).toBe(false)
+    expect(json.error).toBe('No execution is currently running')
+    expect(mockAbortCalled).toBe(false)
+  })
+})
 
 describe('DELETE /api/scheduler/price-collection/executions/:id', () => {
   it('returns 200 and deletes a completed execution', async () => {

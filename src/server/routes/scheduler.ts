@@ -1,4 +1,5 @@
 // PRD-FEAT-005: Price History Scheduler
+// PRD-FEAT-009: Scheduler Execution Stop
 import { Hono } from 'hono'
 import type { PriceCollectorService } from '../scheduler/price-collector-service.js'
 import type { TaskExecutionRepository } from '../database/task-execution-repository.js'
@@ -37,6 +38,19 @@ export function createSchedulerRoutes(
       data: executions,
       error: null,
     })
+  })
+
+  // PRD-FEAT-009: Stop running execution
+  app.post('/stop', async (c) => {
+    if (!service.running) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'No execution is currently running' },
+        409,
+      )
+    }
+
+    service.abort()
+    return c.json<ApiResponse<null>>({ success: true, data: null, error: null })
   })
 
   // PRD-FEAT-008: Delete execution history record

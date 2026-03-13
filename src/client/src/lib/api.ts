@@ -141,6 +141,8 @@ export const api = {
         }
         return body.data as { readonly run_id: number }
       }),
+    stop: () =>
+      request<null>('/scheduler/price-collection/stop', { method: 'POST' }),
     deleteExecution: (id: number) =>
       request<null>(`/scheduler/price-collection/executions/${id}`, {
         method: 'DELETE',
