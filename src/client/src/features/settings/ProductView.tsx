@@ -11,7 +11,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { ProductTable } from './components/ProductTable'
 import { ProductFormModal } from './components/ProductFormModal'
 import { ProductDeleteModal } from './components/ProductDeleteModal'
-import { useProducts } from './use-products'
+import { useProducts, useLatestPrices } from './use-products'
 import type {
   Product,
   CreateProductPayload,
@@ -62,6 +62,7 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
     updateProduct,
     deleteProduct,
   } = useProducts()
+  const { priceMap } = useLatestPrices()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editProduct, setEditProduct] = useState<Product | undefined>()
@@ -243,6 +244,7 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
           ) : (
             <ProductTable
               products={filteredProducts}
+              priceMap={priceMap}
               onEdit={handleEdit}
               onDelete={setDeleteTarget}
               onDetail={(product) => navigate({ to: '/products/$id', params: { id: String(product.id) } })}

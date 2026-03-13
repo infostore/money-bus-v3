@@ -4,7 +4,7 @@ import { Hono } from 'hono'
 import { z } from 'zod/v4'
 import type { ProductRepository } from '../database/product-repository.js'
 import type { PriceHistoryRepository } from '../database/price-history-repository.js'
-import type { ApiResponse, PriceHistory, Product } from '../../shared/types.js'
+import type { ApiResponse, LatestPrice, PriceHistory, Product } from '../../shared/types.js'
 
 const ASSET_TYPES = ['주식', 'ETF', '펀드', '채권', '예적금', '암호화폐', '기타'] as const
 
@@ -95,6 +95,21 @@ export function createProductRoutes(
       error: null,
     })
   })
+
+  // Latest prices for all products (must be before /:id param route)
+  if (priceHistoryRepo) {
+    app.get('/latest-prices', async (c) => {
+      const priceMap = await priceHistoryRepo.findLatestPrices()
+      const data: readonly LatestPrice[] = Array.from(priceMap.entries()).map(
+        ([productId, { close, date }]) => ({ product_id: productId, close, date }),
+      )
+      return c.json<ApiResponse<readonly LatestPrice[]>>({
+        success: true,
+        data,
+        error: null,
+      })
+    })
+  }
 
   app.get('/:id', async (c) => {
     const id = parseInt(c.req.param('id'), 10)

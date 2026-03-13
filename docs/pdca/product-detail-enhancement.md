@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Product Detail Enhancement (종목 상세 페이지 고도화)
 related-prd: PRD-FEAT-011
-phase: plan
-status: not-started
+phase: do
+status: in-progress
 created: 2026-03-13
 updated: 2026-03-13
 tags: [pdca, product, detail, ohlcv, tabs]
@@ -47,6 +47,7 @@ tags: [pdca, product, detail, ohlcv, tabs]
 
 - **Progress Log**:
   - 2026-03-13: PDCA plan created
+  - 2026-03-13: Phase transition plan → do. Implementation started.
 
 ## Check
 

@@ -3,8 +3,17 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import type { Product } from '@shared/types'
 
+const KO_NUMBER_FORMAT = new Intl.NumberFormat('ko-KR')
+
+function formatPrice(value: string): string {
+  const num = Number(value)
+  if (isNaN(num)) return value
+  return KO_NUMBER_FORMAT.format(num)
+}
+
 interface ProductTableProps {
   readonly products: readonly Product[]
+  readonly priceMap?: ReadonlyMap<number, { readonly close: string; readonly date: string }>
   readonly onEdit: (product: Product) => void
   readonly onDelete: (product: Product) => void
   readonly onDetail?: (product: Product) => void
@@ -12,6 +21,7 @@ interface ProductTableProps {
 
 export function ProductTable({
   products,
+  priceMap,
   onEdit,
   onDelete,
   onDetail,
@@ -26,6 +36,7 @@ export function ProductTable({
             <th className="py-2 pr-3 text-right font-medium">유형</th>
             <th className="py-2 pr-3 text-right font-medium">통화</th>
             <th className="py-2 pr-3 text-right font-medium">시장</th>
+            <th className="py-2 pr-3 text-right font-medium">현재가</th>
             <th className="py-2 pl-3 text-right font-medium w-20" />
           </tr>
         </thead>
@@ -61,6 +72,11 @@ export function ProductTable({
               </td>
               <td className="py-2.5 pr-3 text-right text-surface-500">
                 {product.exchange ?? ''}
+              </td>
+              <td className="py-2.5 pr-3 text-right tabular-nums text-surface-300">
+                {priceMap?.get(product.id)
+                  ? formatPrice(priceMap.get(product.id)!.close)
+                  : ''}
               </td>
               <td className="py-2.5 pl-3 text-right">
                 <div className="flex items-center justify-end gap-1">

@@ -85,6 +85,19 @@ export class PriceHistoryRepository {
     return rows.map(toPriceHistory)
   }
 
+  async findLatestPrices(): Promise<ReadonlyMap<number, { close: string; date: string }>> {
+    const rows = await this.db.execute(sql`
+      SELECT DISTINCT ON (product_id) product_id, close, date
+      FROM price_history
+      ORDER BY product_id, date DESC
+    `)
+    const result = new Map<number, { close: string; date: string }>()
+    for (const row of (rows as unknown as { rows: Array<{ product_id: number; close: string; date: string }> }).rows) {
+      result.set(row.product_id, { close: row.close, date: row.date })
+    }
+    return result
+  }
+
   async findByProductId(productId: number): Promise<readonly PriceHistory[]> {
     const rows = await this.db
       .select()
