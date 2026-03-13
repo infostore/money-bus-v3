@@ -37,7 +37,7 @@ export function FamilyMemberTable({
               <td className="py-2.5 pr-3 text-surface-500">
                 {member.relationship}
               </td>
-              <td className="py-2.5 pr-3 text-right text-surface-500">
+              <td className="py-2.5 pr-3 text-right tabular-nums text-surface-500">
                 {member.birth_year ? `${member.birth_year}년` : ''}
               </td>
               <td className="py-2.5 pl-3 text-right">
