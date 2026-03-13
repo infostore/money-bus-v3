@@ -127,7 +127,7 @@ try {
   const etfTask = await scheduledTaskRepo.seedDefault({
     name: 'etf-component-collection-daily',
     cronExpression: '0 12 * * *',
-    enabled: false,
+    enabled: true,
   })
   etfSchedulerTaskId = etfTask.id
 

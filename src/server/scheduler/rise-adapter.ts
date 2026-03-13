@@ -3,6 +3,36 @@ import * as cheerio from 'cheerio'
 import type { EtfProfile } from '../../shared/types.js'
 import type { EtfComponentRow, EtfComponentAdapter } from './etf-component-adapter.js'
 
+const REQUEST_TIMEOUT = 30_000
+
+const COMMON_HEADERS: Record<string, string> = {
+  'User-Agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  Referer: 'https://www.riseetf.co.kr/',
+  'Accept-Language': 'ko-KR,ko;q=0.9',
+}
+
+function parseNumeric(value: string): number {
+  const cleaned = value.replace(/,/g, '').replace(/%/g, '').trim()
+  return Number(cleaned)
+}
+
+/**
+ * Convert ISIN code to 6-digit stock code.
+ * e.g. KR7005930003 → 005930
+ */
+function isinToCode(isin: string): string {
+  if (isin.startsWith('KR7') && isin.length >= 12) {
+    return isin.slice(3, 9)
+  }
+  return isin
+}
+
+/**
+ * Parse RISE HTML — uses `tr.top` selector.
+ * Cell mapping: cells[2]=code(ISIN), cells[3]=name, cells[4]=qty, cells[5]=weight
+ */
 export function parseRiseHtml(
   html: string,
   productId: number,
@@ -11,26 +41,25 @@ export function parseRiseHtml(
   const $ = cheerio.load(html)
   const rows: EtfComponentRow[] = []
 
-  $('table.component-table tbody tr').each((_i, el) => {
+  $('tr.top').each((_i, el) => {
     const cells = $(el).find('td')
-    if (cells.length < 4) return
+    if (cells.length < 7) return
 
-    const symbol = $(cells[0]).text().trim()
-    const name = $(cells[1]).text().trim()
-    const rawWeight = $(cells[2]).text().trim()
-    const rawShares = $(cells[3]).text().trim()
+    const rawCode = $(cells[2]).text().trim()
+    const code = isinToCode(rawCode)
+    const name = $(cells[3]).text().trim()
 
-    if (!symbol) return
+    if (!name || name === 'nan' || name.includes('합계')) return
 
-    const weightNum = parseFloat(rawWeight)
-    const sharesNum = parseInt(rawShares, 10)
+    const qty = parseNumeric($(cells[4]).text().trim())
+    const weight = parseNumeric($(cells[5]).text().trim())
 
     rows.push({
       etf_product_id: productId,
-      component_symbol: symbol,
+      component_symbol: code,
       component_name: name,
-      weight: !isNaN(weightNum) ? weightNum.toFixed(4) : null,
-      shares: !isNaN(sharesNum) ? sharesNum : null,
+      weight: !isNaN(weight) ? weight.toFixed(4) : null,
+      shares: !isNaN(qty) ? Math.floor(qty) : null,
       snapshot_date: snapshotDate,
     })
   })
@@ -40,14 +69,22 @@ export function parseRiseHtml(
 
 export class RiseAdapter implements EtfComponentAdapter {
   constructor(
-    private readonly fetchFn: (url: string) => Promise<Response> = globalThis.fetch,
+    private readonly fetchFn: (url: string, init?: RequestInit) => Promise<Response> = globalThis.fetch,
   ) {}
 
   async fetchComponents(
     profile: EtfProfile,
     snapshotDate: string,
   ): Promise<readonly EtfComponentRow[]> {
-    const response = await this.fetchFn(profile.download_url)
+    const targetUrl = profile.download_url.replace(
+      /searchDate=[\d-]*/,
+      `searchDate=${snapshotDate}`,
+    )
+
+    const response = await this.fetchFn(targetUrl, {
+      headers: COMMON_HEADERS,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT),
+    })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText ?? 'Failed'}`)
     }
