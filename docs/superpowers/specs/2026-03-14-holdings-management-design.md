@@ -12,21 +12,28 @@ Instead of storing holdings directly, we store buy/sell transactions and compute
 
 A single new table: `transactions`.
 
-```sql
-CREATE TABLE transactions (
-  id          SERIAL PRIMARY KEY,
-  account_id  INTEGER NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
-  product_id  INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-  type        TEXT NOT NULL CHECK (type IN ('buy', 'sell')),
-  shares      NUMERIC(18, 6) NOT NULL,
-  price       NUMERIC(18, 4) NOT NULL,
-  fee         NUMERIC(18, 4) NOT NULL DEFAULT 0,
-  tax         NUMERIC(18, 4) NOT NULL DEFAULT 0,
-  traded_at   DATE NOT NULL,
-  memo        TEXT DEFAULT '',
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+```typescript
+// Drizzle schema definition
+export const transactions = pgTable('transactions', {
+  id: serial('id').primaryKey(),
+  accountId: integer('account_id')
+    .notNull()
+    .references(() => accounts.id, { onDelete: 'restrict' }),
+  productId: integer('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'restrict' }),
+  type: text('type').notNull(),  // 'buy' | 'sell'
+  shares: numeric('shares', { precision: 18, scale: 6 }).notNull(),
+  price: numeric('price', { precision: 18, scale: 4 }).notNull(),
+  fee: numeric('fee', { precision: 18, scale: 4 }).notNull().default('0'),
+  tax: numeric('tax', { precision: 18, scale: 4 }).notNull().default('0'),
+  tradedAt: date('traded_at').notNull(),
+  memo: text('memo').default(''),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('transactions_account_product_date_idx').on(t.accountId, t.productId, t.tradedAt),
+])
 ```
 
 Key decisions:
@@ -34,6 +41,8 @@ Key decisions:
 - **`NUMERIC` precision** — matches v3's existing `priceHistory` pattern for financial data
 - **`ON DELETE RESTRICT`** — cannot delete an account or product that has transactions
 - **No unique constraint on (account_id, product_id)** — multiple transactions per pair is the whole point
+- **Composite index** on `(account_id, product_id, traded_at)` — optimizes the holdings computation query
+- **`updatedAt`** — set explicitly in repository `update()` method via `new Date()`, no DB trigger
 
 ### Holdings Computation (View-Based)
 
@@ -47,47 +56,123 @@ For a given (account_id, product_id) pair:
 ```
 For each transaction ordered by traded_at, id:
   if BUY:
-    total_cost = (held_shares * avg_cost) + (new_shares * price)
+    total_cost = (held_shares * avg_cost) + (new_shares * price + fee + tax)
     held_shares += new_shares
     avg_cost = total_cost / held_shares
   if SELL:
-    realized_pnl += (price - avg_cost) * sell_shares - fee - tax
+    realized_pnl += (price * sell_shares - fee - tax) - (avg_cost * sell_shares)
     held_shares -= sell_shares
     (avg_cost unchanged)
 ```
 
+**Fee/tax treatment:**
+- **Buy-side**: fees and taxes are added to cost basis (increases avg_cost)
+- **Sell-side**: fees and taxes are deducted from sale proceeds (reduces realized P&L)
+- This follows standard Korean brokerage practice
+
+**Edge cases:**
+- **Sell to zero then re-buy**: avg_cost resets to new buy price (correct — `0 * old_avg + new_shares * price`)
+- **Transaction edit causing negative shares**: validated on PUT — recompute holdings from all transactions; reject if any point in history goes negative
+
 This cannot be a simple SQL aggregation — it requires ordered sequential processing. The repository will fetch transactions ordered by (traded_at, id) and compute in TypeScript.
 
-### Computed Output Types
+### Shared Types
 
-**HoldingComputed** — per (account, product):
-- shares, avg_cost, market_value, cost_basis
-- unrealized_pnl, unrealized_pnl_percent
-- weight (% of filtered total)
+```typescript
+// Transaction entity
+export interface Transaction {
+  readonly id: number
+  readonly account_id: number
+  readonly product_id: number
+  readonly type: 'buy' | 'sell'
+  readonly shares: string       // NUMERIC as string (Drizzle convention)
+  readonly price: string
+  readonly fee: string
+  readonly tax: string
+  readonly traded_at: string    // DATE as ISO string
+  readonly memo: string
+  readonly created_at: string
+  readonly updated_at: string
+}
 
-**HoldingWithDetails** — enriched with joins:
-- product_name, asset_type, currency, exchange
-- current_price (latest from price_history), fx_rate
-- account_name, institution_name, family_member_name
+export interface CreateTransactionPayload {
+  readonly account_id: number
+  readonly product_id: number
+  readonly type: 'buy' | 'sell'
+  readonly shares: number
+  readonly price: number
+  readonly fee?: number
+  readonly tax?: number
+  readonly traded_at: string
+  readonly memo?: string
+}
 
-**RealizedPnlEntry** — per sell transaction:
-- traded_at, shares, sell_price, avg_cost_at_sell
-- gross_pnl, fee, tax, net_pnl
+export interface UpdateTransactionPayload {
+  readonly type?: 'buy' | 'sell'
+  readonly shares?: number
+  readonly price?: number
+  readonly fee?: number
+  readonly tax?: number
+  readonly traded_at?: string
+  readonly memo?: string
+}
+
+// Computed holdings (not stored)
+export interface HoldingWithDetails {
+  readonly account_id: number
+  readonly product_id: number
+  readonly product_name: string
+  readonly asset_type: string
+  readonly currency: string
+  readonly exchange: string | null
+  readonly shares: number
+  readonly avg_cost: number
+  readonly current_price: number
+  readonly fx_rate: number
+  readonly market_value: number       // shares * current_price * fx_rate
+  readonly cost_basis: number         // shares * avg_cost (already includes buy-side fees)
+  readonly unrealized_pnl: number     // market_value - cost_basis
+  readonly unrealized_pnl_percent: number
+  readonly weight: number             // % of total market_value across all filtered holdings
+  readonly account_name: string
+  readonly institution_name: string
+  readonly family_member_name: string
+}
+
+export interface RealizedPnlEntry {
+  readonly transaction_id: number
+  readonly traded_at: string
+  readonly product_id: number
+  readonly product_name: string
+  readonly shares: number
+  readonly sell_price: number
+  readonly avg_cost_at_sell: number
+  readonly gross_pnl: number          // (sell_price - avg_cost) * shares
+  readonly fee: number
+  readonly tax: number
+  readonly net_pnl: number            // gross_pnl - fee - tax
+}
+```
+
+**FX rate lookup:** FX products (e.g., USD/KRW) are stored as regular products in the `products` table with prices in `price_history`. The `HoldingService` identifies FX products by currency: for KRW holdings, `fx_rate = 1.0`; for USD holdings, look up the latest close price of the product with `code = 'FX:USDKRW'` from `price_history`. If no FX product exists, fall back to `1.0`.
+
+**Weight calculation:** `weight` = this holding's `market_value` / SUM of all `market_value` across the filtered result set (i.e., percentage by market value within the current filter context).
 
 ### API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/transactions` | List transactions (filter: account_id, product_id, type, date range) |
+| GET | `/api/transactions` | List transactions (query: ?account_id=&product_id=&type=&from=&to=) |
 | POST | `/api/transactions` | Create transaction |
 | PUT | `/api/transactions/:id` | Update transaction |
 | DELETE | `/api/transactions/:id` | Delete transaction |
 | GET | `/api/holdings` | Computed holdings with P&L (filter: account_id, family_member_id) |
-| GET | `/api/holdings/realized-pnl` | Realized P&L summary (filter: account_id, family_member_id, date range) |
+| GET | `/api/holdings/realized-pnl` | Realized P&L list (query: ?account_id=&family_member_id=&from=&to=) |
 
 **Validation rules:**
-- POST/PUT: shares > 0, price >= 0, fee >= 0, tax >= 0
+- POST/PUT: shares > 0, price > 0, fee >= 0, tax >= 0
 - Sell validation: cannot sell more shares than currently held (computed at time of request)
+- PUT validation: after edit, recompute all holdings for the (account, product) pair; reject if any point in transaction history results in negative shares
 
 ### Frontend
 
@@ -99,7 +184,7 @@ Layout:
 - Realized P&L section: 실현손익 요약 (total) + detail toggle
 - Transaction input: modal/dialog for adding buy/sell transactions
 
-Navigation: Add to existing sidebar under appropriate group.
+Navigation: Add to `assets` NAV_GROUP in `navigation.ts`, alongside portfolio/accounts/products. This is distinct from the existing `/portfolio` page (which is a summary dashboard) — `/holdings` shows individual position-level detail with transaction history.
 
 ### Architecture Layers
 
