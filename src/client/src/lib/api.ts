@@ -12,6 +12,9 @@ import type {
   AccountType,
   CreateAccountTypePayload,
   UpdateAccountTypePayload,
+  AccountWithDetails,
+  CreateAccountPayload,
+  UpdateAccountPayload,
   Product,
   CreateProductPayload,
   UpdateProductPayload,
@@ -98,6 +101,22 @@ export const api = {
       }),
     delete: (id: number) =>
       request<null>(`/account-types/${id}`, { method: 'DELETE' }),
+  },
+  // PRD-FEAT-010: Account Management
+  accounts: {
+    list: () => request<AccountWithDetails[]>('/accounts'),
+    create: (input: CreateAccountPayload) =>
+      request<AccountWithDetails>('/accounts', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    update: (id: number, input: UpdateAccountPayload) =>
+      request<AccountWithDetails>(`/accounts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    delete: (id: number) =>
+      request<null>(`/accounts/${id}`, { method: 'DELETE' }),
   },
   // PRD-FEAT-004: Product Management
   products: {
