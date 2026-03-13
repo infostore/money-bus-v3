@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: ETF Component Collection Scheduler
 related-prd: PRD-FEAT-012
-phase: plan
-status: not-started
+phase: do
+status: in-progress
 created: 2026-03-13
 updated: 2026-03-13
 tags: [pdca, scheduler, etf, components, samsung, timefolio, rise, batch]
@@ -99,6 +99,7 @@ tags: [pdca, scheduler, etf, components, samsung, timefolio, rise, batch]
 
 - **Progress Log**:
   - 2026-03-13: PDCA plan created. Implementation not started.
+  - 2026-03-13: Waves 0-7 complete. All 347 tests passing (28 test files). Wave 8 (real URLs + verification) pending.
 
 ## Check
 
