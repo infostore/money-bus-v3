@@ -4,7 +4,7 @@ prd-id: PRD-FEAT-013
 prd-type: feature
 title: ETF Component UI (ETF 구성종목 UI)
 status: approved
-implementation-status: not-started
+implementation-status: completed
 created: 2026-03-13
 updated: 2026-03-13
 author: -

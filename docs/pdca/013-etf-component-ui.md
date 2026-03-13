@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: ETF Component UI
 related-prd: PRD-FEAT-013
-phase: do
-status: in-progress
+phase: act
+status: completed
 created: 2026-03-13
 updated: 2026-03-13
 tags: [pdca, etf, components, holdings, scheduler, ui, frontend]
@@ -65,19 +65,26 @@ tags: [pdca, etf, components, holdings, scheduler, ui, frontend]
 
 - **Progress Log**:
   - 2026-03-13: PDCA plan created.
+  - 2026-03-13: All 7 waves implemented. TypeScript clean, 347 tests passing.
 
 ## Check
 
 - **Results**:
-  - (to be filled after implementation)
+  - All waves implemented in single pass — frontend only, no backend changes needed
+  - TypeScript compilation clean
+  - 347 tests passing (no regressions)
+  - Holdings tab conditionally shown only for ETF products via `asset_type` check
 
 - **Evidence**:
-  - (to be filled after implementation)
+  - `npx tsc --noEmit` passes
+  - `npx vitest run` — 28 test files, 347 tests passed
 
 ## Act
 
 - **Learnings**:
-  1. (to be filled after implementation)
+  1. Reusing existing SchedulerPage pattern for ETF scheduler page was very efficient — minimal new code
+  2. Tab schema expansion with Zod enum (`chart | table | holdings`) maintains type safety across routes
+  3. Conditional tab rendering via `asset_type` check is simple and reliable
 
 - **Next Actions**:
   1. Wave 8 of PRD-FEAT-012: Populate real ETF profile seeds and verify end-to-end
