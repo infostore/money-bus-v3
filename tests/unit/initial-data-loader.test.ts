@@ -18,30 +18,29 @@ let db: ReturnType<typeof drizzle>
 function createTestSqlite(): InstanceType<typeof Database> {
   if (existsSync(TEST_SQLITE_PATH)) unlinkSync(TEST_SQLITE_PATH)
   const slDb = new Database(TEST_SQLITE_PATH)
-  slDb.exec(`
-    CREATE TABLE institutions (
-      name TEXT PRIMARY KEY,
-      category TEXT NOT NULL DEFAULT '증권',
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-    CREATE TABLE account_types (
-      name TEXT PRIMARY KEY,
-      short_code TEXT,
-      tax_treatment TEXT NOT NULL DEFAULT '일반',
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-    CREATE TABLE products (
-      name TEXT PRIMARY KEY,
-      code TEXT,
-      asset_type TEXT NOT NULL DEFAULT '기타',
-      currency TEXT NOT NULL DEFAULT 'KRW',
-      exchange TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-  `)
+  slDb.pragma('journal_mode = WAL')
+  slDb.prepare(`CREATE TABLE family_members (
+    name TEXT PRIMARY KEY, relationship TEXT NOT NULL DEFAULT '본인',
+    birth_year INTEGER, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+  )`).run()
+  slDb.prepare(`CREATE TABLE institutions (
+    name TEXT PRIMARY KEY, category TEXT NOT NULL DEFAULT '증권',
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+  )`).run()
+  slDb.prepare(`CREATE TABLE account_types (
+    name TEXT PRIMARY KEY, short_code TEXT, tax_treatment TEXT NOT NULL DEFAULT '일반',
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+  )`).run()
+  slDb.prepare(`CREATE TABLE accounts (
+    account_name TEXT PRIMARY KEY, account_number TEXT,
+    family_member_id INTEGER NOT NULL, institution_id INTEGER NOT NULL,
+    account_type_id INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+  )`).run()
+  slDb.prepare(`CREATE TABLE products (
+    name TEXT PRIMARY KEY, code TEXT, asset_type TEXT NOT NULL DEFAULT '기타',
+    currency TEXT NOT NULL DEFAULT 'KRW', exchange TEXT,
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+  )`).run()
   return slDb
 }
 
@@ -57,6 +56,8 @@ afterAll(async () => {
 })
 
 beforeEach(async () => {
+  await db.execute(sql`TRUNCATE TABLE accounts RESTART IDENTITY CASCADE`)
+  await db.execute(sql`TRUNCATE TABLE family_members RESTART IDENTITY CASCADE`)
   await db.execute(sql`TRUNCATE TABLE institutions RESTART IDENTITY CASCADE`)
   await db.execute(sql`TRUNCATE TABLE account_types RESTART IDENTITY CASCADE`)
   await db.execute(sql`TRUNCATE TABLE products RESTART IDENTITY CASCADE`)

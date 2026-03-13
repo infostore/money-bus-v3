@@ -66,13 +66,13 @@ const accountRepo = new AccountRepository(db)
 // PRD-FEAT-006: Bidirectional sync with initial data SQLite file
 try {
   const result = await syncInitialData(db, './data/initial.db')
-  const { institutions: inst, accountTypes: at, products: prod } = result
-  const totalChanges = inst.pgInserted + inst.pgUpdated + inst.sqliteInserted + inst.sqliteUpdated
-    + at.pgInserted + at.pgUpdated + at.sqliteInserted + at.sqliteUpdated
-    + prod.pgInserted + prod.pgUpdated + prod.sqliteInserted + prod.sqliteUpdated
+  const { familyMembers: fm, institutions: inst, accountTypes: at, accounts: acc, products: prod } = result
+  const tables = [fm, inst, at, acc, prod]
+  const totalChanges = tables.reduce((sum, t) => sum + t.pgInserted + t.pgUpdated + t.sqliteInserted + t.sqliteUpdated, 0)
 
   if (totalChanges > 0) {
-    log('info', `Initial data sync completed: institutions(pg+${inst.pgInserted}/↑${inst.pgUpdated}, sl+${inst.sqliteInserted}/↑${inst.sqliteUpdated}), account_types(pg+${at.pgInserted}/↑${at.pgUpdated}, sl+${at.sqliteInserted}/↑${at.sqliteUpdated}), products(pg+${prod.pgInserted}/↑${prod.pgUpdated}, sl+${prod.sqliteInserted}/↑${prod.sqliteUpdated})`)
+    const fmt = (label: string, t: typeof fm) => `${label}(pg+${t.pgInserted}/↑${t.pgUpdated}, sl+${t.sqliteInserted}/↑${t.sqliteUpdated})`
+    log('info', `Initial data sync completed: ${fmt('family_members', fm)}, ${fmt('institutions', inst)}, ${fmt('account_types', at)}, ${fmt('accounts', acc)}, ${fmt('products', prod)}`)
   } else {
     log('info', 'Initial data sync: already in sync')
   }
