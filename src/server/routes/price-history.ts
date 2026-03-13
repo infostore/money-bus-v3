@@ -6,6 +6,12 @@ import type { ApiResponse, PriceHistory } from '../../shared/types.js'
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
 
+function isValidDate(s: string): boolean {
+  if (!DATE_REGEX.test(s)) return false
+  const d = new Date(s + 'T00:00:00Z')
+  return !isNaN(d.getTime())
+}
+
 export function createPriceHistoryRoutes(
   priceHistoryRepo: PriceHistoryRepository,
   productRepo: ProductRepository,
@@ -34,16 +40,23 @@ export function createPriceHistoryRoutes(
     const from = c.req.query('from')
     const to = c.req.query('to')
 
-    if (from && !DATE_REGEX.test(from)) {
+    if (from && !isValidDate(from)) {
       return c.json<ApiResponse<null>>(
         { success: false, data: null, error: '날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)' },
         400,
       )
     }
 
-    if (to && !DATE_REGEX.test(to)) {
+    if (to && !isValidDate(to)) {
       return c.json<ApiResponse<null>>(
         { success: false, data: null, error: '날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)' },
+        400,
+      )
+    }
+
+    if (from && to && from > to) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: '시작일은 종료일보다 이전이어야 합니다.' },
         400,
       )
     }
