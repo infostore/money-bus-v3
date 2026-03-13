@@ -101,7 +101,7 @@ export function EtfSchedulerPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">ETF 구성종목 수집 스케줄러</h1>
           <p className="mt-1 text-sm text-surface-500">
-            ETF 구성종목 데이터 수집 · 최근 10건 실행 이력
+            매일 21:00 KST 자동 실행 · 최근 10건 실행 이력
           </p>
         </div>
         <div className="flex items-center gap-2">
