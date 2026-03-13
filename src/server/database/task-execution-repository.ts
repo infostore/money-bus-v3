@@ -60,6 +60,26 @@ export class TaskExecutionRepository {
     return rows[0] ? toTaskExecution(rows[0]) : undefined
   }
 
+  // PRD-FEAT-008: Find single execution by PK
+  async findById(id: number): Promise<TaskExecution | undefined> {
+    const rows = await this.db
+      .select()
+      .from(taskExecutions)
+      .where(eq(taskExecutions.id, id))
+
+    return rows[0] ? toTaskExecution(rows[0]) : undefined
+  }
+
+  // PRD-FEAT-008: Delete execution by PK
+  async delete(id: number): Promise<boolean> {
+    const rows = await this.db
+      .delete(taskExecutions)
+      .where(eq(taskExecutions.id, id))
+      .returning({ id: taskExecutions.id })
+
+    return rows.length > 0
+  }
+
   async findRecentByTaskId(
     taskId: number,
     limit: number = DEFAULT_LIMIT,
