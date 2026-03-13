@@ -27,6 +27,7 @@ const ASSET_TYPE_FILTERS = [
 const STORAGE_KEY_ASSET_TYPE = 'product-filter-asset-type'
 const STORAGE_KEY_EXCHANGE = 'product-filter-exchange'
 const STORAGE_KEY_ETF_BRAND = 'product-filter-etf-brand'
+const STORAGE_KEY_CURRENCY = 'product-filter-currency'
 
 function extractEtfBrand(name: string): string {
   return name.split(' ')[0] ?? ''
@@ -76,6 +77,9 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
   const [etfBrandFilter, setEtfBrandFilter] = useState<string>(
     () => loadFilter(STORAGE_KEY_ETF_BRAND, '전체'),
   )
+  const [currencyFilter, setCurrencyFilter] = useState<string>(
+    () => loadFilter(STORAGE_KEY_CURRENCY, '전체'),
+  )
 
   const handleAssetTypeChange = useCallback((value: string) => {
     setAssetTypeFilter(value)
@@ -83,6 +87,10 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
     if (value !== 'ETF') {
       setEtfBrandFilter('전체')
       saveFilter(STORAGE_KEY_ETF_BRAND, '전체')
+    }
+    if (value !== '주식') {
+      setCurrencyFilter('전체')
+      saveFilter(STORAGE_KEY_CURRENCY, '전체')
     }
   }, [])
 
@@ -96,6 +104,11 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
     saveFilter(STORAGE_KEY_ETF_BRAND, value)
   }, [])
 
+  const handleCurrencyChange = useCallback((value: string) => {
+    setCurrencyFilter(value)
+    saveFilter(STORAGE_KEY_CURRENCY, value)
+  }, [])
+
   const etfBrandOptions = useMemo(() => {
     const brands = new Map<string, number>()
     for (const p of products) {
@@ -107,6 +120,15 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }))
     return sorted
+  }, [products])
+
+  const currencyOptions = useMemo(() => {
+    const currencies = new Set(
+      products
+        .filter((p) => p.asset_type === '주식')
+        .map((p) => p.currency),
+    )
+    return ['전체', ...Array.from(currencies).sort()] as const
   }, [products])
 
   const exchangeOptions = useMemo(() => {
@@ -129,9 +151,12 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
       if (assetTypeFilter === 'ETF') {
         if (etfBrandFilter !== '전체' && extractEtfBrand(p.name) !== etfBrandFilter) return false
       }
+      if (assetTypeFilter === '주식') {
+        if (currencyFilter !== '전체' && p.currency !== currencyFilter) return false
+      }
       return true
     })
-  }, [products, assetTypeFilter, exchangeFilter, etfBrandFilter])
+  }, [products, assetTypeFilter, exchangeFilter, etfBrandFilter, currencyFilter])
 
   const handleEdit = (product: Product) => {
     setEditProduct(product)
@@ -190,6 +215,20 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
             </option>
           ))}
         </Select>
+        {assetTypeFilter === '주식' && (
+          <Select
+            value={currencyFilter}
+            onChange={(e) => handleCurrencyChange(e.target.value)}
+            className="h-8 w-36 py-1 text-sm"
+            aria-label="통화 필터"
+          >
+            {currencyOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt === '전체' ? '전체 통화' : opt}
+              </option>
+            ))}
+          </Select>
+        )}
         {assetTypeFilter === 'ETF' && (
           <>
             <Select
