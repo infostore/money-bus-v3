@@ -92,7 +92,7 @@ export class PriceCollectorService {
 
     // Set total count so UI shows progress immediately
     counters.total = naverProducts.length + yahooProducts.length
-    await this.taskExecutionRepo.updateProgress(execution.id, counters)
+    await this.updateExecutionProgress(execution.id, counters)
 
     const naverFetch: AdapterFetchFn = (p, r) => this.naverAdapter.fetchPrices(
       p.code!, p.id, formatDateYYYYMMDD(r.startDate), formatDateYYYYMMDD(r.endDate),
@@ -176,7 +176,7 @@ export class PriceCollectorService {
   ): Promise<void> {
     for (const product of batch) {
       await this.processOneProduct(product, fetchFn, counters)
-      await this.taskExecutionRepo.updateProgress(executionId, counters)
+      await this.updateExecutionProgress(executionId, counters)
     }
   }
 
@@ -216,6 +216,18 @@ export class PriceCollectorService {
     }
 
     return { startDate, endDate }
+  }
+
+  private async updateExecutionProgress(
+    executionId: number,
+    counters: CollectionCounters,
+  ): Promise<void> {
+    await this.taskExecutionRepo.updateProgress(executionId, {
+      productsTotal: counters.total,
+      productsSucceeded: counters.succeeded,
+      productsFailed: counters.failed,
+      productsSkipped: counters.skipped,
+    })
   }
 
   private determineStatus(
