@@ -155,6 +155,7 @@ export interface AccountWithDetails {
   readonly institution_name: string
   readonly account_type_id: number
   readonly account_type_name: string
+  readonly account_type_short_code: string | null
   readonly created_at: string
   readonly updated_at: string
 }

@@ -26,6 +26,7 @@ export class AccountRepository {
         institutionName: institutions.name,
         accountTypeId: accounts.accountTypeId,
         accountTypeName: accountTypes.name,
+        accountTypeShortCode: accountTypes.shortCode,
         createdAt: accounts.createdAt,
         updatedAt: accounts.updatedAt,
       })
@@ -50,6 +51,7 @@ export class AccountRepository {
         institutionName: institutions.name,
         accountTypeId: accounts.accountTypeId,
         accountTypeName: accountTypes.name,
+        accountTypeShortCode: accountTypes.shortCode,
         createdAt: accounts.createdAt,
         updatedAt: accounts.updatedAt,
       })
@@ -130,6 +132,7 @@ interface JoinedAccountRow {
   readonly institutionName: string
   readonly accountTypeId: number
   readonly accountTypeName: string
+  readonly accountTypeShortCode: string | null
   readonly createdAt: Date
   readonly updatedAt: Date
 }
@@ -145,6 +148,7 @@ function toAccountWithDetails(row: JoinedAccountRow): AccountWithDetails {
     institution_name: row.institutionName,
     account_type_id: row.accountTypeId,
     account_type_name: row.accountTypeName,
+    account_type_short_code: row.accountTypeShortCode,
     created_at: row.createdAt.toISOString(),
     updated_at: row.updatedAt.toISOString(),
   }
