@@ -1,4 +1,4 @@
-// PRD-FEAT-007 + PRD-FEAT-011: ETF Detail Page with Tabs
+// PRD-FEAT-007 + PRD-FEAT-011 + PRD-FEAT-013: ETF Detail Page with Tabs
 import { useState } from 'react'
 import { useNavigate, getRouteApi } from '@tanstack/react-router'
 import { cn } from '../../lib/utils'
@@ -10,14 +10,17 @@ import { ProductDetailHeader } from './components/ProductDetailHeader'
 import { PriceSummaryCard } from './components/PriceSummaryCard'
 import { PriceHistoryChart } from './components/PriceHistoryChart'
 import { PriceDataTab } from './components/PriceDataTab'
+import { EtfHoldingsTab } from './components/EtfHoldingsTab'
 import type { RangeKey } from './price-history-utils'
 
-type TabKey = 'chart' | 'table'
+type TabKey = 'chart' | 'table' | 'holdings'
 
-const TAB_OPTIONS: readonly { readonly key: TabKey; readonly label: string }[] = [
+const BASE_TAB_OPTIONS: readonly { readonly key: TabKey; readonly label: string }[] = [
   { key: 'chart', label: '가격 차트' },
   { key: 'table', label: '가격 데이터' },
 ] as const
+
+const HOLDINGS_TAB = { key: 'holdings' as const, label: '구성종목' }
 
 const routeApi = getRouteApi('/products/$id')
 
@@ -132,6 +135,11 @@ function ProductDetailContent({
     )
   }
 
+  const isEtf = product.asset_type.toLowerCase().includes('etf')
+  const tabOptions = isEtf
+    ? [...BASE_TAB_OPTIONS, HOLDINGS_TAB]
+    : [...BASE_TAB_OPTIONS]
+
   return (
     <div className="mx-auto space-y-6 p-6">
       <ProductDetailHeader product={product} />
@@ -140,7 +148,7 @@ function ProductDetailContent({
         currency={product.currency}
       />
       <div className="flex gap-1">
-        {TAB_OPTIONS.map((opt) => (
+        {tabOptions.map((opt) => (
           <Button
             key={opt.key}
             variant={tab === opt.key ? 'primary' : 'ghost'}
@@ -162,6 +170,8 @@ function ProductDetailContent({
           onRangeChange={onRangeChange}
           currency={product.currency}
         />
+      ) : tab === 'holdings' && isEtf ? (
+        <EtfHoldingsTab productId={id} />
       ) : (
         <PriceDataTab
           priceHistory={priceHistory}

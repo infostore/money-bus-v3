@@ -20,6 +20,7 @@ import type {
   UpdateProductPayload,
   PriceHistory,
   TaskExecution,
+  EtfComponent,
 } from '@shared/types'
 
 const BASE_URL = '/api'
@@ -166,6 +167,35 @@ export const api = {
       request<null>(`/scheduler/price-collection/executions/${id}`, {
         method: 'DELETE',
       }),
+  },
+  // PRD-FEAT-013: ETF Component UI
+  etfComponents: {
+    getDates: (productId: number) =>
+      request<string[]>(`/etf-components/dates?productId=${productId}`),
+    getByDate: (productId: number, snapshotDate: string) =>
+      request<EtfComponent[]>(
+        `/etf-components?productId=${productId}&snapshotDate=${snapshotDate}`,
+      ),
+  },
+  // PRD-FEAT-013: ETF Component UI
+  etfScheduler: {
+    status: () => request<TaskExecution[]>('/scheduler/etf-components/status'),
+    run: () =>
+      fetch(`${BASE_URL}/scheduler/etf-components/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).then(async (res) => {
+        const body = await res.json()
+        if (res.status === 409) {
+          throw new Error(body.error ?? '이미 실행 중입니다')
+        }
+        if (!body.success) {
+          throw new Error(body.error ?? 'Unknown error')
+        }
+        return body.data as { readonly run_id: number }
+      }),
+    stop: () =>
+      request<null>('/scheduler/etf-components/stop', { method: 'POST' }),
   },
   settings: {
     getAll: () => request<Record<string, string>>('/settings'),

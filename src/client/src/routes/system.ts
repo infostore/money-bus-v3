@@ -9,10 +9,24 @@ const SchedulerPage = lazy(() =>
   })),
 )
 
+// PRD-FEAT-013: ETF Component UI
+const EtfSchedulerPage = lazy(() =>
+  import('../features/scheduler/EtfSchedulerPage').then((m) => ({
+    default: m.EtfSchedulerPage,
+  })),
+)
+
 export const priceCollectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/scheduler/price-collection',
   component: SchedulerPage,
+})
+
+// PRD-FEAT-013: ETF Component UI
+export const etfComponentsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/scheduler/etf-components',
+  component: EtfSchedulerPage,
 })
 
 export const helpRoute = createRoute({
@@ -21,4 +35,4 @@ export const helpRoute = createRoute({
   component: ComingSoon,
 })
 
-export const systemRoutes = [priceCollectionRoute, helpRoute] as const
+export const systemRoutes = [priceCollectionRoute, etfComponentsRoute, helpRoute] as const
