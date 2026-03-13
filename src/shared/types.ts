@@ -197,3 +197,37 @@ export interface UpdateAccountTypePayload {
   readonly short_code?: string | null
   readonly tax_treatment?: string
 }
+
+// PRD-FEAT-012: ETF Component Collection Scheduler
+export type EtfManager = 'samsung-active' | 'timefolio' | 'rise'
+
+export interface EtfProfile {
+  readonly id: number
+  readonly product_id: number
+  readonly manager: EtfManager
+  readonly expense_ratio: string | null
+  readonly download_url: string
+  readonly download_type: 'xls' | 'html'
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+export interface EtfComponent {
+  readonly id: number
+  readonly etf_product_id: number
+  readonly component_symbol: string
+  readonly component_name: string
+  readonly weight: string | null
+  readonly shares: number | null
+  readonly snapshot_date: string
+  readonly created_at: string
+}
+
+export interface CreateEtfComponentPayload {
+  readonly etf_product_id: number
+  readonly component_symbol: string
+  readonly component_name: string
+  readonly weight?: string | null
+  readonly shares?: number | null
+  readonly snapshot_date: string
+}
