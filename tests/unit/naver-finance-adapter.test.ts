@@ -83,6 +83,7 @@ describe('NaverFinanceAdapter', () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       'https://api.finance.naver.com/siseJson.naver?symbol=005930&requestType=1&startTime=20260310&endTime=20260312&timeframe=day',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
   })
 
@@ -108,5 +109,37 @@ describe('NaverFinanceAdapter', () => {
     const rows = await adapter.fetchPrices('005930', 1, '20260310', '20260312')
 
     expect(rows).toEqual([])
+  })
+
+  // PRD-FEAT-009 v1.1: Abort signal & timeout support
+  it('passes abort signal to fetch', async () => {
+    const mockFetch = vi.fn().mockResolvedValue(
+      new Response(FIXTURE_TEXT, { status: 200 }),
+    )
+    const adapter = new NaverFinanceAdapter(mockFetch)
+    const controller = new AbortController()
+
+    await adapter.fetchPrices('005930', 1, '20260310', '20260312', controller.signal)
+
+    const callArgs = mockFetch.mock.calls[0]!
+    const fetchOptions = callArgs[1] as RequestInit
+    expect(fetchOptions.signal).toBeDefined()
+    expect(fetchOptions.signal!.aborted).toBe(false)
+  })
+
+  it('throws when abort signal is already aborted', async () => {
+    const mockFetch = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
+      if (init?.signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError')
+      }
+      return new Response(FIXTURE_TEXT, { status: 200 })
+    })
+    const adapter = new NaverFinanceAdapter(mockFetch)
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(
+      adapter.fetchPrices('005930', 1, '20260310', '20260312', controller.signal),
+    ).rejects.toThrow()
   })
 })

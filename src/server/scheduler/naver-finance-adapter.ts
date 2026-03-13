@@ -68,9 +68,11 @@ export function parseNaverResponse(
   }))
 }
 
+const FETCH_TIMEOUT_MS = parseInt(process.env['PRICE_FETCH_TIMEOUT_MS'] ?? '30000', 10)
+
 export class NaverFinanceAdapter {
   constructor(
-    private readonly fetchFn: (url: string) => Promise<Response> = globalThis.fetch,
+    private readonly fetchFn: (url: string, init?: RequestInit) => Promise<Response> = globalThis.fetch,
   ) {}
 
   /**
@@ -79,6 +81,7 @@ export class NaverFinanceAdapter {
    * @param productId - Product ID for PriceRow mapping
    * @param startDate - Start date YYYYMMDD
    * @param endDate - End date YYYYMMDD
+   * @param signal - Optional AbortSignal for cancellation
    * @returns Array of PriceRow
    */
   async fetchPrices(
@@ -86,9 +89,14 @@ export class NaverFinanceAdapter {
     productId: number,
     startDate: string,
     endDate: string,
+    signal?: AbortSignal,
   ): Promise<readonly PriceRow[]> {
     const url = `${NAVER_SISE_BASE_URL}?symbol=${code}&requestType=1&startTime=${startDate}&endTime=${endDate}&timeframe=day`
-    const response = await this.fetchFn(url)
+    const timeoutSignal = AbortSignal.timeout(FETCH_TIMEOUT_MS)
+    const combinedSignal = signal
+      ? AbortSignal.any([signal, timeoutSignal])
+      : timeoutSignal
+    const response = await this.fetchFn(url, { signal: combinedSignal })
     const text = await response.text()
 
     return parseNaverResponse(text, productId)
