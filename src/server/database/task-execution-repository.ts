@@ -12,7 +12,7 @@ interface CreateExecutionInput {
   readonly startedAt: Date
 }
 
-interface ProgressUpdate {
+export interface ProgressUpdate {
   readonly productsTotal: number
   readonly productsSucceeded: number
   readonly productsFailed: number
