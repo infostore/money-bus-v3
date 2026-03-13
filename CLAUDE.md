@@ -125,11 +125,16 @@ See `.claude/rules/prd-pdca-policy.md` for the full policy.
 ## COMMANDS
 
 ```bash
-# Development (Docker)
+# Development (Local — recommended)
+npm run db:up               # Start PostgreSQL only (Docker)
+npm run db:down             # Stop PostgreSQL
+npm run dev                 # Start server + client (local)
+
+# Development (Full Docker)
 npm run docker:dev          # Start dev environment
 npm run docker:dev:down     # Stop dev environment
 
-# Development (Local)
+# Development (Local — legacy)
 npm run dev                 # Start server + client
 
 # Production (Docker)
