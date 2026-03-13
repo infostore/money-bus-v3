@@ -21,7 +21,7 @@ export function useScheduler() {
   })
 
   const runMutation = useMutation({
-    mutationFn: () => api.scheduler.run(),
+    mutationFn: (from: string | undefined) => api.scheduler.run(from),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: SCHEDULER_KEY }),
   })
@@ -49,8 +49,8 @@ export function useScheduler() {
     loading,
     error,
     isRunning,
-    triggerRun: async () => {
-      await runMutation.mutateAsync()
+    triggerRun: async (from?: string) => {
+      await runMutation.mutateAsync(from)
     },
     runError: runMutation.error instanceof Error ? runMutation.error.message : null,
     stopRun: async () => {

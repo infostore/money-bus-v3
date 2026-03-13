@@ -149,10 +149,11 @@ export const api = {
   // PRD-FEAT-008: Scheduler Execution History Delete
   scheduler: {
     status: () => request<TaskExecution[]>('/scheduler/price-collection/status'),
-    run: () =>
+    run: (from?: string) =>
       fetch(`${BASE_URL}/scheduler/price-collection/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: from ? JSON.stringify({ from }) : undefined,
       }).then(async (res) => {
         const body = await res.json()
         if (res.status === 409) {

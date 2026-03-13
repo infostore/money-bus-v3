@@ -73,7 +73,7 @@ export class PriceCollectorService {
     this.abortController?.abort()
   }
 
-  async run(): Promise<TaskExecution> {
+  async run(fromDate?: string): Promise<TaskExecution> {
     if (this.isRunning) {
       throw new Error('Collection is already running')
     }
@@ -81,14 +81,14 @@ export class PriceCollectorService {
     this.abortController = new AbortController()
     this.isRunning = true
     try {
-      return await this.executeCollection(this.abortController.signal)
+      return await this.executeCollection(this.abortController.signal, fromDate)
     } finally {
       this.isRunning = false
       this.abortController = null
     }
   }
 
-  private async executeCollection(signal: AbortSignal): Promise<TaskExecution> {
+  private async executeCollection(signal: AbortSignal, fromDate?: string): Promise<TaskExecution> {
     const execution = await this.taskExecutionRepo.create({
       taskId: this.taskId,
       startedAt: new Date(),
@@ -110,8 +110,8 @@ export class PriceCollectorService {
     )
 
     const aborted =
-      await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_DELAY_MS, counters, signal) ||
-      await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_DELAY_MS, counters, signal)
+      await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_DELAY_MS, counters, signal, fromDate) ||
+      await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_DELAY_MS, counters, signal, fromDate)
 
     const status = aborted ? 'aborted' : this.determineStatus(counters)
     const message = aborted ? '사용자 요청으로 중지됨' : null
@@ -168,12 +168,13 @@ export class PriceCollectorService {
     delayMs: number,
     counters: CollectionCounters,
     signal: AbortSignal,
+    fromDate?: string,
   ): Promise<boolean> {
     for (let i = 0; i < products.length; i += batchSize) {
       if (signal.aborted) return true
 
       const batch = products.slice(i, i + batchSize)
-      const batchAborted = await this.processBatch(executionId, batch, fetchFn, counters, signal)
+      const batchAborted = await this.processBatch(executionId, batch, fetchFn, counters, signal, fromDate)
       if (batchAborted) return true
 
       const isLastBatch = i + batchSize >= products.length
@@ -191,11 +192,12 @@ export class PriceCollectorService {
     fetchFn: AdapterFetchFn,
     counters: CollectionCounters,
     signal: AbortSignal,
+    fromDate?: string,
   ): Promise<boolean> {
     for (const product of batch) {
       if (signal.aborted) return true
       try {
-        await this.processOneProduct(product, fetchFn, counters, signal)
+        await this.processOneProduct(product, fetchFn, counters, signal, fromDate)
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return true
@@ -212,8 +214,9 @@ export class PriceCollectorService {
     fetchFn: AdapterFetchFn,
     counters: CollectionCounters,
     signal?: AbortSignal,
+    fromDate?: string,
   ): Promise<void> {
-    const dateRange = await this.calculateDateRange(product.id)
+    const dateRange = await this.calculateDateRange(product.id, fromDate)
 
     if (dateRange === null) {
       counters.skipped++
@@ -237,13 +240,18 @@ export class PriceCollectorService {
     }
   }
 
-  private async calculateDateRange(productId: number): Promise<DateRange | null> {
-    const lastDate = await this.priceHistoryRepo.findLastDate(productId)
+  private async calculateDateRange(productId: number, fromDate?: string): Promise<DateRange | null> {
     const endDate = startOfDay(new Date())
 
-    const startDate = lastDate !== undefined
-      ? addDays(lastDate, 1)
-      : new Date(endDate.getTime() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000)
+    let startDate: Date
+    if (fromDate) {
+      startDate = new Date(`${fromDate}T00:00:00.000Z`)
+    } else {
+      const lastDate = await this.priceHistoryRepo.findLastDate(productId)
+      startDate = lastDate !== undefined
+        ? addDays(lastDate, 1)
+        : new Date(endDate.getTime() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000)
+    }
 
     if (startDate > endDate) {
       return null
