@@ -45,7 +45,7 @@ export function AccountTable({
               {account.institution_name}
             </span>
             <span className="text-xs text-surface-500 truncate">
-              {account.account_type_name}
+              {account.account_type_short_code ?? account.account_type_name}
             </span>
           </div>
           <div className="flex items-center gap-1">
