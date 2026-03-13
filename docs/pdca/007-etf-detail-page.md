@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: ETF Detail Page
 related-prd: PRD-FEAT-007
-phase: check
-status: in-progress
+phase: act
+status: completed
 created: 2026-03-13
 updated: 2026-03-13
 
@@ -83,6 +83,7 @@ tags: [pdca, etf, product, detail, price-history, chart, recharts]
   - 2026-03-13: PDCA plan created
   - 2026-03-13: Phase transition plan → do. Implementation started.
   - 2026-03-13: All 7 waves implemented. Phase transition do → check. Verification started.
+  - 2026-03-13: Code review + security review completed. 7 findings fixed. Phase transition check → act. PDCA cycle complete.
 
 ## Check
 
@@ -101,7 +102,12 @@ tags: [pdca, etf, product, detail, price-history, chart, recharts]
 ## Act
 
 - **Learnings**:
-  1. [To be filled after implementation]
+  1. Mounting two Hono apps on the same prefix (`/api/products`) creates a fragile ordering dependency. Sub-resource routes (e.g., `/:id/price-history`) belong inside the owning domain's factory function.
+  2. `toISOString().split('T')[0]` produces UTC dates, which can be off-by-one for KST (UTC+9) users. Use local date components (`getFullYear/getMonth/getDate`) for user-facing date calculations.
+  3. Hardcoded hex values in chart components drift from design tokens silently. Extract to named constants in `design-tokens.ts` immediately.
+  4. `summaryQuery` (always-1Y for 52W stats) needs its own loading guard to avoid a flicker where the summary card briefly shows "no data" before the 1Y query resolves.
 
 - **Next Actions**:
-  1. [To be filled after implementation]
+  1. Follow-up PRD: Candlestick (OHLCV) chart as an alternative visualization mode
+  2. Follow-up PRD: Pagination for `전체` range when datasets grow large
+  3. Consider adding `CHART_TOOLTIP_STYLE` and `CHART_GRID_STROKE` to the design-tokens reference doc

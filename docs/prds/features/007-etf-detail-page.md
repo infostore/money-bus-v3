@@ -4,7 +4,7 @@ prd-id: PRD-FEAT-007
 prd-type: feature
 title: ETF Detail Page (ETF 상세 페이지)
 status: approved
-implementation-status: not-started
+implementation-status: completed
 created: 2026-03-13
 updated: 2026-03-13
 author: -
