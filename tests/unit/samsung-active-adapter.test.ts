@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { SamsungActiveAdapter, parseXlsBuffer } from '../../src/server/scheduler/samsung-active-adapter.js'
 import type { EtfProfile } from '../../src/shared/types.js'
-import ExcelJS from 'exceljs'
+import * as XLSX from 'xlsx'
 
 function makeProfile(overrides: Partial<EtfProfile> = {}): EtfProfile {
   return {
@@ -20,34 +20,38 @@ function makeProfile(overrides: Partial<EtfProfile> = {}): EtfProfile {
 
 /**
  * Create XLS buffer matching Samsung Active's real format:
- * Row 1: header (종류, 종목명, etc.)
- * Row 2: date string
- * Row 3: column headers
- * Row 4+: data — cells: [종류, 종목명, -, 종목코드, 수량, 비중]
+ * Row 0: header
+ * Row 1: date string
+ * Row 2: column headers
+ * Row 3+: data — cells: [종류, 종목명, 통화, 종목코드, 수량, 비중]
  */
-async function createXlsBuffer(
+function createXlsBuffer(
   dataRows: Array<{ name: string; code: string; qty: number; weight: number }>,
-): Promise<Buffer> {
-  const workbook = new ExcelJS.Workbook()
-  const sheet = workbook.addWorksheet('Sheet1')
-  sheet.addRow(['종류', '종목명', '통화', '종목코드', '보유수량', '비중(%)'])
-  sheet.addRow(['2026/03/13'])
-  sheet.addRow(['', '', '', '', '', ''])
+): ArrayBuffer {
+  const rows: (string | number)[][] = [
+    ['종류', '종목명', '통화', '종목코드', '보유수량', '비중(%)'],
+    ['2026/03/13'],
+    ['', '', '', '', '', ''],
+  ]
   for (const row of dataRows) {
-    sheet.addRow(['주식', row.name, 'KRW', row.code, row.qty, row.weight])
+    rows.push(['주식', row.name, 'KRW', row.code, row.qty, row.weight])
   }
-  const arrayBuffer = await workbook.xlsx.writeBuffer()
-  return Buffer.from(arrayBuffer)
+
+  const ws = XLSX.utils.aoa_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
+  const xlsBuffer = XLSX.write(wb, { type: 'array', bookType: 'xls' })
+  return xlsBuffer
 }
 
 describe('parseXlsBuffer', () => {
-  it('should parse rows using row-index based mapping', async () => {
-    const buffer = await createXlsBuffer([
+  it('should parse rows using row-index based mapping', () => {
+    const buffer = createXlsBuffer([
       { name: '삼성전자', code: '005930', qty: 1000, weight: 25.5 },
       { name: 'SK하이닉스', code: '000660', qty: 500, weight: 15.3 },
     ])
 
-    const result = await parseXlsBuffer(buffer, 100, '2026-03-13')
+    const result = parseXlsBuffer(buffer, 100, '2026-03-13')
 
     expect(result).toHaveLength(2)
     expect(result[0]).toEqual({
@@ -61,49 +65,49 @@ describe('parseXlsBuffer', () => {
     expect(result[1].component_symbol).toBe('000660')
   })
 
-  it('should skip rows with 합계 or 예금 in name', async () => {
-    const buffer = await createXlsBuffer([
+  it('should skip rows with 합계 or 예금 in name', () => {
+    const buffer = createXlsBuffer([
       { name: '삼성전자', code: '005930', qty: 1000, weight: 25.5 },
       { name: '합계', code: '', qty: 0, weight: 100 },
       { name: '예금', code: '', qty: 0, weight: 5 },
     ])
 
-    const result = await parseXlsBuffer(buffer, 100, '2026-03-13')
+    const result = parseXlsBuffer(buffer, 100, '2026-03-13')
     expect(result).toHaveLength(1)
   })
 
-  it('should clean equity suffix from code', async () => {
-    const buffer = await createXlsBuffer([
+  it('should clean equity suffix from code', () => {
+    const buffer = createXlsBuffer([
       { name: '삼성전자', code: '005930 KS EQUITY', qty: 1000, weight: 25.5 },
     ])
 
-    const result = await parseXlsBuffer(buffer, 100, '2026-03-13')
+    const result = parseXlsBuffer(buffer, 100, '2026-03-13')
     expect(result[0].component_symbol).toBe('005930')
   })
 
-  it('should return empty array for sheet with less than 4 rows', async () => {
-    const workbook = new ExcelJS.Workbook()
-    const sheet = workbook.addWorksheet('Sheet1')
-    sheet.addRow(['header'])
-    const arrayBuffer = await workbook.xlsx.writeBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+  it('should return empty array for sheet with less than 4 rows', () => {
+    const ws = XLSX.utils.aoa_to_sheet([['header']])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
+    const buffer = XLSX.write(wb, { type: 'array', bookType: 'xls' })
 
-    const result = await parseXlsBuffer(buffer, 100, '2026-03-13')
+    const result = parseXlsBuffer(buffer, 100, '2026-03-13')
     expect(result).toEqual([])
   })
 
-  it('should handle percentage values stored as decimals', async () => {
-    const workbook = new ExcelJS.Workbook()
-    const sheet = workbook.addWorksheet('Sheet1')
-    sheet.addRow(['종류', '종목명', '통화', '종목코드', '보유수량', '비중(%)'])
-    sheet.addRow(['2026/03/13'])
-    sheet.addRow(['', '', '', '', '', ''])
-    // Simulate ExcelJS returning decimal for percentage (0.255 = 25.5%)
-    sheet.addRow(['주식', '삼성전자', 'KRW', '005930', 1000, 0.255])
-    const arrayBuffer = await workbook.xlsx.writeBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+  it('should handle percentage values stored as decimals', () => {
+    const rows: (string | number)[][] = [
+      ['종류', '종목명', '통화', '종목코드', '보유수량', '비중(%)'],
+      ['2026/03/13'],
+      ['', '', '', '', '', ''],
+      ['주식', '삼성전자', 'KRW', '005930', 1000, 0.255],
+    ]
+    const ws = XLSX.utils.aoa_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
+    const buffer = XLSX.write(wb, { type: 'array', bookType: 'xls' })
 
-    const result = await parseXlsBuffer(buffer, 100, '2026-03-13')
+    const result = parseXlsBuffer(buffer, 100, '2026-03-13')
     expect(result).toHaveLength(1)
     // 0.255 → 25.5 → "25.5000"
     expect(result[0].weight).toBe('25.5000')
@@ -112,18 +116,17 @@ describe('parseXlsBuffer', () => {
 
 describe('SamsungActiveAdapter', () => {
   it('should append date to URL and fetch XLS', async () => {
-    const xlsBuffer = await createXlsBuffer([
+    const xlsBuffer = createXlsBuffer([
       { name: '삼성전자', code: '005930', qty: 1000, weight: 25.5 },
     ])
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      arrayBuffer: () => Promise.resolve(xlsBuffer.buffer.slice(xlsBuffer.byteOffset, xlsBuffer.byteOffset + xlsBuffer.byteLength)),
+      arrayBuffer: () => Promise.resolve(xlsBuffer),
     })
 
     const adapter = new SamsungActiveAdapter(mockFetch)
     const result = await adapter.fetchComponents(makeProfile(), '2026-03-13')
 
-    // Should append gijunYMD=20260313
     expect(mockFetch).toHaveBeenCalledWith(
       'https://www.samsungactive.co.kr/excel_pdf.do?fId=2ETFQ1&gijunYMD=20260313',
       expect.objectContaining({ headers: expect.any(Object) }),
