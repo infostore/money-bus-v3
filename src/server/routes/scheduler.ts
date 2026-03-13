@@ -19,17 +19,13 @@ export function createSchedulerRoutes(
       )
     }
 
-    const execution = await executionRepo.create({
-      taskId,
-      startedAt: new Date(),
-    })
-
-    service.run().catch(() => {
+    const executionPromise = service.run()
+    executionPromise.catch(() => {
       /* errors handled inside service */
     })
 
     return c.json(
-      { success: true, data: { run_id: execution.id }, error: null },
+      { success: true, data: { run_id: 0 }, error: null },
       202,
     )
   })
