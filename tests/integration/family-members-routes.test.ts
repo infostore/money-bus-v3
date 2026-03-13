@@ -8,9 +8,7 @@ import { Hono } from 'hono'
 import * as schema from '../../src/server/database/schema.js'
 import { FamilyMemberRepository } from '../../src/server/database/family-member-repository.js'
 import { createFamilyMemberRoutes } from '../../src/server/routes/family-members.js'
-
-const TEST_DATABASE_URL =
-  process.env['DATABASE_URL'] ?? 'postgresql://app:secret@localhost:5432/app'
+import { TEST_DATABASE_URL } from './test-database.js'
 
 let pool: pg.Pool
 let db: ReturnType<typeof drizzle>

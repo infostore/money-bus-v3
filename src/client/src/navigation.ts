@@ -11,6 +11,7 @@ import {
   Users,
   Building2,
   Landmark,
+  Timer,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -79,6 +80,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { id: 'family-members', label: '가족구성원', icon: Users, path: '/family-members' },
       { id: 'institutions', label: '금융기관', icon: Building2, path: '/institutions' },
       { id: 'account-types', label: '계좌유형', icon: Landmark, path: '/account-types' },
+      { id: 'scheduler', label: '가격수집', icon: Timer, path: '/scheduler' },
       { id: 'settings', label: '설정', icon: Settings, path: '/settings' },
       { id: 'help', label: '도움말', icon: HelpCircle, path: '/help' },
     ],

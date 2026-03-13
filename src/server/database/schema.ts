@@ -1,4 +1,16 @@
-import { pgTable, serial, text, real, integer, timestamp } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  serial,
+  text,
+  real,
+  integer,
+  bigint,
+  numeric,
+  date,
+  timestamp,
+  boolean,
+  unique,
+} from 'drizzle-orm/pg-core'
 
 export const items = pgTable('items', {
   id: serial('id').primaryKey(),
@@ -41,6 +53,46 @@ export const products = pgTable('products', {
   exchange: text('exchange'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// PRD-FEAT-005: Price History Scheduler
+export const priceHistory = pgTable('price_history', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  open: numeric('open', { precision: 18, scale: 4 }),
+  high: numeric('high', { precision: 18, scale: 4 }),
+  low: numeric('low', { precision: 18, scale: 4 }),
+  close: numeric('close', { precision: 18, scale: 4 }).notNull(),
+  volume: bigint('volume', { mode: 'number' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique('price_history_product_date_uniq').on(t.productId, t.date),
+])
+
+// PRD-FEAT-005: Scheduled Tasks
+export const scheduledTasks = pgTable('scheduled_tasks', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  cronExpression: text('cron_expression').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// PRD-FEAT-005: Task Executions
+export const taskExecutions = pgTable('task_executions', {
+  id: serial('id').primaryKey(),
+  taskId: integer('task_id').notNull().references(() => scheduledTasks.id, { onDelete: 'cascade' }),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+  status: text('status').notNull().default('running'),
+  productsTotal: integer('products_total').notNull().default(0),
+  productsSucceeded: integer('products_succeeded').notNull().default(0),
+  productsFailed: integer('products_failed').notNull().default(0),
+  productsSkipped: integer('products_skipped').notNull().default(0),
+  message: text('message'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 export const accountTypes = pgTable('account_types', {

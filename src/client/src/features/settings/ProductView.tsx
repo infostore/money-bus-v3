@@ -1,8 +1,9 @@
 // PRD-FEAT-004: Product Management
-import { useState, useMemo, type MutableRefObject } from 'react'
+import { useState, useMemo, useCallback, type MutableRefObject } from 'react'
 import { Package, Plus } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
+import { Select } from '../../components/ui/Select'
 import { Spinner } from '../../components/ui/Spinner'
 import { Alert } from '../../components/ui/Alert'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -27,6 +28,25 @@ const ASSET_TYPE_FILTERS = [
   '기타',
 ] as const
 
+const STORAGE_KEY_ASSET_TYPE = 'product-filter-asset-type'
+const STORAGE_KEY_EXCHANGE = 'product-filter-exchange'
+
+function loadFilter(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+function saveFilter(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // storage full or unavailable — ignore
+  }
+}
+
 interface ProductViewProps {
   readonly onCreateRef?: MutableRefObject<(() => void) | undefined>
 }
@@ -44,12 +64,39 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [editProduct, setEditProduct] = useState<Product | undefined>()
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
-  const [assetTypeFilter, setAssetTypeFilter] = useState<string>('전체')
+  const [assetTypeFilter, setAssetTypeFilter] = useState<string>(
+    () => loadFilter(STORAGE_KEY_ASSET_TYPE, '전체'),
+  )
+  const [exchangeFilter, setExchangeFilter] = useState<string>(
+    () => loadFilter(STORAGE_KEY_EXCHANGE, '전체'),
+  )
+
+  const handleAssetTypeChange = useCallback((value: string) => {
+    setAssetTypeFilter(value)
+    saveFilter(STORAGE_KEY_ASSET_TYPE, value)
+  }, [])
+
+  const handleExchangeChange = useCallback((value: string) => {
+    setExchangeFilter(value)
+    saveFilter(STORAGE_KEY_EXCHANGE, value)
+  }, [])
+
+  const exchangeOptions = useMemo(() => {
+    const exchanges = new Set(
+      products
+        .map((p) => p.exchange)
+        .filter((e): e is string => e !== null && e !== ''),
+    )
+    return ['전체', ...Array.from(exchanges).sort()] as const
+  }, [products])
 
   const filteredProducts = useMemo(() => {
-    if (assetTypeFilter === '전체') return products
-    return products.filter((p) => p.asset_type === assetTypeFilter)
-  }, [products, assetTypeFilter])
+    return products.filter((p) => {
+      if (assetTypeFilter !== '전체' && p.asset_type !== assetTypeFilter) return false
+      if (exchangeFilter !== '전체' && p.exchange !== exchangeFilter) return false
+      return true
+    })
+  }, [products, assetTypeFilter, exchangeFilter])
 
   const handleEdit = (product: Product) => {
     setEditProduct(product)
@@ -83,17 +130,31 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
 
   return (
     <>
-      <div className="flex gap-2">
-        {ASSET_TYPE_FILTERS.map((filter) => (
-          <Button
-            key={filter}
-            variant={assetTypeFilter === filter ? 'primary' : 'ghost'}
-            className="h-8 px-3 text-sm"
-            onClick={() => setAssetTypeFilter(filter)}
-          >
-            {filter}
-          </Button>
-        ))}
+      <div className="flex items-center gap-4">
+        <div className="flex gap-2">
+          {ASSET_TYPE_FILTERS.map((filter) => (
+            <Button
+              key={filter}
+              variant={assetTypeFilter === filter ? 'primary' : 'ghost'}
+              className="h-8 px-3 text-sm"
+              onClick={() => handleAssetTypeChange(filter)}
+            >
+              {filter}
+            </Button>
+          ))}
+        </div>
+        <Select
+          value={exchangeFilter}
+          onChange={(e) => handleExchangeChange(e.target.value)}
+          className="h-8 w-36 py-1 text-sm"
+          aria-label="시장 필터"
+        >
+          {exchangeOptions.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt === '전체' ? '전체 시장' : opt}
+            </option>
+          ))}
+        </Select>
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -107,17 +168,17 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
             <EmptyState
               icon={Package}
               title={
-                assetTypeFilter === '전체'
+                assetTypeFilter === '전체' && exchangeFilter === '전체'
                   ? '등록된 종목이 없습니다'
-                  : '해당 자산 유형의 종목이 없습니다.'
+                  : '조건에 맞는 종목이 없습니다.'
               }
               description={
-                assetTypeFilter === '전체'
+                assetTypeFilter === '전체' && exchangeFilter === '전체'
                   ? '종목을 추가하여 보유자산을 관리하세요.'
                   : undefined
               }
               action={
-                assetTypeFilter === '전체' ? (
+                assetTypeFilter === '전체' && exchangeFilter === '전체' ? (
                   <Button onClick={handleCreate} className="gap-1.5">
                     <Plus size={16} />
                     종목 추가

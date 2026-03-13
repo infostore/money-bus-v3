@@ -43,6 +43,13 @@
       "when": 1773306097155,
       "tag": "0005_daily_nicolaos",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773361561826,
+      "tag": "0006_brown_adam_warlock",
+      "breakpoints": true
     }
   ]
 }
