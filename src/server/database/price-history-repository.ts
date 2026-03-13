@@ -85,15 +85,67 @@ export class PriceHistoryRepository {
     return rows.map(toPriceHistory)
   }
 
-  async findLatestPrices(): Promise<ReadonlyMap<number, { close: string; date: string }>> {
+  async findLatestPricesWithReturns(): Promise<
+    ReadonlyMap<number, {
+      close: string; date: string;
+      return_1w: number | null; return_1m: number | null;
+      return_3m: number | null; return_1y: number | null;
+    }>
+  > {
     const rows = await this.db.execute(sql`
-      SELECT DISTINCT ON (product_id) product_id, close, date
-      FROM price_history
-      ORDER BY product_id, date DESC
+      WITH latest AS (
+        SELECT DISTINCT ON (product_id) product_id, close, date
+        FROM price_history
+        ORDER BY product_id, date DESC
+      )
+      SELECT
+        l.product_id, l.close, l.date,
+        w.close AS close_1w,
+        m.close AS close_1m,
+        q.close AS close_3m,
+        y.close AS close_1y
+      FROM latest l
+      LEFT JOIN LATERAL (
+        SELECT close FROM price_history
+        WHERE product_id = l.product_id AND date <= (l.date::date - 7)::text
+        ORDER BY date DESC LIMIT 1
+      ) w ON true
+      LEFT JOIN LATERAL (
+        SELECT close FROM price_history
+        WHERE product_id = l.product_id AND date <= (l.date::date - 30)::text
+        ORDER BY date DESC LIMIT 1
+      ) m ON true
+      LEFT JOIN LATERAL (
+        SELECT close FROM price_history
+        WHERE product_id = l.product_id AND date <= (l.date::date - 90)::text
+        ORDER BY date DESC LIMIT 1
+      ) q ON true
+      LEFT JOIN LATERAL (
+        SELECT close FROM price_history
+        WHERE product_id = l.product_id AND date <= (l.date::date - 365)::text
+        ORDER BY date DESC LIMIT 1
+      ) y ON true
     `)
-    const result = new Map<number, { close: string; date: string }>()
-    for (const row of (rows as unknown as { rows: Array<{ product_id: number; close: string; date: string }> }).rows) {
-      result.set(row.product_id, { close: row.close, date: row.date })
+
+    type Row = {
+      product_id: number; close: string; date: string;
+      close_1w: string | null; close_1m: string | null;
+      close_3m: string | null; close_1y: string | null;
+    }
+    const result = new Map<number, {
+      close: string; date: string;
+      return_1w: number | null; return_1m: number | null;
+      return_3m: number | null; return_1y: number | null;
+    }>()
+    for (const row of (rows as unknown as { rows: Row[] }).rows) {
+      result.set(row.product_id, {
+        close: row.close,
+        date: row.date,
+        return_1w: calcReturn(row.close, row.close_1w),
+        return_1m: calcReturn(row.close, row.close_1m),
+        return_3m: calcReturn(row.close, row.close_3m),
+        return_1y: calcReturn(row.close, row.close_1y),
+      })
     }
     return result
   }
@@ -107,6 +159,14 @@ export class PriceHistoryRepository {
 
     return rows.map(toPriceHistory)
   }
+}
+
+function calcReturn(current: string, past: string | null): number | null {
+  if (!past) return null
+  const cur = Number(current)
+  const prev = Number(past)
+  if (prev === 0) return null
+  return Math.round(((cur - prev) / prev) * 10000) / 100
 }
 
 function toPriceHistory(
