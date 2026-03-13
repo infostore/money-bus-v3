@@ -18,6 +18,7 @@ import type {
   Product,
   CreateProductPayload,
   UpdateProductPayload,
+  LatestPrice,
   PriceHistory,
   TaskExecution,
   EtfComponent,
@@ -122,6 +123,7 @@ export const api = {
   // PRD-FEAT-004: Product Management
   products: {
     list: () => request<Product[]>('/products'),
+    latestPrices: () => request<LatestPrice[]>('/products/latest-prices'),
     getById: (id: number) => request<Product>(`/products/${id}`),
     getPriceHistory: (id: number, from?: string, to?: string) => {
       const params = new URLSearchParams()

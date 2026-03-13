@@ -97,6 +97,13 @@ export interface UpdateProductPayload {
   readonly exchange?: string | null
 }
 
+// PRD-FEAT-004: Product list latest price
+export interface LatestPrice {
+  readonly product_id: number
+  readonly close: string
+  readonly date: string
+}
+
 // PRD-FEAT-005: Price History Scheduler
 export interface PriceHistory {
   readonly id: number

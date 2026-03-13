@@ -5,9 +5,11 @@ import type {
   Product,
   CreateProductPayload,
   UpdateProductPayload,
+  LatestPrice,
 } from '@shared/types'
 
 const PRODUCTS_KEY = ['products'] as const
+const LATEST_PRICES_KEY = ['products', 'latest-prices'] as const
 
 export function useProducts() {
   const queryClient = useQueryClient()
@@ -62,4 +64,21 @@ export function useProducts() {
       await deleteMutation.mutateAsync(id)
     },
   } as const
+}
+
+export function useLatestPrices() {
+  const {
+    data: latestPrices = [],
+    isLoading: loading,
+  } = useQuery({
+    queryKey: LATEST_PRICES_KEY,
+    queryFn: () => api.products.latestPrices(),
+  })
+
+  const priceMap = new Map<number, { readonly close: string; readonly date: string }>()
+  for (const p of latestPrices as readonly LatestPrice[]) {
+    priceMap.set(p.product_id, { close: p.close, date: p.date })
+  }
+
+  return { priceMap, loading } as const
 }
