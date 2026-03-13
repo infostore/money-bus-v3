@@ -9,6 +9,11 @@ vi.mock('../../src/server/scheduler/with-retry.js', () => ({
   withRetry: vi.fn((fn: () => Promise<unknown>, _opts?: unknown) => fn()),
 }))
 
+// Mock sleep to resolve immediately (avoid real delays in tests)
+vi.mock('../../src/server/scheduler/sleep.js', () => ({
+  sleep: vi.fn().mockResolvedValue(undefined),
+}))
+
 // Mock logger to suppress output
 vi.mock('../../src/server/middleware/logger.js', () => ({
   log: vi.fn(),

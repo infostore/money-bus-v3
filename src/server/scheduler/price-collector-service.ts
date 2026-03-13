@@ -9,13 +9,16 @@ import type { YahooFinanceAdapter } from './yahoo-finance-adapter.js'
 import type { PriceRow } from '../database/price-history-repository.js'
 import { resolveAdapter } from './exchange-routing.js'
 import { withRetry } from './with-retry.js'
+import { sleep } from './sleep.js'
 import { log } from '../middleware/logger.js'
 
 const LOOKBACK_DAYS = parseInt(process.env['PRICE_HISTORY_DEFAULT_LOOKBACK_DAYS'] ?? '365', 10)
-const NAVER_BATCH_SIZE = 20
-const NAVER_DELAY_MS = 1000
-const YAHOO_BATCH_SIZE = 10
-const YAHOO_DELAY_MS = 2000
+const NAVER_BATCH_SIZE = 10
+const NAVER_BATCH_DELAY_MS = 3000
+const NAVER_REQUEST_DELAY_MS = 500
+const YAHOO_BATCH_SIZE = 5
+const YAHOO_BATCH_DELAY_MS = 5000
+const YAHOO_REQUEST_DELAY_MS = 1000
 
 interface DateRange {
   readonly startDate: Date
@@ -46,10 +49,6 @@ function addDays(dateStr: string, days: number): Date {
 
 function startOfDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-}
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export class PriceCollectorService {
@@ -110,8 +109,8 @@ export class PriceCollectorService {
     )
 
     const aborted =
-      await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_DELAY_MS, counters, signal, fromDate) ||
-      await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_DELAY_MS, counters, signal, fromDate)
+      await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_BATCH_DELAY_MS, NAVER_REQUEST_DELAY_MS, counters, signal, fromDate) ||
+      await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_BATCH_DELAY_MS, YAHOO_REQUEST_DELAY_MS, counters, signal, fromDate)
 
     const status = aborted ? 'aborted' : this.determineStatus(counters)
     const message = aborted ? '사용자 요청으로 중지됨' : null
@@ -165,7 +164,8 @@ export class PriceCollectorService {
     products: readonly Product[],
     fetchFn: AdapterFetchFn,
     batchSize: number,
-    delayMs: number,
+    batchDelayMs: number,
+    requestDelayMs: number,
     counters: CollectionCounters,
     signal: AbortSignal,
     fromDate?: string,
@@ -174,12 +174,12 @@ export class PriceCollectorService {
       if (signal.aborted) return true
 
       const batch = products.slice(i, i + batchSize)
-      const batchAborted = await this.processBatch(executionId, batch, fetchFn, counters, signal, fromDate)
+      const batchAborted = await this.processBatch(executionId, batch, fetchFn, requestDelayMs, counters, signal, fromDate)
       if (batchAborted) return true
 
       const isLastBatch = i + batchSize >= products.length
       if (!isLastBatch) {
-        await sleep(delayMs)
+        await sleep(batchDelayMs)
       }
     }
     return false
@@ -190,14 +190,15 @@ export class PriceCollectorService {
     executionId: number,
     batch: readonly Product[],
     fetchFn: AdapterFetchFn,
+    requestDelayMs: number,
     counters: CollectionCounters,
     signal: AbortSignal,
     fromDate?: string,
   ): Promise<boolean> {
-    for (const product of batch) {
+    for (let i = 0; i < batch.length; i++) {
       if (signal.aborted) return true
       try {
-        await this.processOneProduct(product, fetchFn, counters, signal, fromDate)
+        await this.processOneProduct(batch[i], fetchFn, counters, signal, fromDate)
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return true
@@ -205,6 +206,10 @@ export class PriceCollectorService {
         throw error
       }
       await this.updateExecutionProgress(executionId, counters)
+
+      if (i < batch.length - 1) {
+        await sleep(requestDelayMs)
+      }
     }
     return false
   }
