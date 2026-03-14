@@ -89,8 +89,9 @@ let collectorService: PriceCollectorService | undefined
 let schedulerTaskId = 0
 try {
   const naverAdapter = new NaverFinanceAdapter()
-  const yahooModule = await import('yahoo-finance2')
-  const yahooAdapter = new YahooFinanceAdapter(yahooModule.default as never)
+  const { default: YahooFinance } = await import('yahoo-finance2')
+  const yahooClient = new YahooFinance({ suppressNotices: ['ripHistorical'] })
+  const yahooAdapter = new YahooFinanceAdapter(yahooClient as never)
 
   const task = await scheduledTaskRepo.seedDefault({
     name: 'price-collection-daily',
