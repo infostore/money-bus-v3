@@ -6,12 +6,16 @@ interface HoldingsTableProps {
   readonly holdings: readonly HoldingWithDetails[]
 }
 
-function formatNumber(value: number | null): string {
+function formatNumber(value: number | null, fractionDigits = 0): string {
   if (value === null) return '-'
   return value.toLocaleString('ko-KR', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   })
+}
+
+function priceDigits(currency: string): number {
+  return currency === 'KRW' ? 0 : 2
 }
 
 function formatDecimal(value: number | null, digits = 2): string {
@@ -83,7 +87,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                 {formatDecimal(h.avg_cost)}
               </td>
               <td className="px-3 py-2 text-right text-surface-300">
-                {formatNumber(h.current_price)}
+                {formatNumber(h.current_price, priceDigits(h.currency))}
               </td>
               <td className="px-3 py-2 text-right text-surface-200">
                 {formatNumber(h.market_value)}
