@@ -57,39 +57,39 @@ export function TransactionList({ accountId, productId, onEdit }: TransactionLis
   }
 
   return (
-    <table className="w-full text-xs">
+    <table className="w-full text-sm">
       <thead>
-        <tr className="text-left text-surface-500">
-          <th className="px-3 py-1.5">거래일</th>
-          <th className="px-3 py-1.5">유형</th>
-          <th className="px-3 py-1.5 text-right">수량</th>
-          <th className="px-3 py-1.5 text-right">가격</th>
-          <th className="px-3 py-1.5 text-right">수수료</th>
-          <th className="px-3 py-1.5 text-right">세금</th>
-          <th className="px-3 py-1.5 text-right">메모</th>
-          <th className="px-3 py-1.5 text-right"></th>
+        <tr className="border-b border-white/[0.08] text-xs uppercase tracking-wider text-surface-500">
+          <th className="px-4 py-3 text-left font-medium">거래일</th>
+          <th className="px-4 py-3 text-left font-medium">유형</th>
+          <th className="px-4 py-3 text-right font-medium">수량</th>
+          <th className="px-4 py-3 text-right font-medium">가격</th>
+          <th className="px-4 py-3 text-right font-medium">수수료</th>
+          <th className="px-4 py-3 text-right font-medium">세금</th>
+          <th className="px-4 py-3 text-right font-medium">메모</th>
+          <th className="px-4 py-3 text-right font-medium"></th>
         </tr>
       </thead>
       <tbody>
         {transactions.map((txn) => (
           <tr
             key={txn.id}
-            className="border-t border-white/[0.03] transition-colors hover:bg-white/[0.02]"
+            className="border-b border-white/[0.06] transition-colors hover:bg-white/[0.02]"
           >
-            <td className="px-3 py-1.5 text-surface-300">{formatDate(txn.traded_at)}</td>
-            <td className="px-3 py-1.5">
-              <span className={txn.type === 'buy' ? 'text-success-500' : 'text-error-500'}>
+            <td className="px-4 py-3 text-surface-300">{formatDate(txn.traded_at)}</td>
+            <td className="px-4 py-3">
+              <span className={txn.type === 'buy' ? 'text-error-500' : 'text-blue-400'}>
                 {txn.type === 'buy' ? '매수' : '매도'}
               </span>
             </td>
-            <td className="px-3 py-1.5 text-right text-surface-300">{formatNumber(txn.shares)}</td>
-            <td className="px-3 py-1.5 text-right text-surface-300">{formatNumber(txn.price)}</td>
-            <td className="px-3 py-1.5 text-right text-surface-400">{formatNumber(txn.fee)}</td>
-            <td className="px-3 py-1.5 text-right text-surface-400">{formatNumber(txn.tax)}</td>
-            <td className="max-w-[100px] truncate px-3 py-1.5 text-right text-surface-500">
+            <td className="px-4 py-3 text-right text-surface-300">{formatNumber(txn.shares)}</td>
+            <td className="px-4 py-3 text-right text-surface-300">{formatNumber(txn.price)}</td>
+            <td className="px-4 py-3 text-right text-surface-400">{formatNumber(txn.fee)}</td>
+            <td className="px-4 py-3 text-right text-surface-400">{formatNumber(txn.tax)}</td>
+            <td className="max-w-[100px] truncate px-4 py-3 text-right text-surface-500">
               {txn.memo || '-'}
             </td>
-            <td className="px-3 py-1.5 text-right">
+            <td className="px-4 py-3 text-right">
               <div className="flex items-center justify-end gap-1">
                 <Button
                   variant="ghost"
