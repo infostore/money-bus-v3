@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Holdings Management (보유종목 관리)
 related-prd: PRD-FEAT-014
-phase: plan
-status: not-started
+phase: act
+status: completed
 created: 2026-03-14
 updated: 2026-03-14
 tags: [pdca, holdings, transactions, portfolio, pnl]
@@ -72,19 +72,28 @@ tags: [pdca, holdings, transactions, portfolio, pnl]
 
 - **Progress Log**:
   - 2026-03-14: PDCA plan created
+  - 2026-03-14: Phase → do, status → in-progress. Starting Wave 1 implementation.
+  - 2026-03-14: Waves 1-4 implemented. Phase → check for verification.
+  - 2026-03-14: Verification passed (374 tests, 0 type errors). Phase → act, status → completed.
 
 ## Check
 
 - **Results**:
-  - [Pending implementation]
+  - All 374 tests pass (9 new HoldingService unit tests)
+  - TypeScript: zero type errors
+  - Canonical test fixture verified: Buy 10@100(fee=50)→avg=105; Buy 10@110(fee=50)→avg=110; Sell 5@120(fee=10,tax=20)→pnl=20.0
 
 - **Evidence**:
-  - [Pending verification]
+  - `npx tsc --noEmit` — clean
+  - `npx vitest run` — 29 files, 374 tests passed
 
 ## Act
 
 - **Learnings**:
-  1. [Pending completion]
+  1. Pure function extraction (`computeHoldingsFromTransactions`) enables thorough unit testing without DB mocking
+  2. FX rate lookup via product code convention (`FX:{currency}KRW`) cleanly reuses existing price_history infrastructure
 
 - **Next Actions**:
-  1. [Pending completion]
+  1. Add integration tests for transaction routes and holdings API
+  2. Add expandable transaction list per holding row (currently table-only)
+  3. Consider materializing holdings for performance if transaction count grows
