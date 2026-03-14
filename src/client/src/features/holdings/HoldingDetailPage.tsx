@@ -22,8 +22,8 @@ function formatPercent(value: number | null): string {
 
 function pnlColor(value: number | null): string {
   if (value === null) return 'text-surface-400'
-  if (value > 0) return 'text-success-500'
-  if (value < 0) return 'text-error-500'
+  if (value > 0) return 'text-error-500'
+  if (value < 0) return 'text-blue-400'
   return 'text-surface-300'
 }
 
