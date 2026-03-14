@@ -2,10 +2,12 @@
 // PRD-FEAT-008: Scheduler Execution History Delete
 // PRD-FEAT-009: Scheduler Execution Stop
 import { useState } from 'react'
-import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Trash2, Square } from 'lucide-react'
+import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Trash2, Square, RefreshCw } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useScheduler } from './use-scheduler'
 import type { TaskExecution } from '@shared/types'
+
+const INCREMENTAL_LABEL = '잔여'
 
 const PERIOD_OPTIONS = [
   { label: '1D', days: 1 },
@@ -128,11 +130,16 @@ export function SchedulerPage() {
     stopRun, isStopping, stopError,
     deleteExecution, deletingId, deleteError,
   } = useScheduler()
-  const [selectedPeriod, setSelectedPeriod] = useState<string | null>('1D')
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('1D')
 
   const displayError = error ?? runError ?? stopError ?? deleteError
+  const isIncremental = selectedPeriod === INCREMENTAL_LABEL
 
   const handleRun = () => {
+    if (isIncremental) {
+      triggerRun(undefined)
+      return
+    }
     const option = PERIOD_OPTIONS.find((o) => o.label === selectedPeriod)
     const from = option ? calcFromDate(option.days) : undefined
     triggerRun(from)
@@ -149,15 +156,23 @@ export function SchedulerPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex gap-1">
+            <Button
+              variant={isIncremental ? 'primary' : 'ghost'}
+              className="h-8 px-2.5 text-xs gap-1"
+              disabled={isRunning}
+              onClick={() => setSelectedPeriod(INCREMENTAL_LABEL)}
+            >
+              <RefreshCw size={12} />
+              {INCREMENTAL_LABEL}
+            </Button>
+            <div className="w-px bg-white/[0.08] mx-0.5" />
             {PERIOD_OPTIONS.map((opt) => (
               <Button
                 key={opt.label}
                 variant={selectedPeriod === opt.label ? 'primary' : 'ghost'}
                 className="h-8 px-2.5 text-xs"
                 disabled={isRunning}
-                onClick={() => setSelectedPeriod(
-                  selectedPeriod === opt.label ? null : opt.label,
-                )}
+                onClick={() => setSelectedPeriod(opt.label)}
               >
                 {opt.label}
               </Button>
