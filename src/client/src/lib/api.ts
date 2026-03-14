@@ -27,6 +27,7 @@ import type {
   UpdateTransactionPayload,
   HoldingWithDetails,
   RealizedPnlEntry,
+  ExchangeRate,
 } from '@shared/types'
 
 const BASE_URL = '/api'
@@ -208,6 +209,33 @@ export const api = {
       }),
     stop: () =>
       request<null>('/scheduler/etf-components/stop', { method: 'POST' }),
+  },
+  // PRD-FEAT-016: Exchange Rate Collection Scheduler
+  exchangeRates: {
+    list: () => request<ExchangeRate[]>('/exchange-rates'),
+    getByCurrency: (currency: string) => request<ExchangeRate>(`/exchange-rates/${currency}`),
+    update: () =>
+      fetch(`${BASE_URL}/exchange-rates/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).then(async (res) => {
+        const body = await res.json()
+        if (!body.success) throw new Error(body.error ?? 'Unknown error')
+        return body.data as ExchangeRate
+      }),
+  },
+  exchangeRateScheduler: {
+    status: () => request<TaskExecution[]>('/scheduler/exchange-rate/status'),
+    run: () =>
+      fetch(`${BASE_URL}/scheduler/exchange-rate/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).then(async (res) => {
+        const body = await res.json()
+        if (res.status === 409) throw new Error(body.error ?? '이미 실행 중입니다')
+        if (!body.success) throw new Error(body.error ?? 'Unknown error')
+        return body.data as { readonly message: string }
+      }),
   },
   // PRD-FEAT-014: Holdings Management
   transactions: {

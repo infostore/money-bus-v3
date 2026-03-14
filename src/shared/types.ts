@@ -317,3 +317,11 @@ export interface RealizedPnlEntry {
   readonly tax: number
   readonly net_pnl: number
 }
+
+// PRD-FEAT-016: Exchange Rate Collection Scheduler
+export interface ExchangeRate {
+  readonly id: number
+  readonly currency: string
+  readonly rate: string
+  readonly updated_at: string
+}

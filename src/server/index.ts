@@ -24,6 +24,9 @@ import { RiseAdapter } from './scheduler/rise-adapter.js'
 import { KodexAdapter } from './scheduler/kodex-adapter.js'
 import { EtfComponentCollectorService } from './scheduler/etf-component-collector-service.js'
 import type { EtfComponentAdapter } from './scheduler/etf-component-adapter.js'
+import { ExchangeRateRepository } from './database/exchange-rate-repository.js'
+import { ExchangeRateFetcher } from './services/exchange-rate-fetcher.js'
+import { ExchangeRateCollectorService } from './scheduler/exchange-rate-collector-service.js'
 import { startSchedulers } from './scheduler/index.js'
 import { createItemRoutes } from './routes/items.js'
 import { createFamilyMemberRoutes } from './routes/family-members.js'
@@ -34,6 +37,8 @@ import { createAccountRoutes } from './routes/accounts.js'
 import { createSchedulerRoutes } from './routes/scheduler.js'
 import { createEtfSchedulerRoutes } from './routes/etf-component-scheduler.js'
 import { createEtfComponentRoutes } from './routes/etf-components.js'
+import { createExchangeRateRoutes } from './routes/exchange-rates.js'
+import { createExchangeRateSchedulerRoutes } from './routes/exchange-rate-scheduler.js'
 import { TransactionRepository } from './database/transaction-repository.js'
 import { HoldingService } from './services/holding-service.js'
 import { createTransactionRoutes } from './routes/transactions.js'
@@ -152,10 +157,42 @@ try {
   log('error', `ETF scheduler setup failed: ${error}`)
 }
 
-// Start cron schedulers after both services are constructed
+// PRD-FEAT-016: Exchange Rate Collection Scheduler
+const exchangeRateRepo = new ExchangeRateRepository(db)
+
+let exchangeRateCollectorService: ExchangeRateCollectorService | null = null
+let exchangeRateTaskId = 0
+try {
+  const exchangeRateTask = await scheduledTaskRepo.seedDefault({
+    name: 'exchange-rate-collection-daily',
+    cronExpression: '0 9 * * *',
+    enabled: true,
+  })
+  exchangeRateTaskId = exchangeRateTask.id
+
+  const exchangeRateFetcher = new ExchangeRateFetcher(exchangeRateRepo)
+
+  exchangeRateCollectorService = new ExchangeRateCollectorService(
+    exchangeRateFetcher,
+    taskExecutionRepo,
+    exchangeRateTask.id,
+  )
+
+  log('info', 'Exchange rate scheduler initialized')
+} catch (error) {
+  log('error', `Exchange rate scheduler setup failed: ${error}`)
+}
+
+// Start cron schedulers after all services are constructed
 if (collectorService) {
   try {
-    await startSchedulers(scheduledTaskRepo, taskExecutionRepo, collectorService, etfCollectorService)
+    await startSchedulers(
+      scheduledTaskRepo,
+      taskExecutionRepo,
+      collectorService,
+      etfCollectorService,
+      exchangeRateCollectorService,
+    )
   } catch (error) {
     log('error', `Scheduler startup failed: ${error}`)
   }
@@ -187,7 +224,7 @@ app.route('/api/accounts', createAccountRoutes(accountRepo))
 
 // PRD-FEAT-014: Holdings Management
 const transactionRepo = new TransactionRepository(db)
-const holdingService = new HoldingService(db, priceHistoryRepo)
+const holdingService = new HoldingService(db, priceHistoryRepo, exchangeRateRepo)
 app.route('/api/transactions', createTransactionRoutes(transactionRepo, holdingService))
 app.route('/api/holdings', createHoldingsRoutes(holdingService))
 
@@ -223,6 +260,29 @@ if (etfCollectorService && etfSchedulerTaskId > 0) {
   app.post('/api/scheduler/etf-components/run', (c) =>
     c.json<ApiResponse<null>>(
       { success: false, data: null, error: 'ETF 스케줄러가 초기화되지 않았습니다' },
+      503,
+    ),
+  )
+}
+
+// PRD-FEAT-016: Exchange rate routes
+if (exchangeRateCollectorService && exchangeRateTaskId > 0) {
+  const exchangeRateFetcherForRoutes = new ExchangeRateFetcher(exchangeRateRepo)
+  app.route('/api/exchange-rates', createExchangeRateRoutes(exchangeRateRepo, exchangeRateFetcherForRoutes))
+  app.route(
+    '/api/scheduler/exchange-rate',
+    createExchangeRateSchedulerRoutes(exchangeRateCollectorService, taskExecutionRepo, exchangeRateTaskId),
+  )
+} else {
+  app.get('/api/exchange-rates', (c) =>
+    c.json<ApiResponse<readonly never[]>>({ success: true, data: [], error: null }),
+  )
+  app.get('/api/scheduler/exchange-rate/status', (c) =>
+    c.json<ApiResponse<readonly never[]>>({ success: true, data: [], error: null }),
+  )
+  app.post('/api/scheduler/exchange-rate/run', (c) =>
+    c.json<ApiResponse<null>>(
+      { success: false, data: null, error: '환율 스케줄러가 초기화되지 않았습니다' },
       503,
     ),
   )

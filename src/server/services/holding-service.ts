@@ -4,6 +4,7 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { transactions, products, accounts, familyMembers, institutions } from '../database/schema.js'
 import type * as schemaTypes from '../database/schema.js'
 import type { PriceHistoryRepository } from '../database/price-history-repository.js'
+import type { ExchangeRateRepository } from '../database/exchange-rate-repository.js'
 import type { HoldingWithDetails, RealizedPnlEntry, Transaction } from '../../shared/types.js'
 
 type Database = NodePgDatabase<typeof schemaTypes>
@@ -36,6 +37,7 @@ export class HoldingService {
   constructor(
     private readonly db: Database,
     private readonly priceHistoryRepo: PriceHistoryRepository,
+    private readonly exchangeRateRepo: ExchangeRateRepository,
   ) {}
 
   async getHoldings(filter?: HoldingsFilter): Promise<readonly HoldingWithDetails[]> {
@@ -323,34 +325,13 @@ export class HoldingService {
 
     if (currencies.size === 0) return new Map()
 
-    // Look up FX products by code convention: FX:{currency}KRW
-    const fxCodes = [...currencies].map((c) => `FX:${c}KRW`)
-    const fxProducts = await this.db
-      .select({ id: products.id, code: products.code, currency: products.currency })
-      .from(products)
-
-    const fxProductMap = new Map<string, number>()
-    for (const fp of fxProducts) {
-      if (fp.code && fxCodes.includes(fp.code)) {
-        fxProductMap.set(fp.code, fp.id)
-      }
-    }
-
-    const fxProductIds = [...fxProductMap.values()]
-    if (fxProductIds.length === 0) return new Map()
-
-    const latestFx = await this.priceHistoryRepo.findLatestByProductIds(fxProductIds)
     const result = new Map<string, number>()
-    for (const currency of currencies) {
-      const fxCode = `FX:${currency}KRW`
-      const fxProdId = fxProductMap.get(fxCode)
-      if (fxProdId !== undefined) {
-        const price = latestFx.get(fxProdId)
-        if (price) {
-          result.set(currency, parseFloat(price.close))
-        }
-      }
-    }
+    await Promise.all(
+      [...currencies].map(async (currency) => {
+        const rate = await this.exchangeRateRepo.getRate(currency)
+        result.set(currency, rate)
+      }),
+    )
     return result
   }
 }

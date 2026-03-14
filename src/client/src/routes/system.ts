@@ -16,6 +16,13 @@ const EtfSchedulerPage = lazy(() =>
   })),
 )
 
+// PRD-FEAT-016: Exchange Rate Collection Scheduler
+const ExchangeRateSchedulerPage = lazy(() =>
+  import('../features/scheduler/ExchangeRateSchedulerPage').then((m) => ({
+    default: m.ExchangeRateSchedulerPage,
+  })),
+)
+
 export const priceCollectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/scheduler/price-collection',
@@ -29,10 +36,17 @@ export const etfComponentsRoute = createRoute({
   component: EtfSchedulerPage,
 })
 
+// PRD-FEAT-016: Exchange Rate Collection Scheduler
+export const exchangeRateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/scheduler/exchange-rate',
+  component: ExchangeRateSchedulerPage,
+})
+
 export const helpRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/help',
   component: ComingSoon,
 })
 
-export const systemRoutes = [priceCollectionRoute, etfComponentsRoute, helpRoute] as const
+export const systemRoutes = [priceCollectionRoute, etfComponentsRoute, exchangeRateRoute, helpRoute] as const

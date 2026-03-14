@@ -82,6 +82,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { id: 'price-collection', label: '가격수집', icon: Timer, path: '/scheduler/price-collection' },
       { id: 'etf-components', label: 'ETF 구성종목', icon: Layers, path: '/scheduler/etf-components' },
+      { id: 'exchange-rate', label: '환율수집', icon: Timer, path: '/scheduler/exchange-rate' },
     ],
   },
   {

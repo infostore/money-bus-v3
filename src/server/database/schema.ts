@@ -179,3 +179,11 @@ export const transactions = pgTable('transactions', {
 }, (t) => [
   index('transactions_account_product_date_idx').on(t.accountId, t.productId, t.tradedAt),
 ])
+
+// PRD-FEAT-016: Exchange Rate Collection Scheduler
+export const exchangeRates = pgTable('exchange_rates', {
+  id: serial('id').primaryKey(),
+  currency: text('currency').notNull().unique(),
+  rate: numeric('rate', { precision: 18, scale: 4 }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
