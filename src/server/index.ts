@@ -224,7 +224,7 @@ app.route('/api/accounts', createAccountRoutes(accountRepo))
 
 // PRD-FEAT-014: Holdings Management
 const transactionRepo = new TransactionRepository(db)
-const holdingService = new HoldingService(db, priceHistoryRepo)
+const holdingService = new HoldingService(db, priceHistoryRepo, exchangeRateRepo)
 app.route('/api/transactions', createTransactionRoutes(transactionRepo, holdingService))
 app.route('/api/holdings', createHoldingsRoutes(holdingService))
 
