@@ -52,5 +52,32 @@ export function createEtfSchedulerRoutes(
     })
   })
 
+  app.delete('/executions/:id', async (c) => {
+    const id = Number(c.req.param('id'))
+    if (isNaN(id)) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'Invalid execution id' },
+        400,
+      )
+    }
+
+    const execution = await executionRepo.findById(id)
+    if (!execution) {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'Execution not found' },
+        404,
+      )
+    }
+    if (execution.status === 'running') {
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: 'Cannot delete a running execution' },
+        409,
+      )
+    }
+
+    await executionRepo.delete(id)
+    return c.json<ApiResponse<null>>({ success: true, data: null, error: null })
+  })
+
   return app
 }
