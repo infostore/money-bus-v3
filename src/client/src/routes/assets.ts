@@ -27,6 +27,13 @@ const AccountPage = lazy(() =>
   })),
 )
 
+// PRD-FEAT-014: Holdings Management
+const HoldingsPage = lazy(() =>
+  import('../features/holdings/HoldingsPage').then((m) => ({
+    default: m.HoldingsPage,
+  })),
+)
+
 export const portfolioRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/portfolio',
@@ -53,8 +60,16 @@ export const productDetailRoute = createRoute({
   validateSearch: productDetailSearchSchema,
 })
 
+// PRD-FEAT-014: Holdings Management
+export const holdingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/holdings',
+  component: HoldingsPage,
+})
+
 export const assetRoutes = [
   portfolioRoute,
+  holdingsRoute,
   accountsRoute,
   productsRoute,
   productDetailRoute,

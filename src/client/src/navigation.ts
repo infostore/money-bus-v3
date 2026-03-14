@@ -14,6 +14,7 @@ import {
   CalendarClock,
   Timer,
   Layers,
+  Briefcase,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -46,6 +47,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     icon: Wallet,
     items: [
       { id: 'portfolio', label: '포트폴리오', icon: PieChart, path: '/portfolio' },
+      { id: 'holdings', label: '보유종목', icon: Briefcase, path: '/holdings' },
       { id: 'products', label: '종목 관리', icon: Package, path: '/products' },
     ],
   },

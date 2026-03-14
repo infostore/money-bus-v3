@@ -22,6 +22,11 @@ import type {
   PriceHistory,
   TaskExecution,
   EtfComponent,
+  Transaction,
+  CreateTransactionPayload,
+  UpdateTransactionPayload,
+  HoldingWithDetails,
+  RealizedPnlEntry,
 } from '@shared/types'
 
 const BASE_URL = '/api'
@@ -203,6 +208,61 @@ export const api = {
       }),
     stop: () =>
       request<null>('/scheduler/etf-components/stop', { method: 'POST' }),
+  },
+  // PRD-FEAT-014: Holdings Management
+  transactions: {
+    list: (params?: {
+      account_id?: number
+      product_id?: number
+      type?: 'buy' | 'sell'
+      from?: string
+      to?: string
+    }) => {
+      const qs = new URLSearchParams()
+      if (params?.account_id) qs.set('account_id', String(params.account_id))
+      if (params?.product_id) qs.set('product_id', String(params.product_id))
+      if (params?.type) qs.set('type', params.type)
+      if (params?.from) qs.set('from', params.from)
+      if (params?.to) qs.set('to', params.to)
+      const query = qs.toString()
+      return request<Transaction[]>(`/transactions${query ? `?${query}` : ''}`)
+    },
+    getById: (id: number) => request<Transaction>(`/transactions/${id}`),
+    create: (input: CreateTransactionPayload) =>
+      request<Transaction>('/transactions', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    update: (id: number, input: UpdateTransactionPayload) =>
+      request<Transaction>(`/transactions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    delete: (id: number) =>
+      request<null>(`/transactions/${id}`, { method: 'DELETE' }),
+  },
+  holdings: {
+    list: (params?: { account_id?: number; family_member_id?: number }) => {
+      const qs = new URLSearchParams()
+      if (params?.account_id) qs.set('account_id', String(params.account_id))
+      if (params?.family_member_id) qs.set('family_member_id', String(params.family_member_id))
+      const query = qs.toString()
+      return request<HoldingWithDetails[]>(`/holdings${query ? `?${query}` : ''}`)
+    },
+    realizedPnl: (params?: {
+      account_id?: number
+      family_member_id?: number
+      from?: string
+      to?: string
+    }) => {
+      const qs = new URLSearchParams()
+      if (params?.account_id) qs.set('account_id', String(params.account_id))
+      if (params?.family_member_id) qs.set('family_member_id', String(params.family_member_id))
+      if (params?.from) qs.set('from', params.from)
+      if (params?.to) qs.set('to', params.to)
+      const query = qs.toString()
+      return request<RealizedPnlEntry[]>(`/holdings/realized-pnl${query ? `?${query}` : ''}`)
+    },
   },
   settings: {
     getAll: () => request<Record<string, string>>('/settings'),
