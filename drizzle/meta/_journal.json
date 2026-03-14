@@ -71,6 +71,13 @@
       "when": 1773467806460,
       "tag": "0009_unusual_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1773477929265,
+      "tag": "0010_cloudy_cyclops",
+      "breakpoints": true
     }
   ]
 }
