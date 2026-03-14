@@ -19,8 +19,8 @@ function formatReturn(value: number | null | undefined): string {
 
 function returnColor(value: number | null | undefined): string {
   if (value == null) return 'text-surface-500'
-  if (value > 0) return 'text-success-500'
-  if (value < 0) return 'text-error-500'
+  if (value > 0) return 'text-error-500'
+  if (value < 0) return 'text-blue-400'
   return 'text-surface-500'
 }
 
@@ -75,7 +75,7 @@ export function ProductTable({
                 {onDetail ? (
                   <button
                     type="button"
-                    className="font-medium tabular-nums text-surface-300 hover:text-primary-400 transition-colors cursor-pointer"
+                    className="font-medium tabular-nums text-surface-300 hover:text-blue-400 transition-colors cursor-pointer"
                     onClick={() => onDetail(product)}
                   >
                     {product.code ?? ''}
@@ -120,7 +120,7 @@ export function ProductTable({
                 <div className="flex items-center justify-end gap-1">
                   <Button
                     variant="ghost"
-                    className="h-7 w-7 p-0 text-surface-400 hover:text-primary-400"
+                    className="h-7 w-7 p-0 text-surface-400 hover:text-blue-400"
                     onClick={() => onEdit(product)}
                     aria-label={`${product.name} 수정`}
                   >
