@@ -1,4 +1,5 @@
 // PRD-FEAT-013: ETF Component UI
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import type { TaskExecution } from '@shared/types'
@@ -7,6 +8,7 @@ const ETF_SCHEDULER_KEY = ['etf-scheduler-status'] as const
 
 export function useEtfScheduler() {
   const queryClient = useQueryClient()
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const {
     data: executions = [],
@@ -26,6 +28,12 @@ export function useEtfScheduler() {
 
   const stopMutation = useMutation({
     mutationFn: () => api.etfScheduler.stop(),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ETF_SCHEDULER_KEY }),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.etfScheduler.deleteExecution(id),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ETF_SCHEDULER_KEY }),
   })
@@ -50,5 +58,11 @@ export function useEtfScheduler() {
     },
     isStopping: stopMutation.isPending,
     stopError: stopMutation.error instanceof Error ? stopMutation.error.message : null,
+    deleteExecution: async (id: number) => {
+      setDeletingId(id)
+      try { await deleteMutation.mutateAsync(id) } finally { setDeletingId(null) }
+    },
+    deletingId,
+    deleteError: deleteMutation.error instanceof Error ? deleteMutation.error.message : null,
   } as const
 }

@@ -1,4 +1,5 @@
 // PRD-FEAT-017: Holdings Price Collection Scheduler
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import type { TaskExecution } from '@shared/types'
@@ -7,6 +8,7 @@ const HOLDINGS_PRICE_SCHEDULER_KEY = ['holdings-price-scheduler-status'] as cons
 
 export function useHoldingsPriceScheduler() {
   const queryClient = useQueryClient()
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const {
     data: executions = [],
@@ -24,6 +26,12 @@ export function useHoldingsPriceScheduler() {
       queryClient.invalidateQueries({ queryKey: HOLDINGS_PRICE_SCHEDULER_KEY }),
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.holdingsPriceScheduler.deleteExecution(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: HOLDINGS_PRICE_SCHEDULER_KEY }),
+  })
+
   const error = queryError instanceof Error ? queryError.message : null
 
   const isRunning = executions.some(
@@ -37,5 +45,11 @@ export function useHoldingsPriceScheduler() {
     isRunning,
     triggerRun: async (period?: string) => { await runMutation.mutateAsync(period) },
     runError: runMutation.error instanceof Error ? runMutation.error.message : null,
+    deleteExecution: async (id: number) => {
+      setDeletingId(id)
+      try { await deleteMutation.mutateAsync(id) } finally { setDeletingId(null) }
+    },
+    deletingId,
+    deleteError: deleteMutation.error instanceof Error ? deleteMutation.error.message : null,
   } as const
 }

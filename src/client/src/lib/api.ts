@@ -209,6 +209,8 @@ export const api = {
       }),
     stop: () =>
       request<null>('/scheduler/etf-components/stop', { method: 'POST' }),
+    deleteExecution: (id: number) =>
+      request<null>(`/scheduler/etf-components/executions/${id}`, { method: 'DELETE' }),
   },
   // PRD-FEAT-016: Exchange Rate Collection Scheduler
   exchangeRates: {
@@ -236,6 +238,8 @@ export const api = {
         if (!body.success) throw new Error(body.error ?? 'Unknown error')
         return body.data as { readonly message: string }
       }),
+    deleteExecution: (id: number) =>
+      request<null>(`/scheduler/exchange-rate/executions/${id}`, { method: 'DELETE' }),
   },
   // PRD-FEAT-017: Holdings Price Collection Scheduler
   holdingsPriceScheduler: {
@@ -251,6 +255,8 @@ export const api = {
         if (!body.success) throw new Error(body.error ?? 'Unknown error')
         return body.data as { readonly message: string }
       }),
+    deleteExecution: (id: number) =>
+      request<null>(`/scheduler/holdings-price/executions/${id}`, { method: 'DELETE' }),
   },
   // PRD-FEAT-014: Holdings Management
   transactions: {

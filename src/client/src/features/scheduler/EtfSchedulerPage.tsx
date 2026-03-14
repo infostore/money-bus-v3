@@ -1,5 +1,5 @@
 // PRD-FEAT-013: ETF Component UI
-import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Square } from 'lucide-react'
+import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Square, Trash2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useEtfScheduler } from './use-etf-scheduler'
 import type { TaskExecution } from '@shared/types'
@@ -54,9 +54,11 @@ function StatusBadge({ status }: StatusBadgeProps) {
 
 interface ExecutionRowProps {
   readonly execution: TaskExecution
+  readonly onDelete: (id: number) => Promise<void>
+  readonly isDeleting: boolean
 }
 
-function ExecutionRow({ execution }: ExecutionRowProps) {
+function ExecutionRow({ execution, onDelete, isDeleting }: ExecutionRowProps) {
   return (
     <tr className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors">
       <td className="px-4 py-3">
@@ -82,6 +84,18 @@ function ExecutionRow({ execution }: ExecutionRowProps) {
       <td className="px-4 py-3 text-sm text-surface-500 max-w-[200px] truncate">
         {execution.message ?? '-'}
       </td>
+      <td className="px-4 py-3 text-center">
+        {execution.status !== 'running' && (
+          <button
+            onClick={() => onDelete(execution.id)}
+            disabled={isDeleting}
+            aria-label="이력 삭제"
+            className="p-1 rounded-lg text-surface-500 hover:text-error-500 hover:bg-error-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+          </button>
+        )}
+      </td>
     </tr>
   )
 }
@@ -91,9 +105,10 @@ export function EtfSchedulerPage() {
     executions, loading, error, isRunning,
     triggerRun, runError,
     stopRun, isStopping, stopError,
+    deleteExecution, deletingId, deleteError,
   } = useEtfScheduler()
 
-  const displayError = error ?? runError ?? stopError
+  const displayError = error ?? runError ?? stopError ?? deleteError
 
   return (
     <div className="space-y-6">
@@ -174,11 +189,17 @@ export function EtfSchedulerPage() {
                 <th className="px-4 py-3 text-right font-medium">실패</th>
                 <th className="px-4 py-3 text-right font-medium">건너뜀</th>
                 <th className="px-4 py-3 text-left font-medium">메시지</th>
+                <th className="px-4 py-3 text-center font-medium w-12"></th>
               </tr>
             </thead>
             <tbody>
               {executions.map((exec) => (
-                <ExecutionRow key={exec.id} execution={exec} />
+                <ExecutionRow
+                  key={exec.id}
+                  execution={exec}
+                  onDelete={deleteExecution}
+                  isDeleting={deletingId === exec.id}
+                />
               ))}
             </tbody>
           </table>
