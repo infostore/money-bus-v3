@@ -80,7 +80,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: '스케줄러',
     icon: CalendarClock,
     items: [
-      { id: 'price-collection', label: '가격수집', icon: Timer, path: '/scheduler/price-collection' },
+      { id: 'price-collection', label: '종목 가격', icon: Timer, path: '/scheduler/price-collection' },
       { id: 'holdings-price', label: '보유종목 가격', icon: Timer, path: '/scheduler/holdings-price' },
       { id: 'etf-components', label: 'ETF 구성종목', icon: Layers, path: '/scheduler/etf-components' },
       { id: 'exchange-rate', label: '환율수집', icon: Timer, path: '/scheduler/exchange-rate' },
