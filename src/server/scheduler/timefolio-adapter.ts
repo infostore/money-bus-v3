@@ -87,6 +87,16 @@ function toExcelUrl(pageUrl: string): string {
   return pageUrl.replace(/m11_view\.php/, 'pdf_excel.php')
 }
 
+/** Return the date string one day before the given YYYY-MM-DD. */
+function previousDate(dateStr: string): string {
+  const d = new Date(`${dateStr}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - 1)
+  const y = d.getUTCFullYear()
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(d.getUTCDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
+}
+
 export class TimefolioAdapter implements EtfComponentAdapter {
   constructor(
     private readonly fetchFn: (url: string, init?: RequestInit) => Promise<Response> = globalThis.fetch,
@@ -96,13 +106,29 @@ export class TimefolioAdapter implements EtfComponentAdapter {
     profile: EtfProfile,
     snapshotDate: string,
   ): Promise<readonly EtfComponentRow[]> {
+    // Try requested date first, then fall back to T-1
+    // (Timefolio publishes data after market close, so today's data may not exist yet)
+    const datesToTry = [snapshotDate, previousDate(snapshotDate)]
+
+    for (const date of datesToTry) {
+      const rows = await this.fetchForDate(profile, date)
+      if (rows.length > 0) return rows
+    }
+
+    return []
+  }
+
+  private async fetchForDate(
+    profile: EtfProfile,
+    date: string,
+  ): Promise<readonly EtfComponentRow[]> {
     let targetUrl = toExcelUrl(profile.download_url)
 
     if (targetUrl.includes('pdfDate=')) {
-      targetUrl = targetUrl.replace(/pdfDate=[\d-]*/, `pdfDate=${snapshotDate}`)
+      targetUrl = targetUrl.replace(/pdfDate=[\d-]*/, `pdfDate=${date}`)
     } else {
       const sep = targetUrl.includes('?') ? '&' : '?'
-      targetUrl = `${targetUrl}${sep}pdfDate=${snapshotDate}`
+      targetUrl = `${targetUrl}${sep}pdfDate=${date}`
     }
 
     if (!targetUrl.includes('mode=')) {
@@ -120,6 +146,6 @@ export class TimefolioAdapter implements EtfComponentAdapter {
     const arrayBuffer = await response.arrayBuffer()
     if (arrayBuffer.byteLength === 0) return []
 
-    return parseTimefolioXls(arrayBuffer, profile.product_id, snapshotDate)
+    return parseTimefolioXls(arrayBuffer, profile.product_id, date)
   }
 }

@@ -201,10 +201,13 @@ export class EtfComponentCollectorService {
         { signal },
       )
 
-      if (rows.length > 0) {
-        await this.componentRepo.upsertMany(rows)
+      if (rows.length === 0) {
+        log('warn', `ETF components empty: product_id=${profile.product_id} (adapter returned 0 rows)`)
+        await this.detailRepo.create({ executionId, productId: profile.product_id, status: 'skipped', message: 'No data returned from source' })
+        return { ...counters, skipped: counters.skipped + 1 }
       }
 
+      await this.componentRepo.upsertMany(rows)
       log('info', `ETF components collected: product_id=${profile.product_id}, rows=${rows.length}`)
       await this.detailRepo.create({ executionId, productId: profile.product_id, status: 'success' })
       return { ...counters, succeeded: counters.succeeded + 1 }

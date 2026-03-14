@@ -133,7 +133,9 @@ describe('EtfComponentCollectorService', () => {
       ]
       mocks.profileRepo.findAll.mockResolvedValue(profiles)
       mocks.samsungAdapter.fetchComponents.mockRejectedValue(new Error('Network error'))
-      mocks.timefolioAdapter.fetchComponents.mockResolvedValue([])
+      mocks.timefolioAdapter.fetchComponents.mockResolvedValue([
+        { etf_product_id: 200, component_symbol: '005930', component_name: '삼성전자', weight: '30.5000', shares: 2000, snapshot_date: '2026-03-13' },
+      ])
 
       const result = await service.run()
 

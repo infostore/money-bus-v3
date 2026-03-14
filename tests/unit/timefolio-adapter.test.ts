@@ -133,6 +133,42 @@ describe('TimefolioAdapter', () => {
     )
   })
 
+  it('should fall back to T-1 date when today returns empty', async () => {
+    const emptyBuf = makeXlsBuffer([HEADER])
+    const dataBuf = makeXlsBuffer(SAMPLE_ROWS)
+    const mockFetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, arrayBuffer: () => Promise.resolve(emptyBuf) })
+      .mockResolvedValueOnce({ ok: true, arrayBuffer: () => Promise.resolve(dataBuf) })
+
+    const adapter = new TimefolioAdapter(mockFetch)
+    const result = await adapter.fetchComponents(makeProfile(), '2026-03-14')
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(mockFetch).toHaveBeenNthCalledWith(1,
+      expect.stringContaining('pdfDate=2026-03-14'),
+      expect.any(Object),
+    )
+    expect(mockFetch).toHaveBeenNthCalledWith(2,
+      expect.stringContaining('pdfDate=2026-03-13'),
+      expect.any(Object),
+    )
+    expect(result).toHaveLength(2)
+    expect(result[0].snapshot_date).toBe('2026-03-13')
+  })
+
+  it('should return empty when both today and T-1 have no data', async () => {
+    const emptyBuf = makeXlsBuffer([HEADER])
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(emptyBuf),
+    })
+    const adapter = new TimefolioAdapter(mockFetch)
+    const result = await adapter.fetchComponents(makeProfile(), '2026-03-14')
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(result).toEqual([])
+  })
+
   it('should throw on non-ok response', async () => {
     const mockFetch = vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: 'Error' })
     const adapter = new TimefolioAdapter(mockFetch)
