@@ -56,10 +56,10 @@ export function ProductTable({
             <th className="py-2 pr-3 text-left font-medium">코드</th>
             <th className="py-2 pr-3 text-left font-medium">종목명</th>
             <th className="py-2 pr-3 text-right font-medium">현재가</th>
-            <th className="py-2 pr-3 text-right font-medium">1주</th>
-            <th className="py-2 pr-3 text-right font-medium">1개월</th>
-            <th className="py-2 pr-3 text-right font-medium">3개월</th>
-            <th className="py-2 pr-3 text-right font-medium">1년</th>
+            <th className="py-2 pr-3 text-right font-medium">1W</th>
+            <th className="py-2 pr-3 text-right font-medium">1M</th>
+            <th className="py-2 pr-3 text-right font-medium">3M</th>
+            <th className="py-2 pr-3 text-right font-medium">1Y</th>
             <th className="py-2 pl-3 text-right font-medium w-20" />
           </tr>
         </thead>
