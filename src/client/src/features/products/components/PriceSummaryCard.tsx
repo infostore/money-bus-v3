@@ -14,13 +14,12 @@ import {
 
 interface PriceSummaryCardProps {
   readonly summaryHistory: readonly PriceHistory[]
-  readonly currency: string
 }
 
-function formatPrice(value: string | null, currency: string): string {
+function formatPrice(value: string | null): string {
   if (value === null) return '—'
   const num = parseFloat(value)
-  return `${num.toLocaleString('ko-KR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency}`
+  return num.toLocaleString('ko-KR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 }
 
 function formatVolume(value: number | null): string {
@@ -32,7 +31,7 @@ function formatDate(dateStr: string): string {
   return dateStr.replace(/-/g, '.')
 }
 
-export function PriceSummaryCard({ summaryHistory, currency }: PriceSummaryCardProps) {
+export function PriceSummaryCard({ summaryHistory }: PriceSummaryCardProps) {
   if (summaryHistory.length === 0) {
     return (
       <Card>
@@ -54,9 +53,9 @@ export function PriceSummaryCard({ summaryHistory, currency }: PriceSummaryCardP
   const latestVolume = getLatestVolume(summaryHistory)
 
   const primaryStats = [
-    { label: '최근 종가', value: formatPrice(latestClose, currency) },
-    { label: '52주 최고', value: formatPrice(high52w, currency) },
-    { label: '52주 최저', value: formatPrice(low52w, currency) },
+    { label: '최근 종가', value: formatPrice(latestClose) },
+    { label: '52주 최고', value: formatPrice(high52w) },
+    { label: '52주 최저', value: formatPrice(low52w) },
     {
       label: '데이터 기간',
       value: dateRange ? `${formatDate(dateRange.from)} ~ ${formatDate(dateRange.to)}` : '—',
@@ -64,9 +63,9 @@ export function PriceSummaryCard({ summaryHistory, currency }: PriceSummaryCardP
   ]
 
   const latestDayStats = [
-    { label: '시가', value: formatPrice(latestOpen, currency) },
-    { label: '고가', value: formatPrice(latestHigh, currency) },
-    { label: '저가', value: formatPrice(latestLow, currency) },
+    { label: '시가', value: formatPrice(latestOpen) },
+    { label: '고가', value: formatPrice(latestHigh) },
+    { label: '저가', value: formatPrice(latestLow) },
     { label: '거래량', value: formatVolume(latestVolume) },
   ]
 

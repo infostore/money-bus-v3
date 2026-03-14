@@ -10,10 +10,9 @@ const ROWS_PER_PAGE = 25
 
 interface PriceDataTabProps {
   readonly priceHistory: readonly PriceHistory[]
-  readonly currency: string
 }
 
-export function PriceDataTab({ priceHistory, currency }: PriceDataTabProps) {
+export function PriceDataTab({ priceHistory }: PriceDataTabProps) {
   const [currentPage, setCurrentPage] = useState(1)
 
   // Reset to page 1 when data changes (range switch)
@@ -41,7 +40,7 @@ export function PriceDataTab({ priceHistory, currency }: PriceDataTabProps) {
 
   return (
     <div className="space-y-4">
-      <OhlcvTable rows={pageRows} currency={currency} />
+      <OhlcvTable rows={pageRows} />
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
           <Button

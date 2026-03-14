@@ -73,7 +73,7 @@ export function ProductTable({
                 {onDetail ? (
                   <button
                     type="button"
-                    className="font-medium text-surface-300 hover:text-primary-400 transition-colors cursor-pointer"
+                    className="font-medium tabular-nums text-surface-300 hover:text-primary-400 transition-colors cursor-pointer"
                     onClick={() => onDetail(product)}
                   >
                     {product.code ?? ''}

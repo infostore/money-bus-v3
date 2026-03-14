@@ -13,7 +13,7 @@ export interface EtfProfileSeedEntry {
   readonly manager: string
   readonly expenseRatio: string | null
   readonly downloadUrl: string
-  readonly downloadType: 'xls' | 'html'
+  readonly downloadType: 'xls' | 'html' | 'json'
 }
 
 export class EtfProfileRepository {

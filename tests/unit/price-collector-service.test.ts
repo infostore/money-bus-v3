@@ -178,11 +178,11 @@ describe('PriceCollectorService', () => {
 
     await service.run()
 
-    // Default lookback 365 days from 2026-03-13
+    // Default lookback 380 days from 2026-03-13
     expect(mocks.naverAdapter.fetchPrices).toHaveBeenCalledWith(
       '005930',
       1,
-      '20250313',
+      '20250226',
       '20260313',
       expect.any(AbortSignal),
     )

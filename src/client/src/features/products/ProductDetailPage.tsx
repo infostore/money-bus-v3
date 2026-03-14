@@ -143,10 +143,7 @@ function ProductDetailContent({
   return (
     <div className="mx-auto space-y-6 p-6">
       <ProductDetailHeader product={product} />
-      <PriceSummaryCard
-        summaryHistory={summaryHistory}
-        currency={product.currency}
-      />
+      <PriceSummaryCard summaryHistory={summaryHistory} />
       <div className="flex gap-1">
         {tabOptions.map((opt) => (
           <Button
@@ -173,10 +170,7 @@ function ProductDetailContent({
       ) : tab === 'holdings' && isEtf ? (
         <EtfHoldingsTab productId={id} />
       ) : (
-        <PriceDataTab
-          priceHistory={priceHistory}
-          currency={product.currency}
-        />
+        <PriceDataTab priceHistory={priceHistory} />
       )}
     </div>
   )
