@@ -32,6 +32,10 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     ...options,
   })
 
+  if (!response.ok && !response.headers.get('content-type')?.includes('application/json')) {
+    throw new Error(`서버 오류 (${response.status})`)
+  }
+
   const result: ApiResponse<T> = await response.json()
 
   if (!result.success) {

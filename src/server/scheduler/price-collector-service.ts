@@ -108,12 +108,23 @@ export class PriceCollectorService {
       p.code!, p.id, r.startDate, r.endDate, s,
     )
 
-    const aborted =
-      await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_BATCH_DELAY_MS, NAVER_REQUEST_DELAY_MS, counters, signal, fromDate) ||
-      await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_BATCH_DELAY_MS, YAHOO_REQUEST_DELAY_MS, counters, signal, fromDate)
+    let aborted = false
+    let unexpectedError: string | null = null
+    try {
+      aborted =
+        await this.processProducts(execution.id, naverProducts, naverFetch, NAVER_BATCH_SIZE, NAVER_BATCH_DELAY_MS, NAVER_REQUEST_DELAY_MS, counters, signal, fromDate) ||
+        await this.processProducts(execution.id, yahooProducts, yahooFetch, YAHOO_BATCH_SIZE, YAHOO_BATCH_DELAY_MS, YAHOO_REQUEST_DELAY_MS, counters, signal, fromDate)
+    } catch (error) {
+      unexpectedError = error instanceof Error ? error.message : String(error)
+      log('error', `Price collection crashed: ${unexpectedError}`)
+    }
 
-    const status = aborted ? 'aborted' : this.determineStatus(counters)
-    const message = aborted ? '사용자 요청으로 중지됨' : null
+    const status = aborted ? 'aborted' : unexpectedError ? 'failed' : this.determineStatus(counters)
+    const message = aborted
+      ? '사용자 요청으로 중지됨'
+      : unexpectedError
+        ? `수집 중 오류 발생: ${unexpectedError}`
+        : null
     const completed = await this.taskExecutionRepo.complete(execution.id, {
       status,
       productsTotal: counters.total,
