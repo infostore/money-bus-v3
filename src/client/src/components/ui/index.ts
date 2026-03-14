@@ -1,4 +1,6 @@
 export { Alert } from './Alert'
+export { Autocomplete } from './Autocomplete'
+export type { AutocompleteProps, AutocompleteOption } from './Autocomplete'
 export { Badge } from './Badge'
 export type { BadgeProps } from './Badge'
 export { Button } from './Button'

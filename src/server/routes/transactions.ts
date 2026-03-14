@@ -6,6 +6,7 @@ import type { HoldingService } from '../services/holding-service.js'
 import type { ApiResponse, Transaction } from '../../shared/types.js'
 
 const PG_FK_VIOLATION = '23503'
+const PG_CHECK_VIOLATION = '23514'
 
 function createSchemas() {
   return {
@@ -158,7 +159,16 @@ export function createTransactionRoutes(
           400,
         )
       }
-      throw err
+      if (isPgError(err, PG_CHECK_VIOLATION)) {
+        return c.json<ApiResponse<null>>(
+          { success: false, data: null, error: '유효하지 않은 거래 유형입니다.' },
+          400,
+        )
+      }
+      return c.json<ApiResponse<null>>(
+        { success: false, data: null, error: '거래 등록에 실패했습니다.' },
+        500,
+      )
     }
   })
 

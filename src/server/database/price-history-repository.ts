@@ -1,5 +1,5 @@
 // PRD-FEAT-005: Price History Scheduler
-import { eq, desc, asc, max, sql, and, gte, lte } from 'drizzle-orm'
+import { eq, desc, asc, max, sql, and, gte, lte, inArray } from 'drizzle-orm'
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { priceHistory } from './schema.js'
 import type * as schemaTypes from './schema.js'
@@ -149,17 +149,23 @@ export class PriceHistoryRepository {
   ): Promise<ReadonlyMap<number, { close: string; date: string }>> {
     if (productIds.length === 0) return new Map()
 
-    const rows = await this.db.execute(sql`
-      SELECT DISTINCT ON (product_id) product_id, close, date
-      FROM price_history
-      WHERE product_id = ANY(${productIds})
-      ORDER BY product_id, date DESC
-    `)
+    // Use DISTINCT ON with inArray for safe parameterized query
+    const rows = await this.db
+      .select({
+        productId: priceHistory.productId,
+        close: priceHistory.close,
+        date: priceHistory.date,
+      })
+      .from(priceHistory)
+      .where(inArray(priceHistory.productId, [...productIds]))
+      .orderBy(desc(priceHistory.productId), desc(priceHistory.date))
 
-    type Row = { product_id: number; close: string; date: string }
+    // Group by productId, take first (latest date) per product
     const result = new Map<number, { close: string; date: string }>()
-    for (const row of (rows as unknown as { rows: Row[] }).rows) {
-      result.set(row.product_id, { close: row.close, date: row.date })
+    for (const row of rows) {
+      if (!result.has(row.productId)) {
+        result.set(row.productId, { close: row.close, date: row.date })
+      }
     }
     return result
   }

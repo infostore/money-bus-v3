@@ -1,4 +1,5 @@
 // PRD-FEAT-014: Holdings Management
+import { useNavigate } from '@tanstack/react-router'
 import type { HoldingWithDetails } from '@shared/types'
 
 interface HoldingsTableProps {
@@ -35,6 +36,8 @@ function pnlColor(value: number | null): string {
 }
 
 export function HoldingsTable({ holdings }: HoldingsTableProps) {
+  const navigate = useNavigate()
+
   return (
     <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
       <table className="w-full text-sm">
@@ -56,12 +59,21 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
           {holdings.map((h) => (
             <tr
               key={`${h.account_id}-${h.product_id}`}
-              className="border-b border-white/[0.04] transition-colors hover:bg-white/[0.02]"
+              className="cursor-pointer border-b border-white/[0.04] transition-colors hover:bg-white/[0.02]"
+              onClick={() =>
+                navigate({
+                  to: '/holdings/$accountId/$productId',
+                  params: {
+                    accountId: String(h.account_id),
+                    productId: String(h.product_id),
+                  },
+                })
+              }
             >
               <td className="px-3 py-2">
                 <div className="font-medium text-surface-100">{h.product_name}</div>
                 <div className="text-xs text-surface-400">
-                  {h.account_name} · {h.family_member_name}
+                  {h.institution_name} · {h.family_member_name}
                 </div>
               </td>
               <td className="px-3 py-2 text-right text-surface-300">
