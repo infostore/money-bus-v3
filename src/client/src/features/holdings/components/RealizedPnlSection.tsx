@@ -17,8 +17,8 @@ function formatNumber(value: number): string {
 }
 
 function pnlColor(value: number): string {
-  if (value > 0) return 'text-success-500'
-  if (value < 0) return 'text-error-500'
+  if (value > 0) return 'text-error-500'
+  if (value < 0) return 'text-blue-400'
   return 'text-surface-300'
 }
 
