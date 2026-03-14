@@ -181,12 +181,12 @@ export const api = {
       request<null>(`/scheduler/price-collection/executions/${id}`, {
         method: 'DELETE',
       }),
+    // PRD-FEAT-018: Execution Detail
+    executionDetail: (id: number) =>
+      request<{ execution: TaskExecution; details: readonly TaskExecutionDetail[] }>(
+        `/scheduler/executions/${id}/details`,
+      ),
   },
-  // PRD-FEAT-018: Execution Detail
-  executionDetail: (id: number) =>
-    request<{ execution: TaskExecution; details: readonly TaskExecutionDetail[] }>(
-      `/scheduler/executions/${id}/details`,
-    ),
   // PRD-FEAT-013: ETF Component UI
   etfComponents: {
     getDates: (productId: number) =>

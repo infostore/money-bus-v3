@@ -1,5 +1,5 @@
 // PRD-FEAT-018: Scheduler Execution Detail
-import { useParams } from '@tanstack/react-router'
+import { useParams, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Loader2, CheckCircle2, AlertTriangle, XCircle, Square, Clock, AlertCircle } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useExecutionDetail } from './use-execution-detail'
@@ -78,9 +78,22 @@ function DetailStatusBadge({ status }: DetailStatusBadgeProps) {
 }
 
 export function ExecutionDetailPage() {
-  const { executionId } = useParams({ strict: false }) as { executionId: string }
+  const { executionId } = useParams({ from: '/scheduler/executions/$executionId' })
+  const navigate = useNavigate()
   const id = Number(executionId)
-  const goBack = () => window.history.back()
+  const goBack = () => navigate({ to: '/scheduler/price-collection' })
+
+  if (isNaN(id)) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" onClick={goBack} className="gap-1.5">
+          <ArrowLeft size={16} />
+          돌아가기
+        </Button>
+        <div className="text-surface-500 text-center py-16">잘못된 실행 ID입니다.</div>
+      </div>
+    )
+  }
 
   const { execution, details, loading, error } = useExecutionDetail(id)
 
@@ -125,7 +138,7 @@ export function ExecutionDetailPage() {
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
-          onClick={() => window.history.back()}
+          onClick={goBack}
           className="gap-1.5"
         >
           <ArrowLeft size={16} />

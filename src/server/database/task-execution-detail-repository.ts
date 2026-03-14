@@ -10,8 +10,8 @@ type Database = NodePgDatabase<typeof schemaTypes>
 export class TaskExecutionDetailRepository {
   constructor(private readonly db: Database) {}
 
-  async create(input: CreateDetailInput): Promise<TaskExecutionDetail> {
-    const rows = await this.db
+  async create(input: CreateDetailInput): Promise<void> {
+    await this.db
       .insert(taskExecutionDetails)
       .values({
         executionId: input.executionId,
@@ -19,9 +19,6 @@ export class TaskExecutionDetailRepository {
         status: input.status,
         message: input.message ?? null,
       })
-      .returning()
-
-    return toDetail(rows[0], null, null)
   }
 
   async createMany(inputs: readonly CreateDetailInput[]): Promise<void> {

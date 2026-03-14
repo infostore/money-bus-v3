@@ -98,8 +98,7 @@ export class PriceCollectorService {
 
     const products = await this.productRepo.findAll()
     const counters: CollectionCounters = { total: 0, succeeded: 0, failed: 0, skipped: 0 }
-    const skippedDetails: CreateDetailInput[] = []
-    const { naverProducts, yahooProducts } = this.groupProducts(products, counters, execution.id, skippedDetails)
+    const { naverProducts, yahooProducts, skippedDetails } = this.groupProducts(products, counters, execution.id)
 
     // Write skipped detail rows upfront
     if (skippedDetails.length > 0) {
@@ -152,8 +151,8 @@ export class PriceCollectorService {
     products: readonly Product[],
     counters: CollectionCounters,
     executionId: number,
-    skippedDetails: CreateDetailInput[],
-  ): { readonly naverProducts: readonly Product[]; readonly yahooProducts: readonly Product[] } {
+  ): { readonly naverProducts: readonly Product[]; readonly yahooProducts: readonly Product[]; readonly skippedDetails: readonly CreateDetailInput[] } {
+    const skippedDetails: CreateDetailInput[] = []
     const naverProducts: Product[] = []
     const yahooProducts: Product[] = []
 
@@ -179,7 +178,7 @@ export class PriceCollectorService {
       }
     }
 
-    return { naverProducts, yahooProducts }
+    return { naverProducts, yahooProducts, skippedDetails }
   }
 
   /** Returns true if aborted */

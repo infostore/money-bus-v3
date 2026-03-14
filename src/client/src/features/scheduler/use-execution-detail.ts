@@ -12,7 +12,7 @@ export function useExecutionDetail(executionId: number) {
     error: queryError,
   } = useQuery({
     queryKey: [DETAIL_KEY_PREFIX, executionId] as const,
-    queryFn: () => api.executionDetail(executionId),
+    queryFn: () => api.scheduler.executionDetail(executionId),
   })
 
   const error = queryError instanceof Error ? queryError.message : null

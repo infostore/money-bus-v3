@@ -41,6 +41,7 @@ import { createEtfSchedulerRoutes } from './routes/etf-component-scheduler.js'
 import { createEtfComponentRoutes } from './routes/etf-components.js'
 import { createExchangeRateRoutes } from './routes/exchange-rates.js'
 import { createExchangeRateSchedulerRoutes } from './routes/exchange-rate-scheduler.js'
+import { createExecutionDetailRoutes } from './routes/execution-detail.js'
 import { TaskExecutionDetailRepository } from './database/task-execution-detail-repository.js'
 import { TransactionRepository } from './database/transaction-repository.js'
 import { HoldingService } from './services/holding-service.js'
@@ -279,26 +280,7 @@ app.route('/api/transactions', createTransactionRoutes(transactionRepo, holdingS
 app.route('/api/holdings', createHoldingsRoutes(holdingService))
 
 // PRD-FEAT-018: Unified execution detail route (shared across all scheduler types)
-app.get('/api/scheduler/executions/:id/details', async (c) => {
-  const id = Number(c.req.param('id'))
-  if (isNaN(id)) {
-    return c.json<ApiResponse<null>>(
-      { success: false, data: null, error: 'Invalid execution id' },
-      400,
-    )
-  }
-
-  const execution = await taskExecutionRepo.findById(id)
-  if (!execution) {
-    return c.json<ApiResponse<null>>(
-      { success: false, data: null, error: 'Execution not found' },
-      404,
-    )
-  }
-
-  const details = await detailRepo.findByExecutionId(id)
-  return c.json({ success: true, data: { execution, details }, error: null })
-})
+app.route('/api/scheduler/executions', createExecutionDetailRoutes(taskExecutionRepo, detailRepo))
 
 if (collectorService && schedulerTaskId > 0) {
   app.route(
