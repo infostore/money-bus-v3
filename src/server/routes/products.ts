@@ -105,6 +105,7 @@ export function createProductRoutes(
           product_id: productId,
           close: v.close,
           date: v.date,
+          return_1d: v.return_1d,
           return_1w: v.return_1w,
           return_1m: v.return_1m,
           return_3m: v.return_3m,

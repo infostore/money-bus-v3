@@ -102,6 +102,7 @@ export interface LatestPrice {
   readonly product_id: number
   readonly close: string
   readonly date: string
+  readonly return_1d: number | null
   readonly return_1w: number | null
   readonly return_1m: number | null
   readonly return_3m: number | null
