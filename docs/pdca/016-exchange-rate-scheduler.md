@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Exchange Rate Collection Scheduler
 related-prd: PRD-FEAT-016
-phase: plan
-status: not-started
+phase: do
+status: in-progress
 created: 2026-03-14
 updated: 2026-03-14
 tags: [pdca, scheduler, exchange-rate, exim, naver, usd, krw]
@@ -80,6 +80,7 @@ tags: [pdca, scheduler, exchange-rate, exim, naver, usd, krw]
 
 - **Progress Log**:
   - 2026-03-14: PDCA plan created. Implementation not started.
+  - 2026-03-14: Transitioned to Do phase. Implementation starting.
 
 ## Check
 
