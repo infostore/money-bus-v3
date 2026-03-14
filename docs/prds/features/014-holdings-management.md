@@ -3,7 +3,7 @@ type: prd
 prd-id: PRD-FEAT-014
 prd-type: feature
 title: Holdings Management (보유종목 관리)
-status: draft
+status: approved
 implementation-status: not-started
 created: 2026-03-14
 updated: 2026-03-14
@@ -51,10 +51,10 @@ This is a core feature that unlocks portfolio-level analysis, enabling users to 
 | # | Story | Acceptance Criteria |
 |---|-------|---------------------|
 | 1 | As a user, I want to create a buy transaction | Given I select an account and product, when I enter shares, price, fee, tax, and date, then the transaction is saved and holdings are updated |
-| 2 | As a user, I want to create a sell transaction | Given I have holdings in a product, when I enter a sell transaction with more shares than held, then the API returns 400 with error "보유수량(X주)을 초과하여 매도할 수 없습니다". When valid, the transaction is saved. |
-| 3 | As a user, I want to edit a transaction | Given I edit a transaction, when the edit would cause negative shares at any point in history, then the API returns 400 with error "수정 후 거래내역에서 보유수량이 음수가 됩니다 (YYYY-MM-DD)". When valid, the transaction is saved and holdings are recomputed. |
+| 2 | As a user, I want to create a sell transaction | Given I have holdings in a product, when I enter a sell transaction with more shares than held, then the API returns 400 with error "보유수량(X주)을 초과하여 매도할 수 없습니다". When shares = held_shares, the transaction is accepted (full liquidation — avg_cost resets on next buy). When valid, API returns 201 with `{ success: true, data: Transaction }`. |
+| 3 | As a user, I want to edit a transaction | Given I edit a transaction, when the edit would cause negative shares at any point in history, then the API returns 400 with error "수정 후 거래내역에서 보유수량이 음수가 됩니다 (YYYY-MM-DD)". When `traded_at` is changed, the UI shows a confirmation dialog: "거래일 변경 시 전체 거래내역이 재계산됩니다. 계속하시겠습니까?" before submitting. When valid, the transaction is saved and holdings are recomputed. |
 | 4 | As a user, I want to delete a transaction | Given I delete a transaction, when confirmed, then it is removed and holdings are recomputed. If deletion would cause negative shares, API returns 400 with the same error as Story #3. |
-| 5 | As a user, I want to view holdings with P&L | Given I have transactions, when I open /holdings, then I see 종목명, 보유수량, 평균단가, 현재가, 평가금액, 미실현손익, 수익률. When no price_history exists for a product, current_price shows 0 and 평가금액/손익 columns show "-". |
+| 5 | As a user, I want to view holdings with P&L | Given I have transactions, when I open /holdings, then I see 종목명, 보유수량, 평균단가, 현재가, 평가금액, 미실현손익, 수익률. When `current_price` is null (no price_history), 현재가/평가금액/손익/수익률 columns all show "-". While data is loading, display a loading skeleton in place of the table. |
 | 6 | As a user, I want to filter holdings | Given I select an account or family member filter, then only matching holdings are shown. When no holdings match, display "선택한 조건에 해당하는 보유종목이 없습니다". |
 | 7 | As a user, I want to view realized P&L | Given I am on the /holdings page, when I click the "실현손익" section toggle, then I see a collapsible table of per-sell-transaction realized gains/losses below the holdings table. |
 | 8 | As a user, I want foreign holdings in KRW | Given I hold a USD product, when viewing holdings, then market_value and cost_basis are converted using FX rate. Values are displayed in KRW with the original currency indicated. |
@@ -215,6 +215,7 @@ Validation rules:
 - POST/PUT: shares > 0, price > 0, fee >= 0, tax >= 0
 - Sell: cannot sell more shares than currently held
 - PUT: recompute holdings after edit; reject if negative shares at any history point
+- Query params: `from`/`to` must be ISO date strings (YYYY-MM-DD); `type` must be `buy` or `sell`. Invalid values return 400.
 
 ### Architecture
 
@@ -271,7 +272,7 @@ Transaction history: each holding row is expandable to show its transaction list
 ## 7. Success Metrics
 
 - [ ] Transaction CRUD works correctly (create, read, update, delete)
-- [ ] Holdings computed accurately via moving average method. Canonical test: Buy 10@100 (fee=50) → avg_cost=10.5; Buy 10@110 (fee=50) → avg_cost=110.5; Sell 5@120 (fee=10, tax=20) → realized_pnl = (120×5 - 10 - 20) - (110.5×5) = 17.5
+- [ ] Holdings computed accurately via moving average method. Canonical test: Buy 10@100 (fee=50) → avg_cost=105.0; Buy 10@110 (fee=50) → avg_cost=110.0; Sell 5@120 (fee=10, tax=20) → realized_pnl = (120×5 - 10 - 20) - (110.0×5) = 20.0
 - [ ] Buy-side fees included in cost basis; sell-side fees deducted from proceeds
 - [ ] Sell validation prevents over-selling
 - [ ] PUT validation prevents negative shares at any history point
@@ -293,7 +294,7 @@ Transaction history: each holding row is expandable to show its transaction list
 |------|--------|------------|
 | Moving average computation performance with many transactions | Slow holdings query | Personal use (~1000s of txns) — sequential processing is fast enough. Cache/materialize later if needed. |
 | Sell validation race condition | Over-selling | Wrap sell creation in a DB transaction with holdings check |
-| FX rate availability | Incorrect market_value for foreign holdings | Fall back to fx_rate=1.0 if no FX product exists |
+| FX rate availability | Incorrect market_value for foreign holdings | Display market_value as "-" when fx_rate is null; surface UI tooltip "환율 데이터 없음" next to the dash |
 | Transaction edit invalidating history | Data integrity | Recompute full history on PUT; reject if negative shares at any point |
 
 ## Change Log
@@ -302,3 +303,4 @@ Transaction history: each holding row is expandable to show its transaction list
 |------|---------|--------|---------|
 | 2026-03-14 | 1.0 | - | Initial PRD based on design spec |
 | 2026-03-14 | 1.1 | - | Address review: DB-level type constraint, FX convention, error responses, nullable prices, test fixture |
+| 2026-03-14 | 1.2 | - | Fix CRITICAL: correct moving-avg test fixture arithmetic, remove FX fallback contradiction. Fix HIGH: sell success response spec, current_price null display, edit date-change warning, loading state, query param validation. Status → approved |

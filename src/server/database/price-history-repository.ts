@@ -143,6 +143,27 @@ export class PriceHistoryRepository {
     return result
   }
 
+  // PRD-FEAT-014: Bulk-fetch latest close price per product
+  async findLatestByProductIds(
+    productIds: readonly number[],
+  ): Promise<ReadonlyMap<number, { close: string; date: string }>> {
+    if (productIds.length === 0) return new Map()
+
+    const rows = await this.db.execute(sql`
+      SELECT DISTINCT ON (product_id) product_id, close, date
+      FROM price_history
+      WHERE product_id = ANY(${productIds})
+      ORDER BY product_id, date DESC
+    `)
+
+    type Row = { product_id: number; close: string; date: string }
+    const result = new Map<number, { close: string; date: string }>()
+    for (const row of (rows as unknown as { rows: Row[] }).rows) {
+      result.set(row.product_id, { close: row.close, date: row.date })
+    }
+    return result
+  }
+
   async findByProductId(productId: number): Promise<readonly PriceHistory[]> {
     const rows = await this.db
       .select()
