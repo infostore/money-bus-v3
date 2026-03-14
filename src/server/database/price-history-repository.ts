@@ -81,8 +81,9 @@ export class PriceHistoryRepository {
   async findLatestPricesWithReturns(): Promise<
     ReadonlyMap<number, {
       close: string; date: string;
-      return_1w: number | null; return_1m: number | null;
-      return_3m: number | null; return_1y: number | null;
+      return_1d: number | null; return_1w: number | null;
+      return_1m: number | null; return_3m: number | null;
+      return_1y: number | null;
     }>
   > {
     const rows = await this.db.execute(sql`
@@ -93,11 +94,17 @@ export class PriceHistoryRepository {
       )
       SELECT
         l.product_id, l.close, l.date,
+        d.close AS close_1d,
         w.close AS close_1w,
         m.close AS close_1m,
         q.close AS close_3m,
         y.close AS close_1y
       FROM latest l
+      LEFT JOIN LATERAL (
+        SELECT close FROM price_history
+        WHERE product_id = l.product_id AND date < l.date
+        ORDER BY date DESC LIMIT 1
+      ) d ON true
       LEFT JOIN LATERAL (
         SELECT close FROM price_history
         WHERE product_id = l.product_id AND date <= l.date - 7
@@ -122,18 +129,21 @@ export class PriceHistoryRepository {
 
     type Row = {
       product_id: number; close: string; date: string;
-      close_1w: string | null; close_1m: string | null;
-      close_3m: string | null; close_1y: string | null;
+      close_1d: string | null; close_1w: string | null;
+      close_1m: string | null; close_3m: string | null;
+      close_1y: string | null;
     }
     const result = new Map<number, {
       close: string; date: string;
-      return_1w: number | null; return_1m: number | null;
-      return_3m: number | null; return_1y: number | null;
+      return_1d: number | null; return_1w: number | null;
+      return_1m: number | null; return_3m: number | null;
+      return_1y: number | null;
     }>()
     for (const row of (rows as unknown as { rows: Row[] }).rows) {
       result.set(row.product_id, {
         close: row.close,
         date: row.date,
+        return_1d: calcReturn(row.close, row.close_1d),
         return_1w: calcReturn(row.close, row.close_1w),
         return_1m: calcReturn(row.close, row.close_1m),
         return_3m: calcReturn(row.close, row.close_3m),

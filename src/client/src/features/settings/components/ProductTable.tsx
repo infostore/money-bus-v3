@@ -27,6 +27,7 @@ function returnColor(value: number | null | undefined): string {
 interface PriceData {
   readonly close: string
   readonly date: string
+  readonly return_1d: number | null
   readonly return_1w: number | null
   readonly return_1m: number | null
   readonly return_3m: number | null
@@ -56,6 +57,7 @@ export function ProductTable({
             <th className="py-2 pr-3 text-left font-medium">코드</th>
             <th className="py-2 pr-3 text-left font-medium">종목명</th>
             <th className="py-2 pr-3 text-right font-medium">현재가</th>
+            <th className="py-2 pr-3 text-right font-medium">1D</th>
             <th className="py-2 pr-3 text-right font-medium">1W</th>
             <th className="py-2 pr-3 text-right font-medium">1M</th>
             <th className="py-2 pr-3 text-right font-medium">3M</th>
@@ -96,6 +98,9 @@ export function ProductTable({
                 const p = priceMap?.get(product.id)
                 return (
                   <>
+                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1d)}`}>
+                      {formatReturn(p?.return_1d)}
+                    </td>
                     <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1w)}`}>
                       {formatReturn(p?.return_1w)}
                     </td>
