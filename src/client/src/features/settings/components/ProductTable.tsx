@@ -19,8 +19,8 @@ function formatReturn(value: number | null | undefined): string {
 
 function returnColor(value: number | null | undefined): string {
   if (value == null) return 'text-surface-500'
-  if (value > 0) return 'text-error-400'
-  if (value < 0) return 'text-primary-400'
+  if (value > 0) return 'text-success-500'
+  if (value < 0) return 'text-error-500'
   return 'text-surface-500'
 }
 
