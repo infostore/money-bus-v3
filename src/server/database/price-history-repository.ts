@@ -107,22 +107,22 @@ export class PriceHistoryRepository {
       FROM latest l
       LEFT JOIN LATERAL (
         SELECT close FROM price_history
-        WHERE product_id = l.product_id AND date <= (l.date::date - 7)::text
+        WHERE product_id = l.product_id AND date <= l.date - 7
         ORDER BY date DESC LIMIT 1
       ) w ON true
       LEFT JOIN LATERAL (
         SELECT close FROM price_history
-        WHERE product_id = l.product_id AND date <= (l.date::date - 30)::text
+        WHERE product_id = l.product_id AND date <= l.date - 30
         ORDER BY date DESC LIMIT 1
       ) m ON true
       LEFT JOIN LATERAL (
         SELECT close FROM price_history
-        WHERE product_id = l.product_id AND date <= (l.date::date - 90)::text
+        WHERE product_id = l.product_id AND date <= l.date - 90
         ORDER BY date DESC LIMIT 1
       ) q ON true
       LEFT JOIN LATERAL (
         SELECT close FROM price_history
-        WHERE product_id = l.product_id AND date <= (l.date::date - 365)::text
+        WHERE product_id = l.product_id AND date <= l.date - 365
         ORDER BY date DESC LIMIT 1
       ) y ON true
     `)
