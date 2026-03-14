@@ -2,6 +2,7 @@
 import type { TaskExecution } from '../../shared/types.js'
 import type { ExchangeRateFetcher } from '../services/exchange-rate-fetcher.js'
 import type { TaskExecutionRepository } from '../database/task-execution-repository.js'
+import type { TaskExecutionDetailRepository } from '../database/task-execution-detail-repository.js'
 import { log } from '../middleware/logger.js'
 
 export class ExchangeRateCollectorService {
@@ -10,6 +11,7 @@ export class ExchangeRateCollectorService {
   constructor(
     private readonly fetcher: ExchangeRateFetcher,
     private readonly taskExecutionRepo: TaskExecutionRepository,
+    private readonly detailRepo: TaskExecutionDetailRepository,
     private readonly taskId: number,
   ) {}
 
@@ -39,6 +41,8 @@ export class ExchangeRateCollectorService {
     try {
       await this.fetcher.updateUsdRate()
 
+      await this.detailRepo.create({ executionId: execution.id, productId: null, status: 'success', message: 'USD/KRW' })
+
       const completed = await this.taskExecutionRepo.complete(execution.id, {
         status: 'success',
         productsTotal: 1,
@@ -53,6 +57,8 @@ export class ExchangeRateCollectorService {
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
       log('error', `Exchange rate collection failed: ${msg}`)
+
+      await this.detailRepo.create({ executionId: execution.id, productId: null, status: 'failed', message: `USD/KRW: ${msg}` })
 
       const completed = await this.taskExecutionRepo.complete(execution.id, {
         status: 'failed',

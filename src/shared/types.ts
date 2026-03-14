@@ -319,6 +319,25 @@ export interface RealizedPnlEntry {
   readonly net_pnl: number
 }
 
+// PRD-FEAT-018: Task Execution Detail
+export interface TaskExecutionDetail {
+  readonly id: number
+  readonly execution_id: number
+  readonly product_id: number | null
+  readonly product_name: string | null
+  readonly product_code: string | null
+  readonly status: 'success' | 'failed' | 'skipped'
+  readonly message: string | null
+  readonly created_at: string
+}
+
+export interface CreateDetailInput {
+  readonly executionId: number
+  readonly productId: number | null
+  readonly status: 'success' | 'failed' | 'skipped'
+  readonly message?: string | null
+}
+
 // PRD-FEAT-016: Exchange Rate Collection Scheduler
 export interface ExchangeRate {
   readonly id: number

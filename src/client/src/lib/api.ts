@@ -21,6 +21,7 @@ import type {
   LatestPrice,
   PriceHistory,
   TaskExecution,
+  TaskExecutionDetail,
   EtfComponent,
   Transaction,
   CreateTransactionPayload,
@@ -181,6 +182,11 @@ export const api = {
         method: 'DELETE',
       }),
   },
+  // PRD-FEAT-018: Execution Detail
+  executionDetail: (id: number) =>
+    request<{ execution: TaskExecution; details: readonly TaskExecutionDetail[] }>(
+      `/scheduler/executions/${id}/details`,
+    ),
   // PRD-FEAT-013: ETF Component UI
   etfComponents: {
     getDates: (productId: number) =>

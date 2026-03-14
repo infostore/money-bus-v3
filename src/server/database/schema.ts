@@ -96,6 +96,18 @@ export const taskExecutions = pgTable('task_executions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+// PRD-FEAT-018: Task Execution Details (per-product results)
+export const taskExecutionDetails = pgTable('task_execution_details', {
+  id: serial('id').primaryKey(),
+  executionId: integer('execution_id').notNull().references(() => taskExecutions.id, { onDelete: 'cascade' }),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'set null' }),
+  status: text('status').notNull().$type<'success' | 'failed' | 'skipped'>(),
+  message: text('message'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('task_execution_details_execution_idx').on(t.executionId),
+])
+
 export const accountTypes = pgTable('account_types', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),

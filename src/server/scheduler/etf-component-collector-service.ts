@@ -4,6 +4,7 @@ import type { EtfProfileRepository } from '../database/etf-profile-repository.js
 import type { EtfComponentRepository } from '../database/etf-component-repository.js'
 import type { TaskExecutionRepository } from '../database/task-execution-repository.js'
 import type { EtfComponentAdapter } from './etf-component-adapter.js'
+import type { TaskExecutionDetailRepository } from '../database/task-execution-detail-repository.js'
 import { withRetry } from './with-retry.js'
 import { log } from '../middleware/logger.js'
 
@@ -57,6 +58,7 @@ export class EtfComponentCollectorService {
     private readonly profileRepo: EtfProfileRepository,
     private readonly componentRepo: EtfComponentRepository,
     private readonly taskExecutionRepo: TaskExecutionRepository,
+    private readonly detailRepo: TaskExecutionDetailRepository,
     private readonly adapters: ReadonlyMap<EtfManager, EtfComponentAdapter>,
     private readonly taskId: number,
   ) {}
@@ -166,7 +168,7 @@ export class EtfComponentCollectorService {
         return { counters: current, aborted: true }
       }
 
-      current = await this.processOneEtf(profile, snapshotDate, current, signal)
+      current = await this.processOneEtf(executionId, profile, snapshotDate, current, signal)
       await this.updateProgress(executionId, current)
     }
 
@@ -174,6 +176,7 @@ export class EtfComponentCollectorService {
   }
 
   private async processOneEtf(
+    executionId: number,
     profile: EtfProfile,
     snapshotDate: string,
     counters: CollectionCounters,
@@ -182,11 +185,13 @@ export class EtfComponentCollectorService {
     const adapter = this.adapters.get(profile.manager)
     if (!adapter) {
       log('warn', `No adapter for manager '${profile.manager}' (product_id=${profile.product_id})`)
+      await this.detailRepo.create({ executionId, productId: profile.product_id, status: 'skipped', message: `No adapter for manager: ${profile.manager}` })
       return { ...counters, skipped: counters.skipped + 1 }
     }
 
     const exists = await this.componentRepo.hasSnapshot(profile.product_id, snapshotDate)
     if (exists) {
+      await this.detailRepo.create({ executionId, productId: profile.product_id, status: 'skipped', message: 'Snapshot already exists' })
       return { ...counters, skipped: counters.skipped + 1 }
     }
 
@@ -201,10 +206,12 @@ export class EtfComponentCollectorService {
       }
 
       log('info', `ETF components collected: product_id=${profile.product_id}, rows=${rows.length}`)
+      await this.detailRepo.create({ executionId, productId: profile.product_id, status: 'success' })
       return { ...counters, succeeded: counters.succeeded + 1 }
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
       log('error', `ETF component collection failed for product_id=${profile.product_id}: ${msg}`)
+      await this.detailRepo.create({ executionId, productId: profile.product_id, status: 'failed', message: msg })
       return { ...counters, failed: counters.failed + 1 }
     }
   }

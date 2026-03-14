@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Scheduler Execution Detail
 related-prd: PRD-FEAT-018
-phase: plan
-status: not-started
+phase: do
+status: in-progress
 created: 2026-03-14
 updated: 2026-03-14
 tags: [pdca]
@@ -69,6 +69,7 @@ tags: [pdca]
 
 - **Progress Log**:
   - 2026-03-14: PDCA plan created
+  - 2026-03-14: Phase transition plan → do (implementation started)
 
 ## Check
 

@@ -78,7 +78,12 @@ function createMocks() {
     fetchPrices: vi.fn<(code: string, productId: number, startDate: Date, endDate: Date) => Promise<readonly PriceRow[]>>().mockResolvedValue([]),
   }
 
-  return { productRepo, priceHistoryRepo, taskExecutionRepo, naverAdapter, yahooAdapter }
+  const detailRepo = {
+    create: vi.fn().mockResolvedValue(undefined),
+    createMany: vi.fn().mockResolvedValue(undefined),
+  }
+
+  return { productRepo, priceHistoryRepo, taskExecutionRepo, naverAdapter, yahooAdapter, detailRepo }
 }
 
 function createService(mocks: ReturnType<typeof createMocks>) {
@@ -86,6 +91,7 @@ function createService(mocks: ReturnType<typeof createMocks>) {
     mocks.productRepo as never,
     mocks.priceHistoryRepo as never,
     mocks.taskExecutionRepo as never,
+    mocks.detailRepo as never,
     mocks.naverAdapter as never,
     mocks.yahooAdapter as never,
     1, // taskId

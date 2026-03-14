@@ -3,6 +3,7 @@ import type { Product, TaskExecution } from '../../shared/types.js'
 import type { ProductRepository } from '../database/product-repository.js'
 import type { PriceHistoryRepository, PriceRow } from '../database/price-history-repository.js'
 import type { TaskExecutionRepository } from '../database/task-execution-repository.js'
+import type { TaskExecutionDetailRepository } from '../database/task-execution-detail-repository.js'
 import type { NaverFinanceAdapter } from './naver-finance-adapter.js'
 import type { YahooFinanceAdapter } from './yahoo-finance-adapter.js'
 import { resolveAdapter } from './exchange-routing.js'
@@ -44,6 +45,7 @@ export class HoldingsPriceCollectorService {
     private readonly productRepo: ProductRepository,
     private readonly priceHistoryRepo: PriceHistoryRepository,
     private readonly taskExecutionRepo: TaskExecutionRepository,
+    private readonly detailRepo: TaskExecutionDetailRepository,
     private readonly naverAdapter: NaverFinanceAdapter,
     private readonly yahooAdapter: YahooFinanceAdapter,
     private readonly domesticTaskId: number,
@@ -87,9 +89,15 @@ export class HoldingsPriceCollectorService {
 
     for (const product of products) {
       const result = await this.collectProduct(product, startDate, endDate)
-      if (result === 'success') succeeded++
-      else if (result === 'failed') failed++
+      if (result.status === 'success') succeeded++
+      else if (result.status === 'failed') failed++
       else skipped++
+      await this.detailRepo.create({
+        executionId: execution.id,
+        productId: product.id,
+        status: result.status,
+        message: result.message,
+      })
     }
 
     const status = failed === 0 ? 'success' : succeeded === 0 ? 'failed' : 'partial'
@@ -120,16 +128,16 @@ export class HoldingsPriceCollectorService {
     product: Product,
     startDate: string,
     endDate: string,
-  ): Promise<'success' | 'failed' | 'skipped'> {
+  ): Promise<{ readonly status: 'success' | 'failed' | 'skipped'; readonly message?: string | null }> {
     if (!product.code) {
       log('warn', `Skipping product ${product.id} (${product.name}): no code`)
-      return 'skipped'
+      return { status: 'skipped', message: 'No product code' }
     }
 
     const adapter = resolveAdapter(product.exchange)
     if (adapter === 'unknown') {
       log('warn', `Skipping product ${product.id} (${product.name}): unknown exchange '${product.exchange}'`)
-      return 'skipped'
+      return { status: 'skipped', message: `Unknown exchange: ${product.exchange}` }
     }
 
     try {
@@ -152,11 +160,11 @@ export class HoldingsPriceCollectorService {
       }
 
       log('info', `Holdings price collected: ${product.code} (${product.name})`)
-      return 'success'
+      return { status: 'success' }
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
       log('error', `Holdings price failed for ${product.code}: ${msg}`)
-      return 'failed'
+      return { status: 'failed', message: msg }
     }
   }
 }

@@ -66,7 +66,12 @@ function createMocks() {
     ['rise', riseAdapter],
   ])
 
-  return { profileRepo, componentRepo, taskExecutionRepo, adapters, samsungAdapter, timefolioAdapter, riseAdapter }
+  const detailRepo = {
+    create: vi.fn().mockResolvedValue(undefined),
+    createMany: vi.fn().mockResolvedValue(undefined),
+  }
+
+  return { profileRepo, componentRepo, taskExecutionRepo, adapters, samsungAdapter, timefolioAdapter, riseAdapter, detailRepo }
 }
 
 function createService(mocks: ReturnType<typeof createMocks>) {
@@ -74,6 +79,7 @@ function createService(mocks: ReturnType<typeof createMocks>) {
     mocks.profileRepo as never,
     mocks.componentRepo as never,
     mocks.taskExecutionRepo as never,
+    mocks.detailRepo as never,
     mocks.adapters as never,
     1,
   )
