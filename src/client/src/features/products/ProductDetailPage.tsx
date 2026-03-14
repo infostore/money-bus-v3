@@ -11,13 +11,15 @@ import { PriceSummaryCard } from './components/PriceSummaryCard'
 import { PriceHistoryChart } from './components/PriceHistoryChart'
 import { PriceDataTab } from './components/PriceDataTab'
 import { EtfHoldingsTab } from './components/EtfHoldingsTab'
+import { TransactionTab } from './components/TransactionTab'
 import type { RangeKey } from './price-history-utils'
 
-type TabKey = 'chart' | 'table' | 'holdings'
+type TabKey = 'chart' | 'table' | 'holdings' | 'transactions'
 
 const BASE_TAB_OPTIONS: readonly { readonly key: TabKey; readonly label: string }[] = [
   { key: 'chart', label: '가격 차트' },
   { key: 'table', label: '가격 데이터' },
+  { key: 'transactions', label: '거래내역' },
 ] as const
 
 const HOLDINGS_TAB = { key: 'holdings' as const, label: '구성종목' }
@@ -169,6 +171,8 @@ function ProductDetailContent({
         />
       ) : tab === 'holdings' && isEtf ? (
         <EtfHoldingsTab productId={id} />
+      ) : tab === 'transactions' ? (
+        <TransactionTab productId={id} />
       ) : (
         <PriceDataTab priceHistory={priceHistory} />
       )}
