@@ -210,7 +210,7 @@ export interface UpdateAccountTypePayload {
 }
 
 // PRD-FEAT-012: ETF Component Collection Scheduler
-export type EtfManager = 'samsung-active' | 'timefolio' | 'rise'
+export type EtfManager = 'samsung-active' | 'timefolio' | 'rise' | 'kodex'
 
 export interface EtfProfile {
   readonly id: number
@@ -218,7 +218,7 @@ export interface EtfProfile {
   readonly manager: EtfManager
   readonly expense_ratio: string | null
   readonly download_url: string
-  readonly download_type: 'xls' | 'html'
+  readonly download_type: 'xls' | 'html' | 'json'
   readonly created_at: string
   readonly updated_at: string
 }

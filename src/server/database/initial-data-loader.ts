@@ -21,6 +21,7 @@ export interface SyncResult {
   readonly accountTypes: SyncTableResult
   readonly accounts: SyncTableResult
   readonly products: SyncTableResult
+  readonly etfProfiles: SyncTableResult
 }
 
 interface SyncableRow {
@@ -184,6 +185,102 @@ function buildParamQuery(template: string, params: unknown[]): string {
   return query
 }
 
+interface EtfProfileRow {
+  readonly product_code: string
+  readonly manager: string
+  readonly expense_ratio: string | null
+  readonly download_url: string
+  readonly download_type: string
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+async function syncEtfProfiles(
+  pgDb: PgDb,
+  sqliteDb: InstanceType<typeof Database>,
+): Promise<SyncTableResult> {
+  const result = { pgInserted: 0, pgUpdated: 0, sqliteInserted: 0, sqliteUpdated: 0 }
+
+  const tableExists = sqliteDb.prepare(
+    `SELECT name FROM sqlite_master WHERE type='table' AND name='etf_profiles'`,
+  ).get()
+  if (!tableExists) return result
+
+  const sqliteRows = sqliteDb.prepare('SELECT * FROM etf_profiles').all() as EtfProfileRow[]
+  if (sqliteRows.length === 0) return result
+
+  // Build product code → id mapping from PG
+  const pgProducts = await pgDb.execute(sql.raw(`SELECT id, code FROM products WHERE code IS NOT NULL`))
+  const codeToId = new Map<string, number>()
+  for (const row of (pgProducts as unknown as { rows: Array<{ id: number; code: string }> }).rows) {
+    codeToId.set(row.code, row.id)
+  }
+
+  // Load existing PG etf_profiles keyed by product_id
+  const pgResult = await pgDb.execute(sql.raw(
+    `SELECT ep.product_id, p.code as product_code, ep.manager, ep.expense_ratio, ep.download_url, ep.download_type,
+      to_char(ep.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+      to_char(ep.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at
+     FROM etf_profiles ep JOIN products p ON ep.product_id = p.id`,
+  ))
+  const pgMap = new Map<string, SyncableRow>()
+  for (const row of (pgResult as unknown as { rows: SyncableRow[] }).rows) {
+    pgMap.set(row['product_code'] as string, row)
+  }
+
+  // SQLite → PG
+  for (const slRow of sqliteRows) {
+    const productId = codeToId.get(slRow.product_code)
+    if (productId === undefined) continue
+
+    const pgRow = pgMap.get(slRow.product_code)
+    if (!pgRow) {
+      await pgDb.execute(sql.raw(buildParamQuery(
+        `INSERT INTO etf_profiles (product_id, manager, expense_ratio, download_url, download_type, created_at, updated_at)
+         VALUES ($1::int, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz)
+         ON CONFLICT (product_id) DO NOTHING`,
+        [productId, slRow.manager, slRow.expense_ratio, slRow.download_url, slRow.download_type, slRow.created_at, slRow.updated_at],
+      )))
+      result.pgInserted++
+    } else if (slRow.updated_at > (pgRow['updated_at'] as string)) {
+      await pgDb.execute(sql.raw(buildParamQuery(
+        `UPDATE etf_profiles SET manager = $1, expense_ratio = $2, download_url = $3, download_type = $4, updated_at = $5::timestamptz
+         WHERE product_id = $6::int`,
+        [slRow.manager, slRow.expense_ratio, slRow.download_url, slRow.download_type, slRow.updated_at, productId],
+      )))
+      result.pgUpdated++
+    }
+  }
+
+  // PG → SQLite: sync back any profiles added via PG
+  const slInsert = sqliteDb.prepare(
+    `INSERT OR IGNORE INTO etf_profiles (product_code, manager, expense_ratio, download_url, download_type, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  )
+  const slUpdate = sqliteDb.prepare(
+    `UPDATE etf_profiles SET manager = ?, expense_ratio = ?, download_url = ?, download_type = ?, updated_at = ?
+     WHERE product_code = ?`,
+  )
+  const sqliteMap = new Map(sqliteRows.map((r) => [r.product_code, r]))
+
+  const writeTx = sqliteDb.transaction(() => {
+    for (const [, pgRow] of pgMap) {
+      const code = pgRow['product_code'] as string
+      const slRow = sqliteMap.get(code)
+      if (!slRow) {
+        slInsert.run(code, pgRow['manager'], pgRow['expense_ratio'] ?? null, pgRow['download_url'], pgRow['download_type'], pgRow['created_at'], pgRow['updated_at'])
+        result.sqliteInserted++
+      } else if ((pgRow['updated_at'] as string) > slRow.updated_at) {
+        slUpdate.run(pgRow['manager'], pgRow['expense_ratio'] ?? null, pgRow['download_url'], pgRow['download_type'], pgRow['updated_at'], code)
+        result.sqliteUpdated++
+      }
+    }
+  })
+  writeTx()
+
+  return result
+}
+
 export async function syncInitialData(
   pgDb: PgDb,
   sqlitePath: string,
@@ -191,7 +288,7 @@ export async function syncInitialData(
   const empty: SyncTableResult = { pgInserted: 0, pgUpdated: 0, sqliteInserted: 0, sqliteUpdated: 0 }
   if (!existsSync(sqlitePath)) {
     log('warn', `Initial data file not found: ${sqlitePath}`)
-    return { familyMembers: empty, institutions: empty, accountTypes: empty, accounts: empty, products: empty }
+    return { familyMembers: empty, institutions: empty, accountTypes: empty, accounts: empty, products: empty, etfProfiles: empty }
   }
 
   const sqliteDb = new Database(sqlitePath)
@@ -204,8 +301,9 @@ export async function syncInitialData(
     const accountTypes = await syncTable(pgDb, sqliteDb, ACCOUNT_TYPES_CONFIG)
     const accounts = await syncTable(pgDb, sqliteDb, ACCOUNTS_CONFIG)
     const products = await syncTable(pgDb, sqliteDb, PRODUCTS_CONFIG)
+    const etfProfiles = await syncEtfProfiles(pgDb, sqliteDb)
 
-    return { familyMembers, institutions, accountTypes, accounts, products }
+    return { familyMembers, institutions, accountTypes, accounts, products, etfProfiles }
   } finally {
     sqliteDb.close()
   }

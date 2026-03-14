@@ -12,7 +12,7 @@ import { withRetry } from './with-retry.js'
 import { sleep } from './sleep.js'
 import { log } from '../middleware/logger.js'
 
-const LOOKBACK_DAYS = parseInt(process.env['PRICE_HISTORY_DEFAULT_LOOKBACK_DAYS'] ?? '365', 10)
+const LOOKBACK_DAYS = parseInt(process.env['PRICE_HISTORY_DEFAULT_LOOKBACK_DAYS'] ?? '380', 10)
 const NAVER_BATCH_SIZE = 10
 const NAVER_BATCH_DELAY_MS = 3000
 const NAVER_REQUEST_DELAY_MS = 500

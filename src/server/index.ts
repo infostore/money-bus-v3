@@ -21,9 +21,9 @@ import { EtfComponentRepository } from './database/etf-component-repository.js'
 import { SamsungActiveAdapter } from './scheduler/samsung-active-adapter.js'
 import { TimefolioAdapter } from './scheduler/timefolio-adapter.js'
 import { RiseAdapter } from './scheduler/rise-adapter.js'
+import { KodexAdapter } from './scheduler/kodex-adapter.js'
 import { EtfComponentCollectorService } from './scheduler/etf-component-collector-service.js'
 import type { EtfComponentAdapter } from './scheduler/etf-component-adapter.js'
-import { ETF_PROFILE_SEEDS, VALID_MANAGERS } from './scheduler/etf-profile-seed.js'
 import { startSchedulers } from './scheduler/index.js'
 import { createItemRoutes } from './routes/items.js'
 import { createFamilyMemberRoutes } from './routes/family-members.js'
@@ -66,13 +66,13 @@ const accountRepo = new AccountRepository(db)
 // PRD-FEAT-006: Bidirectional sync with initial data SQLite file
 try {
   const result = await syncInitialData(db, './data/initial.db')
-  const { familyMembers: fm, institutions: inst, accountTypes: at, accounts: acc, products: prod } = result
-  const tables = [fm, inst, at, acc, prod]
+  const { familyMembers: fm, institutions: inst, accountTypes: at, accounts: acc, products: prod, etfProfiles: etf } = result
+  const tables = [fm, inst, at, acc, prod, etf]
   const totalChanges = tables.reduce((sum, t) => sum + t.pgInserted + t.pgUpdated + t.sqliteInserted + t.sqliteUpdated, 0)
 
   if (totalChanges > 0) {
     const fmt = (label: string, t: typeof fm) => `${label}(pg+${t.pgInserted}/↑${t.pgUpdated}, sl+${t.sqliteInserted}/↑${t.sqliteUpdated})`
-    log('info', `Initial data sync completed: ${fmt('family_members', fm)}, ${fmt('institutions', inst)}, ${fmt('account_types', at)}, ${fmt('accounts', acc)}, ${fmt('products', prod)}`)
+    log('info', `Initial data sync completed: ${fmt('family_members', fm)}, ${fmt('institutions', inst)}, ${fmt('account_types', at)}, ${fmt('accounts', acc)}, ${fmt('products', prod)}, ${fmt('etf_profiles', etf)}`)
   } else {
     log('info', 'Initial data sync: already in sync')
   }
@@ -121,10 +121,6 @@ const etfComponentRepo = new EtfComponentRepository(db)
 let etfCollectorService: EtfComponentCollectorService | null = null
 let etfSchedulerTaskId = 0
 try {
-  const allProducts = await productRepo.findAll()
-  const productEntries = allProducts.map((p) => ({ id: p.id, code: p.code }))
-  await etfProfileRepo.seedProfiles(ETF_PROFILE_SEEDS, productEntries, VALID_MANAGERS)
-
   const etfTask = await scheduledTaskRepo.seedDefault({
     name: 'etf-component-collection-daily',
     cronExpression: '0 21 * * *',
@@ -136,6 +132,7 @@ try {
     ['samsung-active', new SamsungActiveAdapter()],
     ['timefolio', new TimefolioAdapter()],
     ['rise', new RiseAdapter()],
+    ['kodex', new KodexAdapter()],
   ])
 
   etfCollectorService = new EtfComponentCollectorService(

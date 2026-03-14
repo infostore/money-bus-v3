@@ -38,15 +38,8 @@ export class PriceHistoryRepository {
           volume: r.volume,
         })),
       )
-      .onConflictDoUpdate({
+      .onConflictDoNothing({
         target: [priceHistory.productId, priceHistory.date],
-        set: {
-          open: sql`excluded.open`,
-          high: sql`excluded.high`,
-          low: sql`excluded.low`,
-          close: sql`excluded.close`,
-          volume: sql`excluded.volume`,
-        },
       })
       .returning({ id: priceHistory.id })
 

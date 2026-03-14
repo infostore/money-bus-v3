@@ -56,7 +56,7 @@ describe('PriceHistoryRepository.upsertMany', () => {
     expect(stored[1].close).toBe('103.0000')
   })
 
-  it('updates existing rows on conflict (same product_id + date)', async () => {
+  it('skips existing rows on conflict (same product_id + date)', async () => {
     const product = await productRepo.create({ name: 'Apple', code: 'AAPL', asset_type: '주식' })
 
     const initialRows: readonly PriceRow[] = [
@@ -64,17 +64,17 @@ describe('PriceHistoryRepository.upsertMany', () => {
     ]
     await repo.upsertMany(initialRows)
 
-    const updatedRows: readonly PriceRow[] = [
+    const duplicateRows: readonly PriceRow[] = [
       { productId: product.id, date: '2024-01-01', open: '101.0000', high: '110.0000', low: '98.0000', close: '109.0000', volume: 1500000 },
     ]
-    const count = await repo.upsertMany(updatedRows)
-    expect(count).toBe(1)
+    const count = await repo.upsertMany(duplicateRows)
+    expect(count).toBe(0)
 
     const stored = await repo.findByProductId(product.id)
     expect(stored).toHaveLength(1)
-    expect(stored[0].close).toBe('109.0000')
-    expect(stored[0].high).toBe('110.0000')
-    expect(stored[0].volume).toBe(1500000)
+    expect(stored[0].close).toBe('103.0000')
+    expect(stored[0].high).toBe('105.0000')
+    expect(stored[0].volume).toBe(1000000)
   })
 
   it('returns 0 for empty array', async () => {
