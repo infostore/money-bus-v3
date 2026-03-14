@@ -237,6 +237,20 @@ export const api = {
         return body.data as { readonly message: string }
       }),
   },
+  // PRD-FEAT-017: Holdings Price Collection Scheduler
+  holdingsPriceScheduler: {
+    status: () => request<TaskExecution[]>('/scheduler/holdings-price/status'),
+    run: () =>
+      fetch(`${BASE_URL}/scheduler/holdings-price/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).then(async (res) => {
+        const body = await res.json()
+        if (res.status === 409) throw new Error(body.error ?? '이미 실행 중입니다')
+        if (!body.success) throw new Error(body.error ?? 'Unknown error')
+        return body.data as { readonly message: string }
+      }),
+  },
   // PRD-FEAT-014: Holdings Management
   transactions: {
     list: (params?: {
