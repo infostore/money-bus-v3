@@ -56,26 +56,31 @@ export class YahooFinanceAdapter {
   ): Promise<readonly PriceRow[]> {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
 
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      const timer = setTimeout(
-        () => reject(new DOMException('Timeout', 'TimeoutError')),
-        FETCH_TIMEOUT_MS,
-      )
-      signal?.addEventListener('abort', () => {
-        clearTimeout(timer)
-        reject(new DOMException('Aborted', 'AbortError'))
+    let timer: ReturnType<typeof setTimeout> | null = null
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new DOMException('Timeout', 'TimeoutError')),
+          FETCH_TIMEOUT_MS,
+        )
+        signal?.addEventListener('abort', () => {
+          if (timer) clearTimeout(timer)
+          reject(new DOMException('Aborted', 'AbortError'))
+        })
       })
-    })
 
-    const fetchPromise = this.client.historical(code, {
-      period1: startDate,
-      period2: endDate,
-      interval: '1d',
-    })
+      const fetchPromise = this.client.historical(code, {
+        period1: startDate,
+        period2: endDate,
+        interval: '1d',
+      })
 
-    const rows = await Promise.race([fetchPromise, timeoutPromise])
-    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+      const rows = await Promise.race([fetchPromise, timeoutPromise])
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
 
-    return rows.map((row) => toPriceRow(productId, row))
+      return rows.map((row) => toPriceRow(productId, row))
+    } finally {
+      if (timer) clearTimeout(timer)
+    }
   }
 }
