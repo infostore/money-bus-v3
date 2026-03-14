@@ -2,8 +2,8 @@
 type: pdca-plan
 plan-name: Scheduler Execution Detail
 related-prd: PRD-FEAT-018
-phase: do
-status: in-progress
+phase: act
+status: completed
 created: 2026-03-14
 updated: 2026-03-14
 tags: [pdca]
@@ -70,19 +70,32 @@ tags: [pdca]
 - **Progress Log**:
   - 2026-03-14: PDCA plan created
   - 2026-03-14: Phase transition plan → do (implementation started)
+  - 2026-03-14: All 8 waves implemented — schema, types, repository, service integration, API, client hook, detail page, tests fixed
+  - 2026-03-14: Phase transition do → check (verification)
+  - 2026-03-14: Code review + security review completed; 4 HIGH issues fixed
+  - 2026-03-14: Phase transition check → act (completed)
 
 ## Check
 
 - **Results**:
-  - [To be filled after implementation]
+  - TypeScript typecheck: zero errors
+  - Tests: 418 passed, 32 test files, 0 failures
+  - Security review: PASS (0 CRITICAL, 0 HIGH from new code)
+  - Code review: 4 HIGH issues found and fixed in follow-up commit
 
 - **Evidence**:
-  - [To be filled after implementation]
+  - `npx tsc --noEmit` — clean
+  - `npx vitest run` — 418/418 passed
+  - Security review agent: PASS
+  - Code review agent: all HIGH issues resolved
 
 ## Act
 
 - **Learnings**:
-  1. [To be filled after implementation]
+  1. When adding constructor params to services, update all test mock factories immediately
+  2. Inline routes in index.ts should always be extracted to route factories for consistency
+  3. `useParams({ strict: false })` bypasses TanStack Router type safety — always use `from:` route reference
 
 - **Next Actions**:
-  1. [To be filled after implementation]
+  1. Consider extracting the shared ExecutionRow component across all 4 scheduler pages to reduce duplication
+  2. Add keyboard accessibility (role="button", tabIndex, onKeyDown) to clickable table rows
