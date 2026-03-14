@@ -46,15 +46,15 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
     <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/[0.06] text-left text-xs text-surface-400">
-            <th className="px-3 py-2">종목명</th>
-            <th className="px-3 py-2 text-right">보유수량</th>
-            <th className="px-3 py-2 text-right">평균단가</th>
-            <th className="px-3 py-2 text-right">현재가</th>
-            <th className="px-3 py-2 text-right">평가금액</th>
-            <th className="px-3 py-2 text-right">손익(미실현)</th>
-            <th className="px-3 py-2 text-right">수익률</th>
-            <th className="hidden px-3 py-2 text-right sm:table-cell" title="비중은 필터 기준 합산 기준입니다">
+          <tr className="border-b border-white/[0.06] text-xs text-surface-500">
+            <th className="px-3 py-2 text-left font-medium">종목명</th>
+            <th className="px-3 py-2 text-right font-medium">보유수량</th>
+            <th className="px-3 py-2 text-right font-medium">평균단가</th>
+            <th className="px-3 py-2 text-right font-medium">현재가</th>
+            <th className="px-3 py-2 text-right font-medium">평가금액</th>
+            <th className="px-3 py-2 text-right font-medium">손익(미실현)</th>
+            <th className="px-3 py-2 text-right font-medium">수익률</th>
+            <th className="hidden px-3 py-2 text-right font-medium sm:table-cell" title="비중은 필터 기준 합산 기준입니다">
               비중
             </th>
           </tr>
