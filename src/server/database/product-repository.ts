@@ -1,7 +1,7 @@
 // PRD-FEAT-004: Product Management
-import { eq, asc, count } from 'drizzle-orm'
+import { eq, asc, count, sql } from 'drizzle-orm'
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
-import { products } from './schema.js'
+import { products, transactions } from './schema.js'
 import type * as schemaTypes from './schema.js'
 import type {
   Product,
@@ -84,6 +84,30 @@ export class ProductRepository {
       .from(products)
 
     return result?.value ?? 0
+  }
+
+  // PRD-FEAT-017: Holdings Price Collection Scheduler
+  async findWithActiveHoldings(): Promise<readonly Product[]> {
+    const rows = await this.db
+      .select({
+        id: products.id,
+        name: products.name,
+        code: products.code,
+        assetType: products.assetType,
+        currency: products.currency,
+        exchange: products.exchange,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+      })
+      .from(products)
+      .innerJoin(transactions, eq(transactions.productId, products.id))
+      .groupBy(products.id)
+      .having(
+        sql`SUM(CASE WHEN ${transactions.type} = 'buy' THEN ${transactions.shares}::numeric ELSE -${transactions.shares}::numeric END) > 0`,
+      )
+      .orderBy(asc(products.name))
+
+    return rows.map(toProduct)
   }
 
 }
