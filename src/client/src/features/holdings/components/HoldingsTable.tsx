@@ -43,18 +43,18 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
   const navigate = useNavigate()
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-white/[0.06]">
+    <div className="glass rounded-2xl overflow-hidden">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/[0.06] text-xs text-surface-500">
-            <th className="px-3 py-2 text-left font-medium">종목명</th>
-            <th className="px-3 py-2 text-right font-medium">보유수량</th>
-            <th className="px-3 py-2 text-right font-medium">평균단가</th>
-            <th className="px-3 py-2 text-right font-medium">현재가</th>
-            <th className="px-3 py-2 text-right font-medium">평가금액</th>
-            <th className="px-3 py-2 text-right font-medium">손익(미실현)</th>
-            <th className="px-3 py-2 text-right font-medium">수익률</th>
-            <th className="hidden px-3 py-2 text-right font-medium sm:table-cell" title="비중은 필터 기준 합산 기준입니다">
+          <tr className="border-b border-white/[0.08] text-xs uppercase tracking-wider text-surface-500">
+            <th className="px-4 py-3 text-left font-medium">종목명</th>
+            <th className="px-4 py-3 text-right font-medium">보유수량</th>
+            <th className="px-4 py-3 text-right font-medium">평균단가</th>
+            <th className="px-4 py-3 text-right font-medium">현재가</th>
+            <th className="px-4 py-3 text-right font-medium">평가금액</th>
+            <th className="px-4 py-3 text-right font-medium">손익(미실현)</th>
+            <th className="px-4 py-3 text-right font-medium">수익률</th>
+            <th className="hidden px-4 py-3 text-right font-medium sm:table-cell" title="비중은 필터 기준 합산 기준입니다">
               비중
             </th>
           </tr>
@@ -63,7 +63,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
           {holdings.map((h) => (
             <tr
               key={`${h.account_id}-${h.product_id}`}
-              className="cursor-pointer border-b border-white/[0.04] transition-colors hover:bg-white/[0.02]"
+              className="cursor-pointer border-b border-white/[0.06] transition-colors hover:bg-white/[0.02]"
               onClick={() =>
                 navigate({
                   to: '/holdings/$accountId/$productId',
@@ -74,7 +74,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                 })
               }
             >
-              <td className="px-3 py-2">
+              <td className="px-4 py-3">
                 <button
                   type="button"
                   className="font-medium text-surface-100 hover:text-primary-400 transition-colors cursor-pointer text-left"
@@ -89,25 +89,25 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                   {h.institution_name} · {h.family_member_name}
                 </div>
               </td>
-              <td className="px-3 py-2 text-right tabular-nums text-surface-300">
+              <td className="px-4 py-3 text-right tabular-nums text-surface-300">
                 {formatDecimal(h.shares, 0)}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums text-surface-300">
+              <td className="px-4 py-3 text-right tabular-nums text-surface-300">
                 {formatDecimal(h.avg_cost)}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums text-surface-300">
+              <td className="px-4 py-3 text-right tabular-nums text-surface-300">
                 {formatNumber(h.current_price, priceDigits(h.currency))}
               </td>
-              <td className="px-3 py-2 text-right tabular-nums text-surface-200">
+              <td className="px-4 py-3 text-right tabular-nums text-surface-200">
                 {formatNumber(h.market_value)}
               </td>
-              <td className={`px-3 py-2 text-right tabular-nums font-medium ${pnlColor(h.unrealized_pnl)}`}>
+              <td className={`px-4 py-3 text-right tabular-nums font-medium ${pnlColor(h.unrealized_pnl)}`}>
                 {formatNumber(h.unrealized_pnl)}
               </td>
-              <td className={`px-3 py-2 text-right tabular-nums ${pnlColor(h.unrealized_pnl_percent)}`}>
+              <td className={`px-4 py-3 text-right tabular-nums ${pnlColor(h.unrealized_pnl_percent)}`}>
                 {formatPercent(h.unrealized_pnl_percent)}
               </td>
-              <td className="hidden px-3 py-2 text-right tabular-nums text-surface-400 sm:table-cell">
+              <td className="hidden px-4 py-3 text-right tabular-nums text-surface-400 sm:table-cell">
                 {h.weight !== null ? `${h.weight.toFixed(1)}%` : '-'}
               </td>
             </tr>

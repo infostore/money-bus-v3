@@ -50,28 +50,28 @@ export function ProductTable({
   onDetail,
 }: ProductTableProps) {
   return (
-    <div className="overflow-x-auto">
+    <div className="glass rounded-2xl overflow-hidden">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/[0.06] text-xs text-surface-500">
-            <th className="py-2 pr-3 text-left font-medium">코드</th>
-            <th className="py-2 pr-3 text-left font-medium">종목명</th>
-            <th className="py-2 pr-3 text-right font-medium">현재가</th>
-            <th className="py-2 pr-3 text-right font-medium">1D</th>
-            <th className="py-2 pr-3 text-right font-medium">1W</th>
-            <th className="py-2 pr-3 text-right font-medium">1M</th>
-            <th className="py-2 pr-3 text-right font-medium">3M</th>
-            <th className="py-2 pr-3 text-right font-medium">1Y</th>
-            <th className="py-2 pl-3 text-right font-medium w-20" />
+          <tr className="border-b border-white/[0.08] text-xs uppercase tracking-wider text-surface-500">
+            <th className="px-4 py-3 text-left font-medium">코드</th>
+            <th className="px-4 py-3 text-left font-medium">종목명</th>
+            <th className="px-4 py-3 text-right font-medium">현재가</th>
+            <th className="px-4 py-3 text-right font-medium">1D</th>
+            <th className="px-4 py-3 text-right font-medium">1W</th>
+            <th className="px-4 py-3 text-right font-medium">1M</th>
+            <th className="px-4 py-3 text-right font-medium">3M</th>
+            <th className="px-4 py-3 text-right font-medium">1Y</th>
+            <th className="px-4 py-3 text-right font-medium w-20" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/[0.04]">
+        <tbody>
           {products.map((product) => (
             <tr
               key={product.id}
-              className="transition-colors hover:bg-surface-800/40"
+              className="border-b border-white/[0.06] transition-colors hover:bg-white/[0.02]"
             >
-              <td className="py-2.5 pr-3 tabular-nums">
+              <td className="px-4 py-3 tabular-nums">
                 {onDetail ? (
                   <button
                     type="button"
@@ -86,10 +86,10 @@ export function ProductTable({
                   </span>
                 )}
               </td>
-              <td className="py-2.5 pr-3 font-medium text-surface-200 max-w-xs truncate">
+              <td className="px-4 py-3 font-medium text-surface-200 max-w-xs truncate">
                 {product.name}
               </td>
-              <td className="py-2.5 pr-3 text-right tabular-nums text-surface-300">
+              <td className="px-4 py-3 text-right tabular-nums text-surface-300">
                 {priceMap?.get(product.id)
                   ? formatPrice(priceMap.get(product.id)!.close)
                   : ''}
@@ -98,25 +98,25 @@ export function ProductTable({
                 const p = priceMap?.get(product.id)
                 return (
                   <>
-                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1d)}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums ${returnColor(p?.return_1d)}`}>
                       {formatReturn(p?.return_1d)}
                     </td>
-                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1w)}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums ${returnColor(p?.return_1w)}`}>
                       {formatReturn(p?.return_1w)}
                     </td>
-                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1m)}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums ${returnColor(p?.return_1m)}`}>
                       {formatReturn(p?.return_1m)}
                     </td>
-                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_3m)}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums ${returnColor(p?.return_3m)}`}>
                       {formatReturn(p?.return_3m)}
                     </td>
-                    <td className={`py-2.5 pr-3 text-right tabular-nums ${returnColor(p?.return_1y)}`}>
+                    <td className={`px-4 py-3 text-right tabular-nums ${returnColor(p?.return_1y)}`}>
                       {formatReturn(p?.return_1y)}
                     </td>
                   </>
                 )
               })()}
-              <td className="py-2.5 pl-3 text-right">
+              <td className="px-4 py-3 text-right">
                 <div className="flex items-center justify-end gap-1">
                   <Button
                     variant="ghost"

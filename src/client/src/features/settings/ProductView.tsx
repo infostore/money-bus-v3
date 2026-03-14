@@ -2,7 +2,6 @@
 import { useState, useMemo, useCallback, type MutableRefObject } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Package } from 'lucide-react'
-import { Card, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Select } from '../../components/ui/Select'
 import { Spinner } from '../../components/ui/Spinner'
@@ -254,30 +253,26 @@ export function ProductView({ onCreateRef }: ProductViewProps) {
           </span>
         )}
       </div>
-      <Card>
-        <CardContent className="pt-6">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <Spinner />
-            </div>
-          ) : error ? (
-            <Alert variant="error">{error}</Alert>
-          ) : filteredProducts.length === 0 ? (
-            <EmptyState
-              icon={Package}
-              title="조건에 맞는 종목이 없습니다."
-            />
-          ) : (
-            <ProductTable
-              products={filteredProducts}
-              priceMap={priceMap}
-              onEdit={handleEdit}
-              onDelete={setDeleteTarget}
-              onDetail={(product) => navigate({ to: '/products/$id', params: { id: String(product.id) } })}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
+      ) : error ? (
+        <Alert variant="error">{error}</Alert>
+      ) : filteredProducts.length === 0 ? (
+        <EmptyState
+          icon={Package}
+          title="조건에 맞는 종목이 없습니다."
+        />
+      ) : (
+        <ProductTable
+          products={filteredProducts}
+          priceMap={priceMap}
+          onEdit={handleEdit}
+          onDelete={setDeleteTarget}
+          onDetail={(product) => navigate({ to: '/products/$id', params: { id: String(product.id) } })}
+        />
+      )}
 
       <ProductFormModal
         open={formOpen}
