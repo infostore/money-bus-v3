@@ -5,7 +5,7 @@ import { rootRoute } from './root'
 import { ComingSoon } from './shared'
 
 const productDetailSearchSchema = z.object({
-  tab: z.enum(['chart', 'table', 'holdings']).optional().default('chart'),
+  tab: z.enum(['chart', 'table', 'holdings', 'transactions']).optional().default('chart'),
 })
 
 const ProductPage = lazy(() =>
