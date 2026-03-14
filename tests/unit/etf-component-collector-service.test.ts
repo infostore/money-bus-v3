@@ -66,7 +66,12 @@ function createMocks() {
     ['rise', riseAdapter],
   ])
 
-  return { profileRepo, componentRepo, taskExecutionRepo, adapters, samsungAdapter, timefolioAdapter, riseAdapter }
+  const detailRepo = {
+    create: vi.fn().mockResolvedValue(undefined),
+    createMany: vi.fn().mockResolvedValue(undefined),
+  }
+
+  return { profileRepo, componentRepo, taskExecutionRepo, adapters, samsungAdapter, timefolioAdapter, riseAdapter, detailRepo }
 }
 
 function createService(mocks: ReturnType<typeof createMocks>) {
@@ -74,6 +79,7 @@ function createService(mocks: ReturnType<typeof createMocks>) {
     mocks.profileRepo as never,
     mocks.componentRepo as never,
     mocks.taskExecutionRepo as never,
+    mocks.detailRepo as never,
     mocks.adapters as never,
     1,
   )
@@ -127,7 +133,9 @@ describe('EtfComponentCollectorService', () => {
       ]
       mocks.profileRepo.findAll.mockResolvedValue(profiles)
       mocks.samsungAdapter.fetchComponents.mockRejectedValue(new Error('Network error'))
-      mocks.timefolioAdapter.fetchComponents.mockResolvedValue([])
+      mocks.timefolioAdapter.fetchComponents.mockResolvedValue([
+        { etf_product_id: 200, component_symbol: '005930', component_name: '삼성전자', weight: '30.5000', shares: 2000, snapshot_date: '2026-03-13' },
+      ])
 
       const result = await service.run()
 

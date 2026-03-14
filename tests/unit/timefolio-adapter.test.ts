@@ -1,6 +1,7 @@
 // PRD-FEAT-012: ETF Component Collection Scheduler
 import { describe, it, expect, vi } from 'vitest'
-import { TimefolioAdapter, parseTimefolioHtml } from '../../src/server/scheduler/timefolio-adapter.js'
+import * as XLSX from 'xlsx'
+import { TimefolioAdapter, parseTimefolioXls } from '../../src/server/scheduler/timefolio-adapter.js'
 import type { EtfProfile } from '../../src/shared/types.js'
 
 function makeProfile(overrides: Partial<EtfProfile> = {}): EtfProfile {
@@ -12,40 +13,26 @@ function makeProfile(overrides: Partial<EtfProfile> = {}): EtfProfile {
   }
 }
 
-// Real TIMEFOLIO HTML structure: table.table3.moreList1
-// cells[0]=code, cells[1]=name, cells[2]=qty, cells[3]=평가금액, cells[4]=weight
-const SAMPLE_HTML = `
-<html><body>
-<table class="table3 moreList1">
-  <tr><td>005930</td><td>삼성전자</td><td>2,000</td><td>150,000,000</td><td>30.50</td></tr>
-  <tr><td>000660</td><td>SK하이닉스</td><td>800</td><td>50,000,000</td><td>15.20</td></tr>
-</table>
-</body></html>
-`
+function makeXlsBuffer(rows: (string | number)[][]): ArrayBuffer {
+  const ws = XLSX.utils.aoa_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+  return buf
+}
 
-const HTML_WITH_SUMMARY = `
-<html><body>
-<table class="table3 moreList1">
-  <tr><td>005930</td><td>삼성전자</td><td>2,000</td><td>150,000,000</td><td>30.50</td></tr>
-  <tr><td></td><td>합계</td><td>2,000</td><td>150,000,000</td><td>100.00</td></tr>
-</table>
-</body></html>
-`
+const HEADER = ['종목코드', '종목명', '수량', '평가금액(원)', '비중(%)']
 
-const HTML_WITH_CASH = `
-<html><body>
-<table class="table3 moreList1">
-  <tr><td>005930</td><td>삼성전자</td><td>2,000</td><td>150,000,000</td><td>95.00</td></tr>
-  <tr><td></td><td>현금 및 기타</td><td>0</td><td>5,000,000</td><td>5.00</td></tr>
-</table>
-</body></html>
-`
+const SAMPLE_ROWS = [
+  HEADER,
+  ['005930', '삼성전자', 2000, 150000000, 30.5],
+  ['000660', 'SK하이닉스', 800, 50000000, 15.2],
+]
 
-const EMPTY_HTML = `<html><body><table class="table3 moreList1"></table></body></html>`
-
-describe('parseTimefolioHtml', () => {
-  it('should parse constituent rows from table.table3.moreList1', () => {
-    const result = parseTimefolioHtml(SAMPLE_HTML, 200, '2026-03-13')
+describe('parseTimefolioXls', () => {
+  it('should parse constituent rows from Excel', () => {
+    const buf = makeXlsBuffer(SAMPLE_ROWS)
+    const result = parseTimefolioXls(buf, 200, '2026-03-13')
     expect(result).toHaveLength(2)
     expect(result[0]).toEqual({
       etf_product_id: 200,
@@ -58,48 +45,81 @@ describe('parseTimefolioHtml', () => {
   })
 
   it('should skip 합계 rows', () => {
-    const result = parseTimefolioHtml(HTML_WITH_SUMMARY, 200, '2026-03-13')
+    const buf = makeXlsBuffer([
+      HEADER,
+      ['005930', '삼성전자', 2000, 150000000, 30.5],
+      ['', '합계', 2000, 150000000, 100],
+    ])
+    const result = parseTimefolioXls(buf, 200, '2026-03-13')
     expect(result).toHaveLength(1)
     expect(result[0].component_symbol).toBe('005930')
   })
 
   it('should convert empty code with 현금 name to CASH', () => {
-    const result = parseTimefolioHtml(HTML_WITH_CASH, 200, '2026-03-13')
+    const buf = makeXlsBuffer([
+      HEADER,
+      ['005930', '삼성전자', 2000, 150000000, 95],
+      ['', '현금 및 기타', 0, 5000000, 5],
+    ])
+    const result = parseTimefolioXls(buf, 200, '2026-03-13')
     expect(result).toHaveLength(2)
     expect(result[1].component_symbol).toBe('CASH')
     expect(result[1].component_name).toBe('현금 및 기타')
   })
 
-  it('should return empty array for empty table', () => {
-    const result = parseTimefolioHtml(EMPTY_HTML, 200, '2026-03-13')
+  it('should return empty array for header-only Excel', () => {
+    const buf = makeXlsBuffer([HEADER])
+    const result = parseTimefolioXls(buf, 200, '2026-03-13')
     expect(result).toEqual([])
   })
 
-  it('should parse comma-separated numbers', () => {
-    const result = parseTimefolioHtml(SAMPLE_HTML, 200, '2026-03-13')
+  it('should parse comma-separated numbers as numeric', () => {
+    const buf = makeXlsBuffer(SAMPLE_ROWS)
+    const result = parseTimefolioXls(buf, 200, '2026-03-13')
     expect(result[0].shares).toBe(2000)
+  })
+
+  it('should clean EQUITY suffix from foreign codes', () => {
+    const buf = makeXlsBuffer([
+      HEADER,
+      ['AAPL US EQUITY', 'Apple Inc', 100, 20000000, 10],
+    ])
+    const result = parseTimefolioXls(buf, 200, '2026-03-13')
+    expect(result).toHaveLength(1)
+    expect(result[0].component_symbol).toBe('AAPL')
+  })
+
+  it('should skip rows with zero weight and zero qty', () => {
+    const buf = makeXlsBuffer([
+      HEADER,
+      ['005930', '삼성전자', 0, 0, 0],
+    ])
+    const result = parseTimefolioXls(buf, 200, '2026-03-13')
+    expect(result).toEqual([])
   })
 })
 
 describe('TimefolioAdapter', () => {
-  it('should append pdfDate and mode=pdf to URL', async () => {
+  it('should convert URL to pdf_excel.php and append pdfDate + mode=pdf', async () => {
+    const buf = makeXlsBuffer(SAMPLE_ROWS)
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      text: () => Promise.resolve(SAMPLE_HTML),
+      arrayBuffer: () => Promise.resolve(buf),
     })
     const adapter = new TimefolioAdapter(mockFetch)
     await adapter.fetchComponents(makeProfile(), '2026-03-13')
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://timeetf.co.kr/m11_view.php?idx=10&cate=001&pdfDate=2026-03-13&mode=pdf',
+      'https://timeetf.co.kr/pdf_excel.php?idx=10&cate=001&pdfDate=2026-03-13&mode=pdf',
       expect.objectContaining({ headers: expect.any(Object) }),
     )
   })
 
   it('should replace existing pdfDate in URL', async () => {
+    const buf = makeXlsBuffer(SAMPLE_ROWS)
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      text: () => Promise.resolve(SAMPLE_HTML),
+      arrayBuffer: () => Promise.resolve(buf),
     })
     const adapter = new TimefolioAdapter(mockFetch)
     await adapter.fetchComponents(
@@ -108,9 +128,45 @@ describe('TimefolioAdapter', () => {
     )
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://timeetf.co.kr/m11_view.php?idx=10&pdfDate=2026-03-13&mode=pdf',
+      'https://timeetf.co.kr/pdf_excel.php?idx=10&pdfDate=2026-03-13&mode=pdf',
       expect.objectContaining({ headers: expect.any(Object) }),
     )
+  })
+
+  it('should fall back to T-1 date when today returns empty', async () => {
+    const emptyBuf = makeXlsBuffer([HEADER])
+    const dataBuf = makeXlsBuffer(SAMPLE_ROWS)
+    const mockFetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, arrayBuffer: () => Promise.resolve(emptyBuf) })
+      .mockResolvedValueOnce({ ok: true, arrayBuffer: () => Promise.resolve(dataBuf) })
+
+    const adapter = new TimefolioAdapter(mockFetch)
+    const result = await adapter.fetchComponents(makeProfile(), '2026-03-14')
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(mockFetch).toHaveBeenNthCalledWith(1,
+      expect.stringContaining('pdfDate=2026-03-14'),
+      expect.any(Object),
+    )
+    expect(mockFetch).toHaveBeenNthCalledWith(2,
+      expect.stringContaining('pdfDate=2026-03-13'),
+      expect.any(Object),
+    )
+    expect(result).toHaveLength(2)
+    expect(result[0].snapshot_date).toBe('2026-03-13')
+  })
+
+  it('should return empty when both today and T-1 have no data', async () => {
+    const emptyBuf = makeXlsBuffer([HEADER])
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(emptyBuf),
+    })
+    const adapter = new TimefolioAdapter(mockFetch)
+    const result = await adapter.fetchComponents(makeProfile(), '2026-03-14')
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(result).toEqual([])
   })
 
   it('should throw on non-ok response', async () => {

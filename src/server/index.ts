@@ -41,6 +41,8 @@ import { createEtfSchedulerRoutes } from './routes/etf-component-scheduler.js'
 import { createEtfComponentRoutes } from './routes/etf-components.js'
 import { createExchangeRateRoutes } from './routes/exchange-rates.js'
 import { createExchangeRateSchedulerRoutes } from './routes/exchange-rate-scheduler.js'
+import { createExecutionDetailRoutes } from './routes/execution-detail.js'
+import { TaskExecutionDetailRepository } from './database/task-execution-detail-repository.js'
 import { TransactionRepository } from './database/transaction-repository.js'
 import { HoldingService } from './services/holding-service.js'
 import { createTransactionRoutes } from './routes/transactions.js'
@@ -96,6 +98,8 @@ const priceHistoryRepo = new PriceHistoryRepository(db)
 const scheduledTaskRepo = new ScheduledTaskRepository(db)
 const taskExecutionRepo = new TaskExecutionRepository(db)
 
+const detailRepo = new TaskExecutionDetailRepository(db)
+
 let naverAdapter: NaverFinanceAdapter | null = null
 let yahooAdapter: YahooFinanceAdapter | null = null
 
@@ -118,6 +122,7 @@ try {
     productRepo,
     priceHistoryRepo,
     taskExecutionRepo,
+    detailRepo,
     naverAdapter,
     yahooAdapter,
     task.id,
@@ -153,6 +158,7 @@ try {
     etfProfileRepo,
     etfComponentRepo,
     taskExecutionRepo,
+    detailRepo,
     adapters,
     etfTask.id,
   )
@@ -180,6 +186,7 @@ try {
   exchangeRateCollectorService = new ExchangeRateCollectorService(
     exchangeRateFetcher,
     taskExecutionRepo,
+    detailRepo,
     exchangeRateTask.id,
   )
 
@@ -211,6 +218,7 @@ try {
       productRepo,
       priceHistoryRepo,
       taskExecutionRepo,
+      detailRepo,
       naverAdapter,
       yahooAdapter,
       domesticTask.id,
@@ -270,6 +278,9 @@ const transactionRepo = new TransactionRepository(db)
 const holdingService = new HoldingService(db, priceHistoryRepo, exchangeRateRepo)
 app.route('/api/transactions', createTransactionRoutes(transactionRepo, holdingService))
 app.route('/api/holdings', createHoldingsRoutes(holdingService))
+
+// PRD-FEAT-018: Unified execution detail route (shared across all scheduler types)
+app.route('/api/scheduler/executions', createExecutionDetailRoutes(taskExecutionRepo, detailRepo))
 
 if (collectorService && schedulerTaskId > 0) {
   app.route(

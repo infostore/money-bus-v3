@@ -45,7 +45,11 @@ function createMocks() {
     ),
     trimOldExecutions: vi.fn().mockResolvedValue(0),
   }
-  return { fetcher, taskExecutionRepo }
+  const detailRepo = {
+    create: vi.fn().mockResolvedValue(undefined),
+    createMany: vi.fn().mockResolvedValue(undefined),
+  }
+  return { fetcher, taskExecutionRepo, detailRepo }
 }
 
 const TASK_ID = 10
@@ -57,8 +61,8 @@ describe('ExchangeRateCollectorService', () => {
 
   describe('run() — success path', () => {
     it('creates an execution, calls fetcher.updateUsdRate, and completes with status=success', async () => {
-      const { fetcher, taskExecutionRepo } = createMocks()
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const { fetcher, taskExecutionRepo, detailRepo } = createMocks()
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       const result = await service.run()
 
@@ -87,8 +91,8 @@ describe('ExchangeRateCollectorService', () => {
     })
 
     it('trims old executions after successful completion', async () => {
-      const { fetcher, taskExecutionRepo } = createMocks()
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const { fetcher, taskExecutionRepo, detailRepo } = createMocks()
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       await service.run()
 
@@ -99,9 +103,9 @@ describe('ExchangeRateCollectorService', () => {
 
   describe('run() — failure path', () => {
     it('completes with status=failed and error message when fetcher throws', async () => {
-      const { fetcher, taskExecutionRepo } = createMocks()
+      const { fetcher, taskExecutionRepo, detailRepo } = createMocks()
       fetcher.updateUsdRate.mockRejectedValue(new Error('Network timeout'))
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       const result = await service.run()
 
@@ -120,9 +124,9 @@ describe('ExchangeRateCollectorService', () => {
     })
 
     it('handles non-Error thrown values', async () => {
-      const { fetcher, taskExecutionRepo } = createMocks()
+      const { fetcher, taskExecutionRepo, detailRepo } = createMocks()
       fetcher.updateUsdRate.mockRejectedValue('string error')
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       await service.run()
 
@@ -133,9 +137,9 @@ describe('ExchangeRateCollectorService', () => {
     })
 
     it('trims old executions after failed completion', async () => {
-      const { fetcher, taskExecutionRepo } = createMocks()
+      const { fetcher, taskExecutionRepo, detailRepo } = createMocks()
       fetcher.updateUsdRate.mockRejectedValue(new Error('fail'))
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       await service.run()
 
@@ -146,14 +150,14 @@ describe('ExchangeRateCollectorService', () => {
 
   describe('running getter', () => {
     it('returns false before run() is called', () => {
-      const { fetcher, taskExecutionRepo } = createMocks()
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const { fetcher, taskExecutionRepo, detailRepo } = createMocks()
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       expect(service.running).toBe(false)
     })
 
     it('returns true while run() is executing', async () => {
-      const { taskExecutionRepo } = createMocks()
+      const { taskExecutionRepo, detailRepo } = createMocks()
       let resolveUpdate!: () => void
       const fetcher = {
         updateUsdRate: vi.fn().mockImplementation(
@@ -162,7 +166,7 @@ describe('ExchangeRateCollectorService', () => {
           }),
         ),
       }
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       const runPromise = service.run()
       // Wait for updateUsdRate to be called (isRunning = true)
@@ -177,8 +181,8 @@ describe('ExchangeRateCollectorService', () => {
     })
 
     it('returns false after run() completes', async () => {
-      const { fetcher, taskExecutionRepo } = createMocks()
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const { fetcher, taskExecutionRepo, detailRepo } = createMocks()
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       await service.run()
 
@@ -188,7 +192,7 @@ describe('ExchangeRateCollectorService', () => {
 
   describe('concurrent run() calls', () => {
     it('throws if run() is called while already running', async () => {
-      const { taskExecutionRepo } = createMocks()
+      const { taskExecutionRepo, detailRepo } = createMocks()
       let resolveUpdate!: () => void
       const fetcher = {
         updateUsdRate: vi.fn().mockImplementation(
@@ -197,7 +201,7 @@ describe('ExchangeRateCollectorService', () => {
           }),
         ),
       }
-      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, TASK_ID)
+      const service = new ExchangeRateCollectorService(fetcher as never, taskExecutionRepo as never, detailRepo as never, TASK_ID)
 
       const firstRun = service.run()
       await vi.waitFor(() => expect(fetcher.updateUsdRate).toHaveBeenCalled())

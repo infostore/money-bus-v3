@@ -4,6 +4,8 @@ import type { Product, TaskExecution } from '../../shared/types.js'
 import type { ProductRepository } from '../database/product-repository.js'
 import type { PriceHistoryRepository } from '../database/price-history-repository.js'
 import type { TaskExecutionRepository } from '../database/task-execution-repository.js'
+import type { TaskExecutionDetailRepository } from '../database/task-execution-detail-repository.js'
+import type { CreateDetailInput } from '../../shared/types.js'
 import type { NaverFinanceAdapter } from './naver-finance-adapter.js'
 import type { YahooFinanceAdapter } from './yahoo-finance-adapter.js'
 import type { PriceRow } from '../database/price-history-repository.js'
@@ -59,6 +61,7 @@ export class PriceCollectorService {
     private readonly productRepo: ProductRepository,
     private readonly priceHistoryRepo: PriceHistoryRepository,
     private readonly taskExecutionRepo: TaskExecutionRepository,
+    private readonly detailRepo: TaskExecutionDetailRepository,
     private readonly naverAdapter: NaverFinanceAdapter,
     private readonly yahooAdapter: YahooFinanceAdapter,
     private readonly taskId: number,
@@ -95,7 +98,12 @@ export class PriceCollectorService {
 
     const products = await this.productRepo.findAll()
     const counters: CollectionCounters = { total: 0, succeeded: 0, failed: 0, skipped: 0 }
-    const { naverProducts, yahooProducts } = this.groupProducts(products, counters)
+    const { naverProducts, yahooProducts, skippedDetails } = this.groupProducts(products, counters, execution.id)
+
+    // Write skipped detail rows upfront
+    if (skippedDetails.length > 0) {
+      await this.detailRepo.createMany(skippedDetails)
+    }
 
     // Set total count so UI shows progress immediately
     counters.total = naverProducts.length + yahooProducts.length
@@ -142,19 +150,23 @@ export class PriceCollectorService {
   private groupProducts(
     products: readonly Product[],
     counters: CollectionCounters,
-  ): { readonly naverProducts: readonly Product[]; readonly yahooProducts: readonly Product[] } {
+    executionId: number,
+  ): { readonly naverProducts: readonly Product[]; readonly yahooProducts: readonly Product[]; readonly skippedDetails: readonly CreateDetailInput[] } {
+    const skippedDetails: CreateDetailInput[] = []
     const naverProducts: Product[] = []
     const yahooProducts: Product[] = []
 
     for (const product of products) {
       if (product.code === null) {
         counters.skipped++
+        skippedDetails.push({ executionId, productId: product.id, status: 'skipped', message: 'No product code' })
         continue
       }
 
       const adapterType = resolveAdapter(product.exchange)
       if (adapterType === 'unknown') {
         counters.skipped++
+        skippedDetails.push({ executionId, productId: product.id, status: 'skipped', message: `Unknown exchange: ${product.exchange}` })
         log('warn', `Unknown exchange for product ${product.name} (id=${product.id}): ${product.exchange}`)
         continue
       }
@@ -166,7 +178,7 @@ export class PriceCollectorService {
       }
     }
 
-    return { naverProducts, yahooProducts }
+    return { naverProducts, yahooProducts, skippedDetails }
   }
 
   /** Returns true if aborted */
@@ -209,7 +221,7 @@ export class PriceCollectorService {
     for (let i = 0; i < batch.length; i++) {
       if (signal.aborted) return true
       try {
-        await this.processOneProduct(batch[i], fetchFn, counters, signal, fromDate)
+        await this.processOneProduct(executionId, batch[i], fetchFn, counters, signal, fromDate)
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return true
@@ -226,6 +238,7 @@ export class PriceCollectorService {
   }
 
   private async processOneProduct(
+    executionId: number,
     product: Product,
     fetchFn: AdapterFetchFn,
     counters: CollectionCounters,
@@ -236,6 +249,7 @@ export class PriceCollectorService {
 
     if (dateRange === null) {
       counters.skipped++
+      await this.detailRepo.create({ executionId, productId: product.id, status: 'skipped', message: 'Already up to date' })
       return
     }
 
@@ -246,6 +260,7 @@ export class PriceCollectorService {
       )
       await this.priceHistoryRepo.upsertMany(rows)
       counters.succeeded++
+      await this.detailRepo.create({ executionId, productId: product.id, status: 'success' })
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw error
@@ -253,6 +268,7 @@ export class PriceCollectorService {
       counters.failed++
       const message = error instanceof Error ? error.message : String(error)
       log('error', `Failed to fetch prices for ${product.name} (id=${product.id}): ${message}`)
+      await this.detailRepo.create({ executionId, productId: product.id, status: 'failed', message })
     }
   }
 

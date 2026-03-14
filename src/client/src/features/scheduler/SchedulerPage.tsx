@@ -2,6 +2,7 @@
 // PRD-FEAT-008: Scheduler Execution History Delete
 // PRD-FEAT-009: Scheduler Execution Stop
 import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Trash2, Square, RefreshCw } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useScheduler } from './use-scheduler'
@@ -82,8 +83,12 @@ interface ExecutionRowProps {
 }
 
 function ExecutionRow({ execution, onDelete, isDeleting }: ExecutionRowProps) {
+  const navigate = useNavigate()
   return (
-    <tr className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors">
+    <tr
+      className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors cursor-pointer"
+      onClick={() => navigate({ to: '/scheduler/executions/$executionId', params: { executionId: String(execution.id) } })}
+    >
       <td className="px-4 py-3">
         <StatusBadge status={execution.status} />
       </td>
@@ -110,7 +115,7 @@ function ExecutionRow({ execution, onDelete, isDeleting }: ExecutionRowProps) {
       <td className="px-4 py-3 text-center">
         {execution.status !== 'running' && (
           <button
-            onClick={() => onDelete(execution.id)}
+            onClick={(e) => { e.stopPropagation(); onDelete(execution.id) }}
             disabled={isDeleting}
             aria-label="이력 삭제"
             className="p-1 rounded-lg text-surface-500 hover:text-error-500 hover:bg-error-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
