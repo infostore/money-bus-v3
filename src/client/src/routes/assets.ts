@@ -34,6 +34,12 @@ const HoldingsPage = lazy(() =>
   })),
 )
 
+const HoldingDetailPage = lazy(() =>
+  import('../features/holdings/HoldingDetailPage').then((m) => ({
+    default: m.HoldingDetailPage,
+  })),
+)
+
 export const portfolioRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/portfolio',
@@ -67,9 +73,16 @@ export const holdingsRoute = createRoute({
   component: HoldingsPage,
 })
 
+export const holdingDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/holdings/$accountId/$productId',
+  component: HoldingDetailPage,
+})
+
 export const assetRoutes = [
   portfolioRoute,
   holdingsRoute,
+  holdingDetailRoute,
   accountsRoute,
   productsRoute,
   productDetailRoute,

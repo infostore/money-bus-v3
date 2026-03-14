@@ -1,11 +1,13 @@
 // PRD-FEAT-014: Holdings Management
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Modal } from '../../../components/ui/Modal'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { Label } from '../../../components/ui/Label'
 import { Button } from '../../../components/ui/Button'
 import { Alert } from '../../../components/ui/Alert'
+import { Autocomplete } from '../../../components/ui/Autocomplete'
+import type { AutocompleteOption } from '../../../components/ui/Autocomplete'
 import { useTransactions } from '../use-transactions'
 import { useAccounts } from '../../settings/use-accounts'
 import { useProducts } from '../../settings/use-products'
@@ -55,6 +57,16 @@ export function TransactionFormDialog({
   const { products } = useProducts()
 
   const isEdit = editTransaction !== undefined
+
+  const productOptions: readonly AutocompleteOption[] = useMemo(
+    () =>
+      products.map((p) => ({
+        value: String(p.id),
+        label: p.name,
+        sub: [p.code, p.asset_type].filter(Boolean).join(' · ') || undefined,
+      })),
+    [products],
+  )
 
   useEffect(() => {
     if (editTransaction) {
@@ -197,16 +209,19 @@ export function TransactionFormDialog({
           </div>
           <div>
             <Label>종목</Label>
-            <Select
-              value={form.product_id}
-              onChange={(e) => handleChange('product_id', e.target.value)}
-              disabled={isEdit}
-            >
-              <option value="">선택</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </Select>
+            {isEdit ? (
+              <Input
+                value={products.find((p) => p.id === Number(form.product_id))?.name ?? ''}
+                disabled
+              />
+            ) : (
+              <Autocomplete
+                options={productOptions}
+                value={form.product_id}
+                onChange={(v) => handleChange('product_id', v)}
+                placeholder="종목 검색"
+              />
+            )}
           </div>
         </div>
 
