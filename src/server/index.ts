@@ -27,7 +27,9 @@ import type { EtfComponentAdapter } from './scheduler/etf-component-adapter.js'
 import { ExchangeRateRepository } from './database/exchange-rate-repository.js'
 import { ExchangeRateFetcher } from './services/exchange-rate-fetcher.js'
 import { ExchangeRateCollectorService } from './scheduler/exchange-rate-collector-service.js'
+import { HoldingsPriceCollectorService } from './scheduler/holdings-price-collector-service.js'
 import { startSchedulers } from './scheduler/index.js'
+import { createHoldingsPriceSchedulerRoutes } from './routes/holdings-price-scheduler.js'
 import { createItemRoutes } from './routes/items.js'
 import { createFamilyMemberRoutes } from './routes/family-members.js'
 import { createInstitutionRoutes } from './routes/institutions.js'
@@ -94,13 +96,16 @@ const priceHistoryRepo = new PriceHistoryRepository(db)
 const scheduledTaskRepo = new ScheduledTaskRepository(db)
 const taskExecutionRepo = new TaskExecutionRepository(db)
 
+let naverAdapter: NaverFinanceAdapter | null = null
+let yahooAdapter: YahooFinanceAdapter | null = null
+
 let collectorService: PriceCollectorService | undefined
 let schedulerTaskId = 0
 try {
-  const naverAdapter = new NaverFinanceAdapter()
+  naverAdapter = new NaverFinanceAdapter()
   const { default: YahooFinance } = await import('yahoo-finance2')
   const yahooClient = new YahooFinance({ suppressNotices: ['ripHistorical'] })
-  const yahooAdapter = new YahooFinanceAdapter(yahooClient as never)
+  yahooAdapter = new YahooFinanceAdapter(yahooClient as never)
 
   const task = await scheduledTaskRepo.seedDefault({
     name: 'price-collection-daily',
@@ -183,6 +188,43 @@ try {
   log('error', `Exchange rate scheduler setup failed: ${error}`)
 }
 
+// PRD-FEAT-017: Holdings Price Collection Scheduler
+let holdingsPriceService: HoldingsPriceCollectorService | null = null
+let holdingsDomesticTaskId = 0
+let holdingsForeignTaskId = 0
+try {
+  if (naverAdapter && yahooAdapter) {
+    const domesticTask = await scheduledTaskRepo.seedDefault({
+      name: 'holdings-price-domestic',
+      cronExpression: '0 0-7 * * 1-5',
+      enabled: true,
+    })
+    const foreignTask = await scheduledTaskRepo.seedDefault({
+      name: 'holdings-price-foreign',
+      cronExpression: '0 22 * * 1-5',
+      enabled: true,
+    })
+    holdingsDomesticTaskId = domesticTask.id
+    holdingsForeignTaskId = foreignTask.id
+
+    holdingsPriceService = new HoldingsPriceCollectorService(
+      productRepo,
+      priceHistoryRepo,
+      taskExecutionRepo,
+      naverAdapter,
+      yahooAdapter,
+      domesticTask.id,
+      foreignTask.id,
+    )
+
+    log('info', 'Holdings price scheduler initialized')
+  } else {
+    log('warn', 'Holdings price scheduler skipped: adapters not available')
+  }
+} catch (error) {
+  log('error', `Holdings price scheduler setup failed: ${error}`)
+}
+
 // Start cron schedulers after all services are constructed
 if (collectorService) {
   try {
@@ -192,6 +234,7 @@ if (collectorService) {
       collectorService,
       etfCollectorService,
       exchangeRateCollectorService,
+      holdingsPriceService,
     )
   } catch (error) {
     log('error', `Scheduler startup failed: ${error}`)
@@ -283,6 +326,29 @@ if (exchangeRateCollectorService && exchangeRateTaskId > 0) {
   app.post('/api/scheduler/exchange-rate/run', (c) =>
     c.json<ApiResponse<null>>(
       { success: false, data: null, error: '환율 스케줄러가 초기화되지 않았습니다' },
+      503,
+    ),
+  )
+}
+
+// PRD-FEAT-017: Holdings price scheduler routes
+if (holdingsPriceService && holdingsDomesticTaskId > 0 && holdingsForeignTaskId > 0) {
+  app.route(
+    '/api/scheduler/holdings-price',
+    createHoldingsPriceSchedulerRoutes(
+      holdingsPriceService,
+      taskExecutionRepo,
+      holdingsDomesticTaskId,
+      holdingsForeignTaskId,
+    ),
+  )
+} else {
+  app.get('/api/scheduler/holdings-price/status', (c) =>
+    c.json<ApiResponse<readonly never[]>>({ success: true, data: [], error: null }),
+  )
+  app.post('/api/scheduler/holdings-price/run', (c) =>
+    c.json<ApiResponse<null>>(
+      { success: false, data: null, error: '보유종목 가격수집 스케줄러가 초기화되지 않았습니다' },
       503,
     ),
   )
