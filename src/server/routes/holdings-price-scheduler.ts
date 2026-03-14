@@ -1,6 +1,6 @@
 // PRD-FEAT-017: Holdings Price Collection Scheduler
 import { Hono } from 'hono'
-import type { HoldingsPriceCollectorService } from '../scheduler/holdings-price-collector-service.js'
+import { type HoldingsPriceCollectorService, PERIOD_LOOKBACK_MAP } from '../scheduler/holdings-price-collector-service.js'
 import type { TaskExecutionRepository } from '../database/task-execution-repository.js'
 import type { ApiResponse, TaskExecution } from '../../shared/types.js'
 import { log } from '../middleware/logger.js'
@@ -21,7 +21,9 @@ export function createHoldingsPriceSchedulerRoutes(
       )
     }
 
-    const runPromise = service.run('all')
+    const body = await c.req.json<{ period?: string }>().catch(() => ({}))
+    const lookbackDays = body.period ? PERIOD_LOOKBACK_MAP[body.period] ?? 3 : 3
+    const runPromise = service.run('all', lookbackDays)
     runPromise.catch((err) => log('error', `Holdings price collection run error: ${err}`))
 
     return c.json<ApiResponse<{ readonly message: string }>>(

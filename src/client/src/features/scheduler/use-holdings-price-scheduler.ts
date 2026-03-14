@@ -19,7 +19,7 @@ export function useHoldingsPriceScheduler() {
   })
 
   const runMutation = useMutation({
-    mutationFn: () => api.holdingsPriceScheduler.run(),
+    mutationFn: (period?: string) => api.holdingsPriceScheduler.run(period),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: HOLDINGS_PRICE_SCHEDULER_KEY }),
   })
@@ -35,7 +35,7 @@ export function useHoldingsPriceScheduler() {
     loading,
     error,
     isRunning,
-    triggerRun: async () => { await runMutation.mutateAsync() },
+    triggerRun: async (period?: string) => { await runMutation.mutateAsync(period) },
     runError: runMutation.error instanceof Error ? runMutation.error.message : null,
   } as const
 }

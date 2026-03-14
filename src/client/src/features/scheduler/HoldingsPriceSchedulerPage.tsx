@@ -1,8 +1,12 @@
 // PRD-FEAT-017: Holdings Price Collection Scheduler
+import { useState } from 'react'
 import { Play, Loader2, CheckCircle2, AlertTriangle, XCircle, Clock, Square } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useHoldingsPriceScheduler } from './use-holdings-price-scheduler'
 import type { TaskExecution } from '@shared/types'
+
+const PERIODS = ['1D', '1W', '1M', '3M', '6M', '1Y'] as const
+type Period = typeof PERIODS[number]
 
 const STATUS_CONFIG: Record<
   TaskExecution['status'],
@@ -87,6 +91,7 @@ function ExecutionRow({ execution }: ExecutionRowProps) {
 }
 
 export function HoldingsPriceSchedulerPage() {
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('1D')
   const { executions, loading, error, isRunning, triggerRun, runError } =
     useHoldingsPriceScheduler()
 
@@ -101,9 +106,24 @@ export function HoldingsPriceSchedulerPage() {
             평일 09:00~16:00 KST 1시간 단위(국내) · 07:00 KST 1회(해외)
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 rounded-full bg-white/[0.06] p-1">
+            {PERIODS.map((p) => (
+              <button
+                key={p}
+                onClick={() => setSelectedPeriod(p)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                  selectedPeriod === p
+                    ? 'bg-primary-500 text-white'
+                    : 'text-surface-400 hover:text-surface-200'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
           <Button
-            onClick={() => triggerRun()}
+            onClick={() => triggerRun(selectedPeriod)}
             disabled={isRunning}
             className="gap-1.5"
           >

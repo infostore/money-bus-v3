@@ -240,10 +240,11 @@ export const api = {
   // PRD-FEAT-017: Holdings Price Collection Scheduler
   holdingsPriceScheduler: {
     status: () => request<TaskExecution[]>('/scheduler/holdings-price/status'),
-    run: () =>
+    run: (period?: string) =>
       fetch(`${BASE_URL}/scheduler/holdings-price/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ period: period ?? '1D' }),
       }).then(async (res) => {
         const body = await res.json()
         if (res.status === 409) throw new Error(body.error ?? '이미 실행 중입니다')

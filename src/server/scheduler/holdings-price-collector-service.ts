@@ -1,7 +1,7 @@
 // PRD-FEAT-017: Holdings Price Collection Scheduler
 import type { Product, TaskExecution } from '../../shared/types.js'
 import type { ProductRepository } from '../database/product-repository.js'
-import type { PriceHistoryRepository } from '../database/price-history-repository.js'
+import type { PriceHistoryRepository, PriceRow } from '../database/price-history-repository.js'
 import type { TaskExecutionRepository } from '../database/task-execution-repository.js'
 import type { NaverFinanceAdapter } from './naver-finance-adapter.js'
 import type { YahooFinanceAdapter } from './yahoo-finance-adapter.js'
@@ -11,9 +11,26 @@ import { log } from '../middleware/logger.js'
 
 type Scope = 'domestic' | 'foreign' | 'all'
 
-function formatToday(): string {
-  const d = new Date()
+const DEFAULT_LOOKBACK_DAYS = 3
+
+export const PERIOD_LOOKBACK_MAP: Record<string, number> = {
+  '1D': 1,
+  '1W': 7,
+  '1M': 30,
+  '3M': 90,
+  '6M': 180,
+  '1Y': 365,
+} as const
+
+function formatDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function getDateRange(lookbackDays: number): { readonly startDate: string; readonly endDate: string } {
+  const end = new Date()
+  const start = new Date(end)
+  start.setDate(start.getDate() - lookbackDays)
+  return { startDate: formatDate(start), endDate: formatDate(end) }
 }
 
 function formatDateCompact(dateStr: string): string {
@@ -37,13 +54,13 @@ export class HoldingsPriceCollectorService {
     return this.isRunning
   }
 
-  async run(scope: Scope = 'all'): Promise<TaskExecution> {
+  async run(scope: Scope = 'all', lookbackDays: number = DEFAULT_LOOKBACK_DAYS): Promise<TaskExecution> {
     if (this.isRunning) {
       throw new Error('Holdings price collection is already running')
     }
     this.isRunning = true
     try {
-      return await this.executeCollection(scope)
+      return await this.executeCollection(scope, lookbackDays)
     } finally {
       this.isRunning = false
     }
@@ -53,7 +70,7 @@ export class HoldingsPriceCollectorService {
     return scope === 'foreign' ? this.foreignTaskId : this.domesticTaskId
   }
 
-  private async executeCollection(scope: Scope): Promise<TaskExecution> {
+  private async executeCollection(scope: Scope, lookbackDays: number): Promise<TaskExecution> {
     const taskId = this.resolveTaskId(scope)
     const execution = await this.taskExecutionRepo.create({
       taskId,
@@ -62,14 +79,14 @@ export class HoldingsPriceCollectorService {
 
     const allHeld = await this.productRepo.findWithActiveHoldings()
     const products = this.filterByScope(allHeld, scope)
-    const today = formatToday()
+    const { startDate, endDate } = getDateRange(lookbackDays)
 
     let succeeded = 0
     let failed = 0
     let skipped = 0
 
     for (const product of products) {
-      const result = await this.collectProduct(product, today)
+      const result = await this.collectProduct(product, startDate, endDate)
       if (result === 'success') succeeded++
       else if (result === 'failed') failed++
       else skipped++
@@ -101,7 +118,8 @@ export class HoldingsPriceCollectorService {
 
   private async collectProduct(
     product: Product,
-    today: string,
+    startDate: string,
+    endDate: string,
   ): Promise<'success' | 'failed' | 'skipped'> {
     if (!product.code) {
       log('warn', `Skipping product ${product.id} (${product.name}): no code`)
@@ -115,22 +133,22 @@ export class HoldingsPriceCollectorService {
     }
 
     try {
+      let rows: readonly PriceRow[]
       if (adapter === 'naver') {
-        const compact = formatDateCompact(today)
-        const rows = await withRetry(() =>
-          this.naverAdapter.fetchPrices(product.code!, product.id, compact, compact),
+        const compactStart = formatDateCompact(startDate)
+        const compactEnd = formatDateCompact(endDate)
+        rows = await withRetry(() =>
+          this.naverAdapter.fetchPrices(product.code!, product.id, compactStart, compactEnd),
         )
-        if (rows.length > 0) {
-          await this.priceHistoryRepo.upsertMany(rows)
-        }
       } else {
-        const todayDate = new Date(`${today}T00:00:00.000Z`)
-        const rows = await withRetry(() =>
-          this.yahooAdapter.fetchPrices(product.code!, product.id, todayDate, todayDate),
+        const start = new Date(`${startDate}T00:00:00.000Z`)
+        const end = new Date(`${endDate}T00:00:00.000Z`)
+        rows = await withRetry(() =>
+          this.yahooAdapter.fetchPrices(product.code!, product.id, start, end),
         )
-        if (rows.length > 0) {
-          await this.priceHistoryRepo.upsertMany(rows)
-        }
+      }
+      if (rows.length > 0) {
+        await this.priceHistoryRepo.upsertMany(rows)
       }
 
       log('info', `Holdings price collected: ${product.code} (${product.name})`)

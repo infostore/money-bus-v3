@@ -141,7 +141,7 @@ describe('HoldingsPriceCollectorService', () => {
       await service.run('domestic')
 
       expect(mocks.naverAdapter.fetchPrices).toHaveBeenCalledTimes(1)
-      expect(mocks.naverAdapter.fetchPrices).toHaveBeenCalledWith('005930', 1, '20260314', '20260314')
+      expect(mocks.naverAdapter.fetchPrices).toHaveBeenCalledWith('005930', 1, expect.any(String), expect.any(String))
       expect(mocks.yahooAdapter.fetchPrices).not.toHaveBeenCalled()
     })
 
@@ -156,8 +156,8 @@ describe('HoldingsPriceCollectorService', () => {
       expect(mocks.yahooAdapter.fetchPrices).toHaveBeenCalledWith(
         'AAPL',
         2,
-        new Date('2026-03-14T00:00:00.000Z'),
-        new Date('2026-03-14T00:00:00.000Z'),
+        expect.any(Date),
+        expect.any(Date),
       )
       expect(mocks.naverAdapter.fetchPrices).not.toHaveBeenCalled()
     })
@@ -174,8 +174,8 @@ describe('HoldingsPriceCollectorService', () => {
     })
   })
 
-  describe('today-only date range', () => {
-    it('calls Naver adapter with today compact date for both start and end', async () => {
+  describe('date range', () => {
+    it('calls Naver adapter with compact date range (default 3-day lookback)', async () => {
       const product = makeProduct({ exchange: 'KOSPI' })
       mocks.productRepo.findWithActiveHoldings.mockResolvedValue([product])
 
@@ -184,24 +184,39 @@ describe('HoldingsPriceCollectorService', () => {
       expect(mocks.naverAdapter.fetchPrices).toHaveBeenCalledWith(
         product.code,
         product.id,
-        '20260314',
-        '20260314',
+        expect.stringMatching(/^\d{8}$/),  // YYYYMMDD compact start
+        expect.stringMatching(/^\d{8}$/),  // YYYYMMDD compact end
       )
+      // end date should be different from start date (3-day lookback)
+      const [, , startDate, endDate] = mocks.naverAdapter.fetchPrices.mock.calls[0]
+      expect(startDate).not.toBe(endDate)
     })
 
-    it('calls Yahoo adapter with today Date objects for both start and end', async () => {
+    it('calls Yahoo adapter with Date objects for start and end', async () => {
       const product = makeProduct({ id: 2, code: 'AAPL', exchange: 'NASDAQ' })
       mocks.productRepo.findWithActiveHoldings.mockResolvedValue([product])
 
       await service.run('foreign')
 
-      const expectedDate = new Date('2026-03-14T00:00:00.000Z')
       expect(mocks.yahooAdapter.fetchPrices).toHaveBeenCalledWith(
         'AAPL',
         2,
-        expectedDate,
-        expectedDate,
+        expect.any(Date),
+        expect.any(Date),
       )
+    })
+
+    it('respects custom lookbackDays parameter', async () => {
+      const product = makeProduct({ exchange: 'KOSPI' })
+      mocks.productRepo.findWithActiveHoldings.mockResolvedValue([product])
+
+      await service.run('domestic', 30)  // 1M lookback
+
+      const [, , startDate, endDate] = mocks.naverAdapter.fetchPrices.mock.calls[0]
+      // 30-day lookback: start and end should differ significantly
+      const startNum = parseInt(startDate as string, 10)
+      const endNum = parseInt(endDate as string, 10)
+      expect(endNum - startNum).toBeGreaterThanOrEqual(28)  // at least 28 days apart
     })
   })
 
