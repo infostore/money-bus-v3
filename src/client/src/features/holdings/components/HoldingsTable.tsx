@@ -75,30 +75,39 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
               }
             >
               <td className="px-3 py-2">
-                <div className="font-medium text-surface-100">{h.product_name}</div>
+                <button
+                  type="button"
+                  className="font-medium text-surface-100 hover:text-primary-400 transition-colors cursor-pointer text-left"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate({ to: '/products/$id', params: { id: String(h.product_id) } })
+                  }}
+                >
+                  {h.product_name}
+                </button>
                 <div className="text-xs text-surface-400">
                   {h.institution_name} · {h.family_member_name}
                 </div>
               </td>
-              <td className="px-3 py-2 text-right text-surface-300">
+              <td className="px-3 py-2 text-right tabular-nums text-surface-300">
                 {formatDecimal(h.shares, 0)}
               </td>
-              <td className="px-3 py-2 text-right text-surface-300">
+              <td className="px-3 py-2 text-right tabular-nums text-surface-300">
                 {formatDecimal(h.avg_cost)}
               </td>
-              <td className="px-3 py-2 text-right text-surface-300">
+              <td className="px-3 py-2 text-right tabular-nums text-surface-300">
                 {formatNumber(h.current_price, priceDigits(h.currency))}
               </td>
-              <td className="px-3 py-2 text-right text-surface-200">
+              <td className="px-3 py-2 text-right tabular-nums text-surface-200">
                 {formatNumber(h.market_value)}
               </td>
-              <td className={`px-3 py-2 text-right font-medium ${pnlColor(h.unrealized_pnl)}`}>
+              <td className={`px-3 py-2 text-right tabular-nums font-medium ${pnlColor(h.unrealized_pnl)}`}>
                 {formatNumber(h.unrealized_pnl)}
               </td>
-              <td className={`px-3 py-2 text-right ${pnlColor(h.unrealized_pnl_percent)}`}>
+              <td className={`px-3 py-2 text-right tabular-nums ${pnlColor(h.unrealized_pnl_percent)}`}>
                 {formatPercent(h.unrealized_pnl_percent)}
               </td>
-              <td className="hidden px-3 py-2 text-right text-surface-400 sm:table-cell">
+              <td className="hidden px-3 py-2 text-right tabular-nums text-surface-400 sm:table-cell">
                 {h.weight !== null ? `${h.weight.toFixed(1)}%` : '-'}
               </td>
             </tr>
