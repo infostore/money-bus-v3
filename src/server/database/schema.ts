@@ -157,3 +157,25 @@ export const accounts = pgTable('accounts', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// PRD-FEAT-014: Holdings Management
+export const transactions = pgTable('transactions', {
+  id: serial('id').primaryKey(),
+  accountId: integer('account_id')
+    .notNull()
+    .references(() => accounts.id, { onDelete: 'restrict' }),
+  productId: integer('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'restrict' }),
+  type: text('type').notNull().$type<'buy' | 'sell'>(),
+  shares: numeric('shares', { precision: 18, scale: 6 }).notNull(),
+  price: numeric('price', { precision: 18, scale: 4 }).notNull(),
+  fee: numeric('fee', { precision: 18, scale: 4 }).notNull().default('0'),
+  tax: numeric('tax', { precision: 18, scale: 4 }).notNull().default('0'),
+  tradedAt: date('traded_at').notNull(),
+  memo: text('memo').default(''),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('transactions_account_product_date_idx').on(t.accountId, t.productId, t.tradedAt),
+])

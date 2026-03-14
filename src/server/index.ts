@@ -34,6 +34,10 @@ import { createAccountRoutes } from './routes/accounts.js'
 import { createSchedulerRoutes } from './routes/scheduler.js'
 import { createEtfSchedulerRoutes } from './routes/etf-component-scheduler.js'
 import { createEtfComponentRoutes } from './routes/etf-components.js'
+import { TransactionRepository } from './database/transaction-repository.js'
+import { HoldingService } from './services/holding-service.js'
+import { createTransactionRoutes } from './routes/transactions.js'
+import { createHoldingsRoutes } from './routes/holdings.js'
 import { requestLogger, log } from './middleware/logger.js'
 import { registerCleanupHandler, setupShutdownHandlers } from './shutdown.js'
 import type { ApiResponse, EtfManager } from '../shared/types.js'
@@ -180,6 +184,12 @@ app.route('/api/institutions', createInstitutionRoutes(institutionRepo))
 app.route('/api/account-types', createAccountTypeRoutes(accountTypeRepo))
 app.route('/api/products', createProductRoutes(productRepo, priceHistoryRepo))
 app.route('/api/accounts', createAccountRoutes(accountRepo))
+
+// PRD-FEAT-014: Holdings Management
+const transactionRepo = new TransactionRepository(db)
+const holdingService = new HoldingService(db, priceHistoryRepo)
+app.route('/api/transactions', createTransactionRoutes(transactionRepo, holdingService))
+app.route('/api/holdings', createHoldingsRoutes(holdingService))
 
 if (collectorService && schedulerTaskId > 0) {
   app.route(

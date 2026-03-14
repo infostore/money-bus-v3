@@ -242,3 +242,78 @@ export interface CreateEtfComponentPayload {
   readonly shares?: number | null
   readonly snapshot_date: string
 }
+
+// PRD-FEAT-014: Holdings Management
+export interface Transaction {
+  readonly id: number
+  readonly account_id: number
+  readonly product_id: number
+  readonly type: 'buy' | 'sell'
+  readonly shares: string
+  readonly price: string
+  readonly fee: string
+  readonly tax: string
+  readonly traded_at: string
+  readonly memo: string
+  readonly created_at: string
+  readonly updated_at: string
+}
+
+export interface CreateTransactionPayload {
+  readonly account_id: number
+  readonly product_id: number
+  readonly type: 'buy' | 'sell'
+  readonly shares: number
+  readonly price: number
+  readonly fee?: number
+  readonly tax?: number
+  readonly traded_at: string
+  readonly memo?: string
+}
+
+// account_id and product_id are immutable after creation.
+// To change them, delete and re-create the transaction.
+export interface UpdateTransactionPayload {
+  readonly type?: 'buy' | 'sell'
+  readonly shares?: number
+  readonly price?: number
+  readonly fee?: number
+  readonly tax?: number
+  readonly traded_at?: string
+  readonly memo?: string
+}
+
+export interface HoldingWithDetails {
+  readonly account_id: number
+  readonly product_id: number
+  readonly product_name: string
+  readonly asset_type: string
+  readonly currency: string
+  readonly exchange: string | null
+  readonly shares: number
+  readonly avg_cost: number
+  readonly current_price: number | null
+  readonly fx_rate: number | null
+  readonly market_value: number | null
+  readonly cost_basis: number
+  readonly unrealized_pnl: number | null
+  readonly unrealized_pnl_percent: number | null
+  readonly weight: number | null
+  readonly account_name: string
+  readonly institution_name: string
+  readonly family_member_name: string
+}
+
+export interface RealizedPnlEntry {
+  readonly transaction_id: number
+  readonly traded_at: string
+  readonly product_id: number
+  readonly product_name: string
+  readonly shares: number
+  readonly sell_price: number
+  readonly avg_cost_at_sell: number
+  readonly gross_pnl: number
+  readonly fee: number
+  readonly tax: number
+  readonly net_pnl: number
+}
